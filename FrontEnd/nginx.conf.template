@@ -1,5 +1,6 @@
 server {
-  listen 80;
+  listen ${PORT};
+  listen [::]:${PORT};
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
@@ -8,9 +9,15 @@ server {
   gzip on;
   gzip_types text/css application/javascript application/json image/svg+xml;
 
-  # API, Swagger and uploaded files -> NestJS backend
+  # API, Swagger and uploaded files -> NestJS backend.
+  # BACKEND_URL is env-configurable (Docker Compose: http://backend:3000,
+  # Railway: http://<service>.railway.internal:3000). Using a variable in
+  # proxy_pass forces nginx to re-resolve DNS, so backend redeploys with new
+  # IPs keep working without restarting this container.
   location /api/ {
-    proxy_pass         http://backend:3000;
+    resolver ${DNS_RESOLVER} valid=10s;
+    set $api_upstream ${BACKEND_URL};
+    proxy_pass         $api_upstream;
     proxy_http_version 1.1;
     proxy_set_header   Host              $host;
     proxy_set_header   X-Real-IP         $remote_addr;

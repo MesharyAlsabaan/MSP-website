@@ -51,7 +51,8 @@ async function bootstrap() {
   SwaggerModule.setup(`${prefix}/docs`, app, document);
 
   const port = config.get<number>('port', 3000);
-  await app.listen(port);
+  // '::' binds IPv4 + IPv6 — required for Railway private networking.
+  await app.listen(port, '::');
   // eslint-disable-next-line no-console
   console.log(`MSP API running on http://localhost:${port}/${prefix}`);
   // eslint-disable-next-line no-console
