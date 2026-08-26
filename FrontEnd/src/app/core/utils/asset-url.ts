@@ -19,13 +19,17 @@ const API_ORIGIN = environment.apiUrl.replace(/\/api\/?$/, '');
  *   seed stores it) is made root-relative as-is
  * - a bare filename resolves against the frontend's `/images/` folder (back-compat
  *   with the original static placeholder data)
- * - empty / null → `''` (templates should guard with `@if`)
+ * - a bare token with no file extension (e.g. the seed's `compass` icon keyword)
+ *   is not an image at all → `''`, so no broken `<img>` can be rendered
+ * - empty / null → `''` (templates should guard on the RESOLVED value)
  */
+const HAS_FILE_EXTENSION = /\.[a-z0-9]{2,5}$/i;
+
 export function assetUrl(value: string | null | undefined): string {
   if (!value) return '';
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith('/api/')) return `${API_ORIGIN}${value}`;
   if (value.startsWith('/')) return value;
   if (value.includes('/')) return `/${value}`;
-  return `/images/${value}`;
+  return HAS_FILE_EXTENSION.test(value) ? `/images/${value}` : '';
 }

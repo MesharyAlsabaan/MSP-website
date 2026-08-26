@@ -4,7 +4,8 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AdminApi } from '../../../core/services/admin-api.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ADMIN_NAV } from '../../../core/data/admin-nav';
+import { ADMIN_NAV, AdminNavItem } from '../../../core/data/admin-nav';
+import { Role } from '../../../core/enums/role.enum';
 
 interface Card {
   path: string;
@@ -51,16 +52,19 @@ export class AdminDashboard implements OnInit {
   private readonly admin = inject(AdminApi);
   protected readonly auth = inject(AuthService);
 
+  /** Sections this user may actually read — others would 403 on their count. */
+  private readonly visible: AdminNavItem[] = ADMIN_NAV.filter(
+    (i) =>
+      i.resource &&
+      (!i.roles || i.roles.includes(this.auth.user()?.role as Role)),
+  );
+
   protected readonly cards = signal<Card[]>(
-    ADMIN_NAV.filter((i) => i.resource).map((i) => ({
-      path: i.path,
-      label: i.label,
-      count: null,
-    })),
+    this.visible.map((i) => ({ path: i.path, label: i.label, count: null })),
   );
 
   ngOnInit(): void {
-    const items = ADMIN_NAV.filter((i) => i.resource);
+    const items = this.visible;
     forkJoin(
       items.map((i) =>
         this.admin

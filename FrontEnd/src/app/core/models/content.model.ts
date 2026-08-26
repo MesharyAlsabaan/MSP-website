@@ -72,6 +72,10 @@ export interface CompanyInfo {
   email?: string;
   addressEn?: string;
   addressAr?: string;
+  cairoPhone?: string;
+  cairoAddressEn?: string;
+  cairoAddressAr?: string;
+  cairoMapUrl?: string;
   workingHours?: L;
   social?: { linkedin?: string; instagram?: string; x?: string };
 }

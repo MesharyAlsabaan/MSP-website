@@ -31,6 +31,9 @@ interface NavLink {
             <p class="mt-6 font-mono text-xs uppercase tracking-[0.15em] text-muted">
               {{ i18n.pick(city) }}
             </p>
+            <p class="mt-2 font-mono text-xs uppercase tracking-[0.15em] text-muted">
+              {{ i18n.pick(established) }}
+            </p>
           </div>
 
           <div>
@@ -59,8 +62,30 @@ interface NavLink {
               <li>
                 <a [href]="'mailto:' + emailValue()" class="transition-colors hover:text-ink">{{ emailValue() }}</a>
               </li>
-              <li dir="ltr">{{ phoneValue() }}</li>
+              <li dir="ltr">
+                <a [href]="'tel:' + phoneValue()" class="transition-colors hover:text-ink">{{ phoneValue() }}</a>
+              </li>
+              @if (whatsappValue()) {
+                <li dir="ltr">
+                  <a [href]="whatsappLink()" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-ink">{{ whatsappValue() }}</a>
+                </li>
+              }
               <li>{{ i18n.pick(addressValue()) }}</li>
+              @if (cairoPhoneValue()) {
+                <li dir="ltr">
+                  <a [href]="'tel:' + cairoPhoneValue()" class="transition-colors hover:text-ink">{{ cairoPhoneValue() }}</a>
+                </li>
+              }
+              @if (cairoMapUrl()) {
+                <li>
+                  <a
+                    [href]="cairoMapUrl()"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-ink"
+                  >{{ i18n.pick(cairoBranchLabel) }}</a>
+                </li>
+              }
             </ul>
           </div>
         </div>
@@ -85,7 +110,15 @@ export class Footer {
 
   protected readonly taglineValue = computed(() => this.cfg().tagline ?? this.tagline);
   protected readonly emailValue = computed(() => this.cfg().email || 'info@msp.sa');
-  protected readonly phoneValue = computed(() => this.cfg().phone || '+966 11 000 0000');
+  protected readonly phoneValue = computed(() => this.cfg().phone || '+966112000087');
+  protected readonly whatsappValue = computed(() => this.cfg().whatsapp || '+966570327777');
+  protected readonly whatsappLink = computed(
+    () => `https://wa.me/${this.whatsappValue().replace(/\D/g, '')}`,
+  );
+  protected readonly cairoPhoneValue = computed(() => this.cfg().cairoPhone || '+201068017313');
+  protected readonly cairoMapUrl = computed(
+    () => this.cfg().cairoMapUrl || 'https://www.google.com/maps/place/MSP+DESIGNS/',
+  );
   protected readonly addressValue = computed(() => {
     const c = this.cfg();
     if (c.addressEn || c.addressAr) {
@@ -108,8 +141,10 @@ export class Footer {
     ar: 'بيتُ خبرةٍ في العمارة والهندسة، نُصمّم مبانٍ وبنىً تحتيةً ومدناً تدوم.',
   };
   protected readonly city = { en: 'Riyadh · Saudi Arabia', ar: 'الرياض · المملكة العربية السعودية' };
+  protected readonly established = { en: 'Established 2010', ar: 'تأسس عام 2010' };
   protected readonly navHeading = { en: 'Navigate', ar: 'تصفّح' };
   protected readonly contactHeading = { en: 'Contact', ar: 'تواصل معنا' };
+  protected readonly cairoBranchLabel = { en: 'Cairo branch · Google Maps', ar: 'فرع القاهرة · خرائط Google' };
   protected readonly address = { en: 'King Fahd Road, Riyadh', ar: 'طريق الملك فهد، الرياض' };
   protected readonly legal = { en: 'MSP Consultants', ar: 'إم إس بي للاستشارات' };
   protected readonly strap = {

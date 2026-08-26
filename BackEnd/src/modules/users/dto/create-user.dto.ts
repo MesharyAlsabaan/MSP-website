@@ -7,10 +7,12 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { NormalizeEmail } from '../../../common/decorators/normalize-email.decorator';
 import { Role } from '../../../common/enums/role.enum';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'editor@msp.sa' })
+  @NormalizeEmail()
   @IsEmail()
   email: string;
 

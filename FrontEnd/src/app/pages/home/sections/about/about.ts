@@ -85,13 +85,13 @@ export class About {
     },
     facts: {
       en: [
-        { label: 'Founded', value: 'Riyadh, 2012' },
+        { label: 'Founded', value: 'Riyadh, 2010' },
         { label: 'Disciplines', value: 'Five, in-house' },
         { label: 'Sectors', value: 'Civic · Commercial · Residential' },
         { label: 'Standards', value: 'SBC · ISO · LEED' },
       ],
       ar: [
-        { label: 'التأسيس', value: 'الرياض، ٢٠١٢' },
+        { label: 'التأسيس', value: 'الرياض، ٢٠١٠' },
         { label: 'التخصصات', value: 'خمسة، داخلياً' },
         { label: 'القطاعات', value: 'مدني · تجاري · سكني' },
         { label: 'المعايير', value: 'كود البناء · آيزو · ليد' },

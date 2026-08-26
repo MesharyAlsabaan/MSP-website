@@ -13,3 +13,6 @@ Thumbs.db
 # Dependencies & build output (also covered by sub-project .gitignore files)
 node_modules/
 dist/
+
+# Local data export for the server (DB dump + uploaded images) — never commit
+deploy/

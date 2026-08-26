@@ -1,4 +1,11 @@
-import { Component, inject, signal, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  afterNextRender,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Section } from '../../../../shared/ui/section/section';
 import { Container } from '../../../../shared/ui/container/container';
@@ -32,8 +39,19 @@ import { Project } from '../../../../core/data/projects';
           </a>
         </div>
 
-        <div class="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2">
-          @for (project of projects(); track project.slug) {
+        @if (loading()) {
+          <div class="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2">
+            @for (item of skeletons; track item) {
+              <div class="animate-pulse">
+                <div class="aspect-[4/3] bg-hairline/40"></div>
+                <div class="mt-5 h-7 w-2/3 bg-hairline/50"></div>
+                <div class="mt-3 h-3 w-1/3 bg-hairline/40"></div>
+              </div>
+            }
+          </div>
+        } @else if (projects().length) {
+          <div class="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2">
+            @for (project of projects(); track project.slug) {
             <a [routerLink]="['/projects', project.slug]" class="group block">
               <div appScrollReveal revealType="line" class="aspect-[4/3] overflow-hidden bg-hairline/40">
                 @if (project.cover) {
@@ -54,14 +72,21 @@ import { Project } from '../../../../core/data/projects';
                   <span class="font-mono text-sm align-top text-accent">{{ project.no }}&ensp;</span>
                   {{ i18n.pick(project.title) }}
                 </h3>
-                <span class="shrink-0 font-mono text-xs text-muted">{{ project.year }}</span>
+                @if (project.year) {
+                  <span class="shrink-0 font-mono text-xs text-muted">{{ project.year }}</span>
+                }
               </div>
               <p class="mt-2 font-mono text-xs uppercase tracking-[0.12em] text-muted">
                 {{ i18n.pick(project.typology) }} · {{ i18n.pick(project.location) }}
               </p>
             </a>
-          }
-        </div>
+            }
+          </div>
+        } @else {
+          <p class="py-16 text-center font-mono text-xs uppercase tracking-[0.14em] text-muted">
+            {{ i18n.pick(t.empty) }}
+          </p>
+        }
       </app-container>
     </app-section>
   `,
@@ -70,13 +95,26 @@ export class FeaturedProjects {
   protected readonly i18n = inject(TranslationService);
   private readonly content = inject(PublicContentService);
 
-  protected readonly projects = signal<Project[]>([]);
+  private readonly fetched = signal<Project[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly skeletons = [0, 1, 2, 3];
+
+  protected readonly projects = computed<Project[]>(() => {
+    const api = this.fetched();
+    // Prefer what the admin marked as featured; until anything is marked, the
+    // newest published work stands in so the section is never empty.
+    const featured = api.filter((p) => p.featured);
+    return (featured.length ? featured : api).slice(0, 4);
+  });
 
   constructor() {
     afterNextRender(() => {
-      this.content.featuredProjects().subscribe({
-        next: (list) => this.projects.set(list.slice(0, 4)),
-        error: () => this.projects.set([]),
+      this.content.projects().subscribe({
+        next: (list) => {
+          this.fetched.set(list);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
       });
     });
   }
@@ -84,5 +122,6 @@ export class FeaturedProjects {
   protected readonly t = {
     eyebrow: { en: 'Selected Works', ar: 'مختاراتٌ من أعمالنا' },
     all: { en: 'Full index', ar: 'الأرشيف الكامل' },
+    empty: { en: 'No published projects yet.', ar: 'لا توجد مشاريع منشورة بعد.' },
   };
 }

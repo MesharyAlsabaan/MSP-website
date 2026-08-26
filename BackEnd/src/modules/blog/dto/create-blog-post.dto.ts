@@ -8,6 +8,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { EmptyToUndefined } from '../../../common/decorators/empty-to-undefined.decorator';
 import { Localized } from '../../../common/types/localized.type';
 import { BlogStatus } from '../entities/blog-post.entity';
 
@@ -25,7 +26,7 @@ export class CreateBlogPostDto {
   @ApiProperty() @IsOptional() @IsString() cover?: string;
   @ApiProperty() @IsOptional() @IsString() author?: string;
   @ApiProperty({ enum: BlogStatus }) @IsOptional() @IsEnum(BlogStatus) status?: BlogStatus;
-  @ApiProperty() @IsOptional() @IsDateString() publishedAt?: string;
+  @ApiProperty() @EmptyToUndefined() @IsOptional() @IsDateString() publishedAt?: string;
 
   @ApiProperty({ type: Localized })
   @IsOptional() @ValidateNested() @Type(() => Localized)

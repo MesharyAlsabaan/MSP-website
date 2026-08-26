@@ -26,7 +26,7 @@ interface Stat {
           <span class="h-px flex-1 bg-bg/15"></span>
         </div>
 
-        <dl class="mt-14 grid grid-cols-2 gap-x-8 gap-y-12 lg:grid-cols-4">
+        <dl class="mt-14 grid grid-cols-1 gap-x-8 gap-y-12">
           @for (stat of i18n.pick(t.stats); track stat.label; let i = $index) {
             <div appScrollReveal [revealDelay]="i * 90">
               <dt
@@ -49,21 +49,17 @@ interface Stat {
 })
 export class Stats {
   protected readonly i18n = inject(TranslationService);
+  private readonly foundingYear = 2010;
+  private readonly experienceYears = new Date().getFullYear() - this.foundingYear;
 
   protected readonly t = {
     eyebrow: { en: 'By the Numbers', ar: 'بالأرقام' },
     stats: {
       en: [
-        { value: 240, suffix: '+', label: 'Projects delivered' },
-        { value: 4, suffix: 'M m²', label: 'Built area designed' },
-        { value: 12, suffix: ' yrs', label: 'In practice' },
-        { value: 30, suffix: '', label: 'Awards & citations' },
+        { value: this.experienceYears, suffix: ' yrs', label: 'In practice' },
       ],
       ar: [
-        { value: 240, suffix: '+', label: 'مشروع مُنجَز' },
-        { value: 4, suffix: ' مليون م²', label: 'مساحة مُصمَّمة' },
-        { value: 12, suffix: ' عاماً', label: 'من الخبرة' },
-        { value: 30, suffix: '', label: 'جائزة وتكريم' },
+        { value: this.experienceYears, suffix: ' عاماً', label: 'من الخبرة' },
       ],
     },
   };

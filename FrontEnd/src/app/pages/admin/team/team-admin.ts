@@ -84,8 +84,8 @@ function blank(): TeamMember {
             <label class="block"><span class="lbl">Bio (AR)</span>
               <textarea [(ngModel)]="model().bio.ar" rows="3" dir="rtl" class="inp"></textarea></label>
 
-            <label class="block"><span class="lbl">Photo</span>
-              <app-image-upload [(value)]="model().photo" /></label>
+            <div class="block"><span class="lbl">Photo</span>
+              <app-image-upload [(value)]="model().photo" /></div>
 
             <label class="block"><span class="lbl">Sort order</span>
               <input type="number" [(ngModel)]="model().sortOrder" class="inp" /></label>

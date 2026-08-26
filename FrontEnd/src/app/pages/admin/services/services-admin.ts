@@ -94,8 +94,8 @@ function blank(): Service {
               <textarea [(ngModel)]="model().fullDescription.ar" rows="3" dir="rtl" class="inp"></textarea></label>
 
             <div class="grid grid-cols-2 gap-3">
-              <label class="block"><span class="lbl">Icon / image</span>
-                <app-image-upload [(value)]="model().icon" /></label>
+              <div class="block"><span class="lbl">Icon / image</span>
+                <app-image-upload [(value)]="model().icon" /></div>
               <label class="block"><span class="lbl">Sort order</span>
                 <input type="number" [(ngModel)]="model().sortOrder" class="inp" /></label>
             </div>

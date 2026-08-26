@@ -1,4 +1,10 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Container } from '../../../../shared/ui/container/container';
 import { ThemeToggle } from '../../../../shared/ui/theme-toggle/theme-toggle';
@@ -14,6 +20,10 @@ interface NavLink {
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'closeMenu()',
+    '(document:click)': 'onDocumentClick($event)',
+  },
   imports: [
     RouterLink,
     RouterLinkActive,
@@ -55,23 +65,90 @@ interface NavLink {
             }
           </ul>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3 sm:gap-4">
             <app-riyadh-clock class="hidden lg:block" />
             <span class="hidden h-5 w-px bg-hairline lg:block" aria-hidden="true"></span>
             <app-lang-toggle />
             <app-theme-toggle />
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 items-center justify-center border border-hairline text-ink transition-colors hover:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg md:hidden"
+              [attr.aria-label]="i18n.pick(menuOpenLabel)"
+              aria-controls="mobile-navigation"
+              [attr.aria-expanded]="menuOpen()"
+              (click)="toggleMenu()"
+            >
+              <span class="sr-only">{{ i18n.pick(menuOpenLabel) }}</span>
+              <span class="relative block h-4 w-5" aria-hidden="true">
+                <span
+                  class="absolute start-0 top-0 block h-px w-5 bg-current transition-transform"
+                  [class.translate-y-[7px]]="menuOpen()"
+                  [class.rotate-45]="menuOpen()"
+                ></span>
+                <span
+                  class="absolute start-0 top-[7px] block h-px w-5 bg-current transition-opacity"
+                  [class.opacity-0]="menuOpen()"
+                ></span>
+                <span
+                  class="absolute start-0 top-[14px] block h-px w-5 bg-current transition-transform"
+                  [class.-translate-y-[7px]]="menuOpen()"
+                  [class.-rotate-45]="menuOpen()"
+                ></span>
+              </span>
+            </button>
           </div>
         </nav>
+
+        @if (menuOpen()) {
+          <div
+            id="mobile-navigation"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="i18n.pick(menuLabel)"
+            class="absolute inset-x-0 top-20 border-b border-hairline bg-bg shadow-lg md:hidden"
+          >
+            <div class="mx-auto max-w-[1200px] px-5 py-7 sm:px-8">
+              <ul class="divide-y divide-hairline border-y border-hairline">
+                @for (item of navItems; track item.path) {
+                  <li>
+                    <a
+                      [routerLink]="item.path"
+                      routerLinkActive="text-accent"
+                      [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+                      (click)="closeMenu()"
+                      class="flex items-center justify-between py-4 font-display text-2xl text-ink transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                    >
+                      <span>{{ i18n.pick(item.label) }}</span>
+                      <span class="dir-flip font-mono text-sm text-accent" aria-hidden="true">&rarr;</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
       </app-container>
     </header>
   `,
 })
 export class Header {
   protected readonly i18n = inject(TranslationService);
+  private readonly element = inject(ElementRef<HTMLElement>);
+  protected readonly menuOpen = signal(false);
 
   protected readonly brandSub = {
     en: 'Architecture<br />+ Engineering',
     ar: 'عمارة<br />وهندسة',
+  };
+
+  protected readonly menuOpenLabel = {
+    en: 'Open navigation',
+    ar: 'فتح قائمة التنقل',
+  };
+
+  protected readonly menuLabel = {
+    en: 'Mobile navigation',
+    ar: 'قائمة التنقل للجوال',
   };
 
   protected readonly navItems: readonly NavLink[] = [
@@ -82,4 +159,19 @@ export class Header {
     { path: '/blog', label: { en: 'Journal', ar: 'المدوّنة' } },
     { path: '/contact', label: { en: 'Contact', ar: 'تواصل معنا' } },
   ];
+
+  protected toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  protected onDocumentClick(event: Event): void {
+    if (!this.menuOpen()) return;
+    if (!this.element.nativeElement.contains(event.target as Node)) {
+      this.closeMenu();
+    }
+  }
 }

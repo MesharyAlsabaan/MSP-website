@@ -94,7 +94,9 @@ import { Project, TYPOLOGIES } from '../../core/data/projects';
                     <span class="font-mono text-xs align-top text-accent">{{ project.no }}&ensp;</span>
                     {{ i18n.pick(project.title) }}
                   </h2>
-                  <span class="shrink-0 font-mono text-xs text-muted">{{ project.year }}</span>
+                  @if (project.year) {
+                    <span data-project-year class="shrink-0 font-mono text-xs text-muted">{{ project.year }}</span>
+                  }
                 </div>
                 <p class="mt-2 font-mono text-xs uppercase tracking-[0.12em] text-muted">
                   {{ i18n.pick(project.typology) }} · {{ i18n.pick(project.location) }}

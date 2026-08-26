@@ -117,8 +117,8 @@ function blank(): Project {
             <label class="block"><span class="lbl">Year</span>
               <input [(ngModel)]="model().year" class="inp" /></label>
 
-            <label class="block"><span class="lbl">Cover image</span>
-              <app-image-upload [(value)]="model().cover" /></label>
+            <div class="block"><span class="lbl">Cover image</span>
+              <app-image-upload [(value)]="model().cover" /></div>
 
             <label class="block"><span class="lbl">Summary (EN)</span>
               <textarea [(ngModel)]="model().summary.en" rows="2" class="inp"></textarea></label>

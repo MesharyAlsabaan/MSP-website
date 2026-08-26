@@ -68,8 +68,37 @@ docker compose -f docker-compose.prod.yml ps
 
 ---
 
-## 6. Seed the database (one time only)
-Creates the admin account + starter content:
+## 6. Get the content into the database (one time only)
+
+Pick **one** of the two — not both.
+
+### 6a. Move the content you already entered locally (recommended)
+The `deploy/` folder in this project holds an export of your local site:
+`msp_db.sql` (all records, users and passwords included) and `uploads/` (every
+image you uploaded through the admin). Upload that folder to the server next to
+`docker-compose.prod.yml`, then:
+
+```bash
+# 1. Load the records into the production database
+docker compose -f docker-compose.prod.yml exec -T db   psql -U msp -d msp_db < deploy/msp_db.sql
+
+# 2. Copy the uploaded images into the backend's volume
+docker compose -f docker-compose.prod.yml cp deploy/uploads/. backend:/app/uploads/
+
+# 3. Confirm — should print the same counts you had locally
+docker compose -f docker-compose.prod.yml exec db   psql -U msp -d msp_db -c "select count(*) from team_members;"
+```
+
+> Do **not** run the seed afterwards: your export already contains the admin
+> account and every user, with their existing passwords.
+
+To refresh the export from your PC later, re-run:
+```bash
+pg_dump -h localhost -U msp -d msp_db --no-owner --no-privileges -f deploy/msp_db.sql
+```
+
+### 6b. Start from the sample content instead
+Only if you want a clean site with the starter records:
 ```bash
 docker compose -f docker-compose.prod.yml exec backend node dist/database/seeds/seed.js
 ```
@@ -80,7 +109,10 @@ docker compose -f docker-compose.prod.yml exec backend node dist/database/seeds/
 - Public site: **https://www.msp.sa**
 - Admin login: **https://www.msp.sa/admin**
   - Email: `admin@msp.sa`
-  - Password: *(the SEED_ADMIN_PASSWORD in your `.env`)*
+  - Password: the one you already use locally if you followed 6a — or the
+    `SEED_ADMIN_PASSWORD` from your `.env` if you seeded (6b).
+  - Every other account you created (editors, content managers) comes across
+    with 6a and signs in with the same password as before.
 
 Caddy fetches the HTTPS certificate automatically the first time someone visits —
 allow a few seconds on the very first load.

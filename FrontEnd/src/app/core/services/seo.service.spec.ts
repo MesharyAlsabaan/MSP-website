@@ -16,12 +16,12 @@ describe('SeoService', () => {
 
   it('suffixes the page title with the site name', () => {
     seo.update({ title: 'About' });
-    expect(title.getTitle()).toBe('About — MSP Design');
+    expect(title.getTitle()).toBe('About — MSP — Architecture + Engineering');
   });
 
   it('uses the site name alone when no title is given', () => {
     seo.update({});
-    expect(title.getTitle()).toBe('MSP Design');
+    expect(title.getTitle()).toBe('MSP — Architecture + Engineering');
   });
 
   it('sets the description and og:description tags', () => {

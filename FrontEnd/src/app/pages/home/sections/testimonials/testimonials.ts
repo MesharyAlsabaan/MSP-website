@@ -11,7 +11,7 @@ interface L {
   ar: string;
 }
 
-/** Unified quote shape used for both the API data and the static fallback. */
+/** Unified quote shape used for published API data. */
 interface Quote {
   quote: L;
   name: L;
@@ -24,6 +24,7 @@ interface Quote {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Section, Container, ScrollReveal],
   template: `
+    @if (lead()) {
     <app-section>
       <app-container>
         <div
@@ -69,30 +70,31 @@ interface Quote {
         }
       </app-container>
     </app-section>
+    }
   `,
 })
 export class Testimonials {
   protected readonly i18n = inject(TranslationService);
   private readonly content = inject(PublicContentService);
 
-  /** API testimonials; empty until loaded, then drives lead + supporting. */
+  /** Only testimonials returned by the public (published) API are shown. */
   private readonly fetched = signal<Quote[]>([]);
 
   protected readonly lead = computed<Quote | null>(() => {
     const api = this.fetched();
-    return api.length ? api[0] : this.fallbackLead;
+    return api[0] ?? null;
   });
 
   protected readonly supporting = computed<Quote[]>(() => {
     const api = this.fetched();
-    return api.length ? api.slice(1, 3) : this.fallbackSupporting;
+    return api.slice(1, 3);
   });
 
   constructor() {
     afterNextRender(() => {
       this.content.testimonials().subscribe({
         next: (list) => this.fetched.set(list.map(toQuote)),
-        error: () => {},
+        error: () => this.fetched.set([]),
       });
     });
   }
@@ -101,33 +103,6 @@ export class Testimonials {
     eyebrow: { en: 'Words', ar: 'آراء عملائنا' },
   };
 
-  private readonly fallbackLead: Quote = {
-    quote: {
-      en: 'MSP held the architecture and the engineering to the same line. The result is a building that is beautiful, buildable, and exactly on budget.',
-      ar: 'وحّدت إم إس بي العمارة والهندسة على خطٍّ واحد، فجاء المبنى جميلاً وقابلاً للتنفيذ وضمن الميزانية تماماً.',
-    },
-    name: { en: 'Eng. Faisal Al-Otaibi', ar: 'م. فيصل العتيبي' },
-    role: { en: 'Director, Najd Development Authority', ar: 'مدير هيئة تطوير نجد' },
-  };
-
-  private readonly fallbackSupporting: Quote[] = [
-    {
-      quote: {
-        en: 'They resolved the difficult structural spans early, which kept the whole programme on track. A genuinely integrated team.',
-        ar: 'حسموا البحور الإنشائية الصعبة مبكراً، فبقي البرنامج كلّه في مساره. فريقٌ متكاملٌ بحق.',
-      },
-      name: { en: 'Lina Haddad', ar: 'لينا حداد' },
-      role: { en: 'Project Lead, Marsa Holding', ar: 'قائدة مشروع — مرسى القابضة' },
-    },
-    {
-      quote: {
-        en: 'Rigorous, responsive, and unusually calm under pressure. We hand them our most complex sites for a reason.',
-        ar: 'دقّةٌ وسرعةُ استجابةٍ وهدوءٌ لافتٌ تحت الضغط. نُسند إليهم أصعب مواقعنا لسبب.',
-      },
-      name: { en: 'Omar Khan', ar: 'عمر خان' },
-      role: { en: 'Head of Assets, Qiddiya', ar: 'رئيس الأصول — القدية' },
-    },
-  ];
 }
 
 /** Map an API testimonial to the unified quote shape (clientName is single-language). */

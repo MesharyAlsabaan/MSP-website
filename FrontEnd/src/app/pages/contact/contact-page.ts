@@ -14,6 +14,13 @@ interface L {
   ar: string;
 }
 
+interface ContactDetail {
+  label: L;
+  value: L;
+  ltr?: boolean;
+  href?: string;
+}
+
 /** Wrap a single string as the same value in both languages. */
 function lv(s: string): L {
   return { en: s, ar: s };
@@ -56,7 +63,16 @@ function lv(s: string): L {
                     {{ i18n.pick(d.label) }}
                   </dt>
                   <dd class="mt-2 text-lg text-ink" [attr.dir]="d.ltr ? 'ltr' : null">
-                    {{ i18n.pick(d.value) }}
+                    @if (d.href) {
+                      <a
+                        [href]="d.href"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="underline decoration-hairline underline-offset-4 transition-colors hover:text-accent"
+                      >{{ i18n.pick(d.value) }}</a>
+                    } @else {
+                      {{ i18n.pick(d.value) }}
+                    }
                   </dd>
                 </div>
               }
@@ -172,13 +188,15 @@ export class ContactPage {
     errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيدٍ من التفاصيل.' },
   };
 
-  protected readonly details = computed<{ label: L; value: L; ltr?: boolean }[]>(() => {
+  protected readonly details = computed<ContactDetail[]>(() => {
     const c = this.cfg();
-    return [
-      { label: { en: 'Email', ar: 'البريد الإلكتروني' }, value: lv(c.email || 'hello@msp.sa'), ltr: true },
-      { label: { en: 'Telephone', ar: 'الهاتف' }, value: lv(c.phone || '+966 11 000 0000'), ltr: true },
+    const result: ContactDetail[] = [
+      { label: { en: 'Established', ar: 'سنة التأسيس' }, value: lv('2010'), ltr: true },
+      { label: { en: 'Email', ar: 'البريد الإلكتروني' }, value: lv(c.email || 'info@msp.sa'), ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
+      { label: { en: 'Riyadh office telephone', ar: 'هاتف مكتب الرياض' }, value: lv(c.phone || '+966112000087'), ltr: true, href: `tel:${c.phone || '+966112000087'}` },
+      { label: { en: 'Mobile / WhatsApp', ar: 'الجوال / واتساب' }, value: lv(c.whatsapp || '+966570327777'), ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
       {
-        label: { en: 'Studio', ar: 'المكتب' },
+        label: { en: 'Riyadh office', ar: 'فرع الرياض' },
         value: {
           en: c.addressEn || 'King Fahd Road, Riyadh, Saudi Arabia',
           ar: c.addressAr || 'طريق الملك فهد، الرياض، المملكة العربية السعودية',
@@ -189,6 +207,22 @@ export class ContactPage {
         value: c.workingHours ?? { en: 'Sun–Thu · 9:00–17:00', ar: 'الأحد–الخميس · ٩:٠٠–١٧:٠٠' },
       },
     ];
+    const cairoPhone = c.cairoPhone || '+201068017313';
+    result.push({
+      label: { en: 'Cairo telephone', ar: 'هاتف فرع القاهرة' },
+      value: lv(cairoPhone),
+      ltr: true,
+      href: `tel:${cairoPhone}`,
+    });
+    result.push({
+      label: { en: 'Cairo branch', ar: 'فرع القاهرة' },
+      value: {
+        en: c.cairoAddressEn || 'Cairo, Egypt',
+        ar: c.cairoAddressAr || 'القاهرة، مصر',
+      },
+      href: c.cairoMapUrl || 'https://www.google.com/maps/place/MSP+DESIGNS/',
+    });
+    return result;
   });
 
   protected readonly labelClass = 'mb-3 block font-mono text-xs uppercase tracking-[0.12em] text-muted';

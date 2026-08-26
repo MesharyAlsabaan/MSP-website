@@ -61,6 +61,10 @@ export class AdminSettings implements OnInit {
     { key: 'email', label: 'Email' },
     { key: 'addressEn', label: 'Address (English)' },
     { key: 'addressAr', label: 'Address (Arabic)' },
+    { key: 'cairoPhone', label: 'Cairo phone' },
+    { key: 'cairoAddressEn', label: 'Cairo address (English)' },
+    { key: 'cairoAddressAr', label: 'Cairo address (Arabic)' },
+    { key: 'cairoMapUrl', label: 'Cairo Google Maps URL' },
   ];
 
   // Mutable model bound by ngModel; keyed by field key.

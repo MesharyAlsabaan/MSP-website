@@ -65,7 +65,7 @@ interface L {
             @for (item of services(); track item.id; let i = $index) {
               <div class="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
                 <!-- image -->
-                @if (item.icon) {
+                @if (item.icon | asset; as iconSrc) {
                   <div
                     appScrollReveal
                     revealType="line"
@@ -73,7 +73,7 @@ interface L {
                     [ngClass]="{ 'lg:order-2': i % 2 === 1 }"
                   >
                     <img
-                      [src]="item.icon | asset"
+                      [src]="iconSrc"
                       [alt]="i18n.pick(item.title)"
                       loading="lazy"
                       decoding="async"

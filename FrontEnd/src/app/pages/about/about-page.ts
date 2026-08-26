@@ -28,7 +28,7 @@ interface L {
         <div class="flex items-center gap-5 font-mono text-xs uppercase tracking-[0.18em] text-muted">
           <span class="text-accent">{{ i18n.pick(t.eyebrow) }}</span>
           <span class="h-px flex-1 bg-hairline"></span>
-          <span dir="ltr">EST. 2012</span>
+          <span dir="ltr">EST. 2010</span>
         </div>
         <h1
           appScrollReveal
@@ -140,6 +140,13 @@ interface L {
                       decoding="async"
                       class="h-full w-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0"
                     />
+                  } @else {
+                    <!-- Awaiting a portrait: a monogram keeps the grid even. -->
+                    <span
+                      class="grid h-full w-full place-items-center font-display text-4xl text-muted/60"
+                      aria-hidden="true"
+                      >{{ initials(member.name) }}</span
+                    >
                   }
                 </div>
                 <h3 class="mt-5 font-display text-xl font-medium text-ink">{{ member.name }}</h3>
@@ -185,6 +192,17 @@ export class AboutPage {
   protected readonly loading = signal(true);
   protected readonly skeletons = [0, 1, 2, 3];
 
+  /** First letters of the first two name parts, e.g. "MOHAMMED ALSABAAN" -> "MA". */
+  protected initials(name: string): string {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase();
+  }
+
   protected readonly t = {
     eyebrow: { en: 'The Practice', ar: 'المكتب' },
     title: { en: 'An integrated practice.', ar: 'ممارسةٌ متكاملة.' },
@@ -193,8 +211,8 @@ export class AboutPage {
       ar: 'تجمع إم إس بي للاستشارات العمارة والهندسة تحت سقفٍ واحد — فريقٌ واحد مسؤولٌ عن شكل المبنى وثباته وأدائه.',
     },
     storyLead: {
-      en: 'We started in 2012 with a simple conviction: design and engineering should never be two conversations.',
-      ar: 'بدأنا عام ٢٠١٢ بقناعةٍ بسيطة: ألا يكون التصميم والهندسة حديثين منفصلين.',
+      en: 'We started in 2010 with a simple conviction: design and engineering should never be two conversations.',
+      ar: 'بدأنا عام ٢٠١٠ بقناعةٍ بسيطة: ألا يكون التصميم والهندسة حديثين منفصلين.',
     },
     story1: {
       en: 'From a small Riyadh studio, MSP grew into a multidisciplinary practice trusted with civic landmarks, towers, and masterplans across the Kingdom.',
@@ -219,7 +237,7 @@ export class AboutPage {
   protected readonly stats = [
     { value: 240, suffix: '+', label: { en: 'Projects delivered', ar: 'مشروع مُنجَز' } },
     { value: 4, suffix: ' M m²', label: { en: 'Built area designed', ar: 'مساحة مُصمَّمة' } },
-    { value: 12, suffix: '', label: { en: 'Years in practice', ar: 'عاماً من الخبرة' } },
+    { value: 16, suffix: '', label: { en: 'Years in practice', ar: 'عاماً من الخبرة' } },
     { value: 30, suffix: '', label: { en: 'Awards & citations', ar: 'جائزة وتكريم' } },
   ];
 
@@ -260,7 +278,7 @@ export class AboutPage {
 
   protected readonly timeline: readonly { year: string; title: L; body: L }[] = [
     {
-      year: '2012',
+      year: '2010',
       title: { en: 'Founded in Riyadh', ar: 'التأسيس في الرياض' },
       body: { en: 'A three-person studio opens on King Fahd Road.', ar: 'افتتاح استوديو من ثلاثة أشخاص على طريق الملك فهد.' },
     },
@@ -277,7 +295,8 @@ export class AboutPage {
     {
       year: '2024',
       title: { en: 'Vision 2030 projects', ar: 'مشاريع رؤية ٢٠٣٠' },
-      body: { en: 'Work across NEOM, Qiddiya, Diriyah, and the Red Sea.', ar: 'أعمالٌ في نيوم والقدية والدرعية والبحر الأحمر.' },
+      // Client names stay out of public copy until the office approves them.
+      body: { en: 'Commissions widen across residential, commercial and hospitality work.', ar: 'اتساع التكليفات لتشمل السكني والتجاري والضيافة.' },
     },
   ];
 

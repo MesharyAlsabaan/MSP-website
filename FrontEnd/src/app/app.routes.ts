@@ -35,11 +35,13 @@ export const routes: Routes = [
       },
       {
         path: 'messages',
+        canActivate: [roleGuard(Role.SuperAdmin, Role.ContentManager)],
         loadComponent: () =>
           import('./pages/admin/messages/messages').then((m) => m.AdminMessages),
       },
       {
         path: 'settings',
+        canActivate: [roleGuard(Role.SuperAdmin, Role.ContentManager)],
         loadComponent: () =>
           import('./pages/admin/settings/settings').then((m) => m.AdminSettings),
       },
@@ -100,6 +102,11 @@ export const routes: Routes = [
           import('./pages/projects/projects').then((m) => m.Projects),
       },
       {
+        path: 'projects/sbc-commercial-office',
+        pathMatch: 'full',
+        redirectTo: 'projects/al-ateeq-real-estate-commercial-office',
+      },
+      {
         path: 'projects/:slug',
         loadComponent: () =>
           import('./pages/projects/project-detail').then((m) => m.ProjectDetail),
@@ -107,6 +114,10 @@ export const routes: Routes = [
       {
         path: 'blog',
         loadComponent: () => import('./pages/blog/blog-page').then((m) => m.BlogPage),
+      },
+      {
+        path: 'team',
+        loadComponent: () => import('./pages/team/team-page').then((m) => m.TeamPage),
       },
       {
         path: 'careers',

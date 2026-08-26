@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Container } from '../../../../shared/ui/container/container';
-import { Button } from '../../../../shared/ui/button/button';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.directive';
 import { ProjectShowcase } from './project-showcase';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -12,7 +12,7 @@ import { TranslationService } from '../../../../core/services/translation.servic
 @Component({
   selector: 'app-hero',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Container, Button, ScrollReveal, ProjectShowcase],
+  imports: [RouterLink, Container, ScrollReveal, ProjectShowcase],
   template: `
     <section class="relative overflow-hidden border-b border-hairline bg-bg">
       <app-container>
@@ -53,8 +53,14 @@ import { TranslationService } from '../../../../core/services/translation.servic
             </p>
 
             <div appScrollReveal [revealDelay]="480" class="mt-9 flex flex-wrap gap-4">
-              <app-button>{{ i18n.pick(t.ctaPrimary) }}</app-button>
-              <app-button variant="outline">{{ i18n.pick(t.ctaSecondary) }}</app-button>
+              <a
+                routerLink="/contact"
+                class="group inline-flex items-center justify-center gap-2.5 bg-ink px-6 py-3.5 font-mono text-xs font-medium uppercase tracking-[0.12em] text-bg transition-all duration-300 hover:bg-accent hover:text-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              >{{ i18n.pick(t.ctaPrimary) }}</a>
+              <a
+                routerLink="/projects"
+                class="group inline-flex items-center justify-center gap-2.5 border border-ink/30 px-6 py-3.5 font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink transition-all duration-300 hover:bg-ink hover:text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              >{{ i18n.pick(t.ctaSecondary) }}</a>
             </div>
           </div>
 
@@ -87,7 +93,7 @@ export class Hero {
 
   protected readonly t = {
     kicker: { en: 'Consultants', ar: 'للاستشارات الهندسية' },
-    est: { en: 'Est. 2012 — Riyadh, KSA', ar: 'الرياض · منذ ٢٠١٢' },
+    est: { en: 'Est. 2010 — Riyadh, KSA', ar: 'الرياض · منذ ٢٠١٠' },
     line1: { en: 'Architecture', ar: 'نُصمّم' },
     line2: { en: '& engineering', ar: 'ونبني' },
     line3: { en: 'for what endures.', ar: 'ما يدوم.' },

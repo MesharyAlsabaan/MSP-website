@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -9,6 +9,15 @@ import { Container } from '../../../../shared/ui/container/container';
 import { Button } from '../../../../shared/ui/button/button';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.directive';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { PublicContentService } from '../../../../core/services/public-content.service';
+import { CompanyInfo } from '../../../../core/models/content.model';
+
+interface ContactItem {
+  label: string;
+  value: string;
+  ltr?: boolean;
+  href?: string;
+}
 
 /**
  * Section 11 — Contact: studio details plus a reactive enquiry form.
@@ -42,13 +51,22 @@ import { TranslationService } from '../../../../core/services/translation.servic
             </h2>
 
             <dl class="mt-12 space-y-8">
-              @for (detail of i18n.pick(t.details); track detail.label) {
+              @for (detail of i18n.pick(details()); track detail.label) {
                 <div class="border-t border-hairline pt-4">
                   <dt class="font-mono text-xs uppercase tracking-[0.15em] text-accent">
                     {{ detail.label }}
                   </dt>
                   <dd class="mt-2 text-lg text-ink" [attr.dir]="detail.ltr ? 'ltr' : null">
-                    {{ detail.value }}
+                    @if (detail.href) {
+                      <a
+                        [href]="detail.href"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="underline decoration-hairline underline-offset-4 transition-colors hover:text-accent"
+                      >{{ detail.value }}</a>
+                    } @else {
+                      {{ detail.value }}
+                    }
                   </dd>
                 </div>
               }
@@ -129,7 +147,9 @@ import { TranslationService } from '../../../../core/services/translation.servic
 })
 export class Contact {
   protected readonly i18n = inject(TranslationService);
+  private readonly content = inject(PublicContentService);
   private readonly fb = new FormBuilder();
+  private readonly cfg = signal<CompanyInfo>({});
 
   protected readonly submitted = signal(false);
 
@@ -143,18 +163,6 @@ export class Contact {
     eyebrow: { en: 'Contact', ar: 'تواصل معنا' },
     headingPre: { en: 'Start a ', ar: 'لنتحدّث عن ' },
     headingEm: { en: 'conversation.', ar: 'مشروعك.' },
-    details: {
-      en: [
-        { label: 'Email', value: 'hello@msp.sa', ltr: true },
-        { label: 'Telephone', value: '+966 11 000 0000', ltr: true },
-        { label: 'Studio', value: 'King Fahd Road, Riyadh', ltr: false },
-      ],
-      ar: [
-        { label: 'البريد الإلكتروني', value: 'hello@msp.sa', ltr: true },
-        { label: 'الهاتف', value: '+966 11 000 0000', ltr: true },
-        { label: 'المكتب', value: 'طريق الملك فهد، الرياض', ltr: false },
-      ],
-    },
     sentKicker: { en: 'Message received', ar: 'تمّ استلام رسالتك' },
     sentBody: {
       en: "Thank you. We'll be in touch within one business day.",
@@ -177,6 +185,31 @@ export class Contact {
     'w-full border-0 border-b border-hairline bg-transparent px-0 py-3 text-lg text-ink placeholder:text-muted/60 transition-colors focus:border-accent focus:outline-none';
   protected readonly errorClass = 'mt-2 font-mono text-xs uppercase tracking-[0.1em] text-accent';
 
+  protected readonly details = computed<{ en: ContactItem[]; ar: ContactItem[] }>(() => {
+    const c = this.cfg();
+    const cairoMapUrl = c.cairoMapUrl || 'https://www.google.com/maps/place/MSP+DESIGNS/';
+    return {
+      en: [
+        { label: 'Established', value: '2010', ltr: true },
+        { label: 'Email', value: c.email || 'info@msp.sa', ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
+        { label: 'Riyadh office telephone', value: c.phone || '+966112000087', ltr: true, href: `tel:${c.phone || '+966112000087'}` },
+        { label: 'Mobile / WhatsApp', value: c.whatsapp || '+966570327777', ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
+        { label: 'Riyadh office', value: c.addressEn || 'Riyadh, Saudi Arabia' },
+        { label: 'Cairo telephone', value: c.cairoPhone || '+201068017313', ltr: true, href: `tel:${c.cairoPhone || '+201068017313'}` },
+        { label: 'Cairo branch', value: c.cairoAddressEn || 'Cairo, Egypt', href: cairoMapUrl },
+      ],
+      ar: [
+        { label: 'سنة التأسيس', value: '2010', ltr: true },
+        { label: 'البريد الإلكتروني', value: c.email || 'info@msp.sa', ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
+        { label: 'هاتف مكتب الرياض', value: c.phone || '+966112000087', ltr: true, href: `tel:${c.phone || '+966112000087'}` },
+        { label: 'الجوال / واتساب', value: c.whatsapp || '+966570327777', ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
+        { label: 'فرع الرياض', value: c.addressAr || 'الرياض، المملكة العربية السعودية' },
+        { label: 'هاتف فرع القاهرة', value: c.cairoPhone || '+201068017313', ltr: true, href: `tel:${c.cairoPhone || '+201068017313'}` },
+        { label: 'فرع القاهرة', value: c.cairoAddressAr || 'القاهرة، مصر', href: cairoMapUrl },
+      ],
+    };
+  });
+
   protected showError(control: 'name' | 'email' | 'message'): boolean {
     const c = this.form.controls[control];
     return c.invalid && (c.touched || c.dirty);
@@ -188,5 +221,14 @@ export class Contact {
       return;
     }
     this.submitted.set(true);
+  }
+
+  constructor() {
+    afterNextRender(() => {
+      this.content.settings().subscribe({
+        next: (c) => this.cfg.set(c ?? {}),
+        error: () => {},
+      });
+    });
   }
 }

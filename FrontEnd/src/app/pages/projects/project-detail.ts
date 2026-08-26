@@ -59,7 +59,9 @@ type LoadState =
               <span class="text-accent">{{ p.no }}</span>
               <span>{{ i18n.pick(p.typology) }}</span>
               <span class="h-px flex-1 bg-hairline"></span>
-              <span dir="ltr">{{ p.year }}</span>
+              @if (p.year) {
+                <span data-project-year dir="ltr">{{ p.year }}</span>
+              }
             </div>
 
             <h1

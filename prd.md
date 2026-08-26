@@ -13,7 +13,7 @@ Goals:
 
 Technical Stack
 
-Frontend:
+Frontend:/
 - Angular Latest Version
 - Angular Signals
 - Standalone Components

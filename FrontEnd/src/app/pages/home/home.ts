@@ -15,8 +15,8 @@ import { Contact } from './sections/contact/contact';
 
 /**
  * Home page — composes the full 12-section experience defined in the PRD.
- * Each section is a self-contained component holding its own placeholder data
- * (swappable for API calls once the backend exists).
+ * Public content sections read from the backend and handle empty states without
+ * presenting sample projects, partners, or testimonials as real work.
  */
 @Component({
   selector: 'app-home',

@@ -7,6 +7,7 @@ import { PublicContentService } from '../../../../core/services/public-content.s
   selector: 'app-partners',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (marqueeItems().length) {
     <section class="overflow-hidden border-y border-hairline bg-bg py-10">
       <p
         class="mb-8 text-center font-mono text-xs uppercase tracking-[0.2em] text-muted"
@@ -35,6 +36,7 @@ import { PublicContentService } from '../../../../core/services/public-content.s
         </div>
       </div>
     </section>
+    }
   `,
 })
 export class Partners {
@@ -46,18 +48,12 @@ export class Partners {
     ar: 'جهاتٌ رائدة تثق بنا',
   };
 
-  /** Partner names from the API; falls back to the static bilingual list when empty. */
+  /** Only names returned by the public (published) API are shown. */
   private readonly fetched = signal<string[]>([]);
-
-  private readonly clients = {
-    en: ['NEOM', 'Qiddiya', 'Diriyah Gate', 'Red Sea Global', 'Roshn', 'Aramco'],
-    ar: ['نيوم', 'القدية', 'بوابة الدرعية', 'البحر الأحمر', 'روشن', 'أرامكو'],
-  };
 
   /** Doubled list so the marquee track loops seamlessly at -50%. */
   protected readonly marqueeItems = computed(() => {
-    const fromApi = this.fetched();
-    const list = fromApi.length ? fromApi : this.i18n.pick(this.clients);
+    const list = this.fetched();
     return [...list, ...list];
   });
 
@@ -65,7 +61,7 @@ export class Partners {
     afterNextRender(() => {
       this.content.partners().subscribe({
         next: (ps) => this.fetched.set(ps.map((p) => p.name).filter(Boolean)),
-        error: () => {},
+        error: () => this.fetched.set([]),
       });
     });
   }

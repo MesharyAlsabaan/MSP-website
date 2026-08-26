@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   signal,
+  computed,
   PLATFORM_ID,
   NgZone,
   afterNextRender,
@@ -11,7 +12,9 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslationService } from '../../../../core/services/translation.service';
-import { PROJECTS } from '../../../../core/data/projects';
+import { PublicContentService } from '../../../../core/services/public-content.service';
+import { AssetPipe } from '../../../../shared/pipes/asset.pipe';
+import { Project } from '../../../../core/data/projects';
 
 /**
  * Hero project showcase — an expanding-panels accordion (desktop) that
@@ -24,16 +27,25 @@ import { PROJECTS } from '../../../../core/data/projects';
 @Component({
   selector: 'app-project-showcase',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, AssetPipe],
   template: `
     <div class="mx-auto max-w-[1200px] px-5 pb-16 sm:px-8">
+      @if (loading()) {
+        <div class="h-[320px] animate-pulse bg-hairline/40 sm:h-[460px] lg:h-[540px]"></div>
+      } @else if (projects().length === 0) {
+        <div class="flex min-h-48 items-center justify-center border-y border-hairline py-12 text-center">
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-muted">
+            {{ i18n.pick(t.empty) }}
+          </p>
+        </div>
+      } @else {
       <!-- Desktop: expanding panels -->
       <div
         class="hidden h-[460px] gap-1.5 sm:flex lg:h-[540px]"
         (mouseenter)="pause()"
         (mouseleave)="resume()"
       >
-        @for (p of projects; track p.slug; let i = $index) {
+        @for (p of projects(); track p.slug; let i = $index) {
           <a
             [routerLink]="['/projects', p.slug]"
             (mouseenter)="setActive(i)"
@@ -43,7 +55,7 @@ import { PROJECTS } from '../../../../core/data/projects';
             [style.flexGrow]="active() === i ? 6 : 1"
           >
             <img
-              [src]="p.cover"
+              [src]="p.cover | asset"
               [alt]="i18n.pick(p.title)"
               class="absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
               [class.grayscale]="active() !== i"
@@ -97,14 +109,14 @@ import { PROJECTS } from '../../../../core/data/projects';
       <div
         class="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 sm:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
-        @for (p of projects; track p.slug) {
+        @for (p of projects(); track p.slug) {
           <a
             [routerLink]="['/projects', p.slug]"
             class="block w-[82%] shrink-0 snap-start"
           >
             <div class="aspect-[4/3] overflow-hidden">
               <img
-                [src]="p.cover"
+                [src]="p.cover | asset"
                 [alt]="i18n.pick(p.title)"
                 class="h-full w-full object-cover"
               />
@@ -118,18 +130,34 @@ import { PROJECTS } from '../../../../core/data/projects';
           </a>
         }
       </div>
+      }
     </div>
   `,
 })
 export class ProjectShowcase implements OnDestroy {
   protected readonly i18n = inject(TranslationService);
   private readonly zone = inject(NgZone);
+  private readonly content = inject(PublicContentService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  protected readonly projects = PROJECTS.filter((p) => p.featured).slice(0, 4);
+  /** Published projects from the API. Bundled sample data is never rendered. */
+  private readonly fetched = signal<Project[]>([]);
+  protected readonly loading = signal(true);
+
+  protected readonly projects = computed<Project[]>(() => {
+    const api = this.fetched();
+    // Prefer what the admin marked as featured; until anything is marked, show
+    // the newest published work rather than the bundled sample projects.
+    const featured = api.filter((p) => p.featured);
+    return (featured.length ? featured : api).slice(0, 4);
+  });
+
   protected readonly active = signal(0);
 
-  protected readonly t = { view: { en: 'View project', ar: 'عرض المشروع' } };
+  protected readonly t = {
+    view: { en: 'View project', ar: 'عرض المشروع' },
+    empty: { en: 'No published projects yet.', ar: 'لا توجد مشاريع منشورة بعد.' },
+  };
 
   private intervalId?: ReturnType<typeof setInterval>;
   private autoOk = false;
@@ -139,6 +167,14 @@ export class ProjectShowcase implements OnDestroy {
     afterNextRender(() => {
       this.autoOk = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.resume();
+      this.content.projects().subscribe({
+        next: (list) => {
+          this.fetched.set(list);
+          this.loading.set(false);
+          this.active.set(0);
+        },
+        error: () => this.loading.set(false),
+      });
     });
   }
 
@@ -157,7 +193,7 @@ export class ProjectShowcase implements OnDestroy {
     if (!this.autoOk || this.intervalId) return;
     this.zone.runOutsideAngular(() => {
       this.intervalId = setInterval(() => {
-        this.active.update((i) => (i + 1) % this.projects.length);
+        this.active.update((i) => (i + 1) % Math.max(1, this.projects().length));
       }, 4000);
     });
   }

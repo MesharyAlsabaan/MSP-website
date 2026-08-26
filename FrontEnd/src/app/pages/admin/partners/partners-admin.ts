@@ -65,8 +65,8 @@ function blank(): Partner {
             <label class="block"><span class="lbl">Name</span>
               <input [(ngModel)]="model().name" class="inp" /></label>
 
-            <label class="block"><span class="lbl">Logo</span>
-              <app-image-upload [(value)]="model().logo" /></label>
+            <div class="block"><span class="lbl">Logo</span>
+              <app-image-upload [(value)]="model().logo" /></div>
 
             <label class="block"><span class="lbl">Website URL</span>
               <input [(ngModel)]="model().url" class="inp" /></label>

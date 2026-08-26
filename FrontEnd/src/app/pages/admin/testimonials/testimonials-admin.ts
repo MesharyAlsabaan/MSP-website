@@ -85,8 +85,8 @@ function blank(): Testimonial {
             <label class="block"><span class="lbl">Quote (AR)</span>
               <textarea [(ngModel)]="model().quote.ar" rows="3" dir="rtl" class="inp"></textarea></label>
 
-            <label class="block"><span class="lbl">Photo</span>
-              <app-image-upload [(value)]="model().photo" /></label>
+            <div class="block"><span class="lbl">Photo</span>
+              <app-image-upload [(value)]="model().photo" /></div>
 
             <div class="grid grid-cols-2 gap-3">
               <label class="block"><span class="lbl">Rating</span>

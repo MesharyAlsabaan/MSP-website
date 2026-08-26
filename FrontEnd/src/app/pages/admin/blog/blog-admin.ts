@@ -90,8 +90,8 @@ function blank(): BlogPost {
                 <input [(ngModel)]="model().author" class="inp" /></label>
             </div>
 
-            <label class="block"><span class="lbl">Cover</span>
-              <app-image-upload [(value)]="model().cover" /></label>
+            <div class="block"><span class="lbl">Cover</span>
+              <app-image-upload [(value)]="model().cover" /></div>
 
             <label class="block"><span class="lbl">Excerpt (EN)</span>
               <textarea [(ngModel)]="model().excerpt.en" rows="2" class="inp"></textarea></label>
