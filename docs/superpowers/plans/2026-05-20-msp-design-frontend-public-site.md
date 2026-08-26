@@ -1,6 +1,6 @@
 # MSP Design Frontend Public Site Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan taskdd-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **Project rule from owner:** Do **not** run `git add` or `git commit` at any point. Each task ends with a "Pause for review" checkpoint instead. The owner will commit at their own cadence.
 
