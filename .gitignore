@@ -16,3 +16,12 @@ dist/
 
 # Local data export for the server (DB dump + uploaded images) — never commit
 deploy/
+
+# Large binary source assets — keep on disk / Drive, never in git
+BRANDING/
+*.pdf
+*.psd
+*.ai
+*.indd
+*.tif
+*.tiff
