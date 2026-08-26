@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-> **Project rule from owner:** Do **not** run `git add` or `git commit` at any point. Each task ends with a "Pause for review" checkpoint instead. The owner will commit at their own cadence.
+> **Project rule from owner:** Do **not** run `git add` or `git commit` at any point. Each task ends with a "Pause ford review" checkpoint instead. The owner will commit at their own cadence.
 
 **Goal:** Build a production-quality bilingual (EN/AR, full RTL) Angular 17+ public marketing website for MSP Design with dark default theme, 6 polished pages, 5 minimal pages, a designed 404, custom Tailwind component library, NgRx state management fed by a mock HTTP interceptor, and static prerender (SSG) production output.
 
