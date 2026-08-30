@@ -153,11 +153,11 @@ export class Footer {
   };
 
   protected readonly links: readonly NavLink[] = [
-    { path: '/about', label: { en: 'Practice', ar: 'المكتب' } },
-    { path: '/services', label: { en: 'Disciplines', ar: 'التخصصات' } },
-    { path: '/projects', label: { en: 'Works', ar: 'الأعمال' } },
-    { path: '/team', label: { en: 'Studio', ar: 'الفريق' } },
-    { path: '/blog', label: { en: 'Journal', ar: 'المدوّنة' } },
+    { path: '/about', label: { en: 'About', ar: 'عن المكتب' } },
+    { path: '/services', label: { en: 'Services', ar: 'الخدمات' } },
+    { path: '/projects', label: { en: 'Projects', ar: 'المشاريع' } },
+    { path: '/team', label: { en: 'Team', ar: 'الفريق' } },
+    { path: '/blog', label: { en: 'Insights', ar: 'الرؤى' } },
     { path: '/careers', label: { en: 'Careers', ar: 'الوظائف' } },
   ];
 }

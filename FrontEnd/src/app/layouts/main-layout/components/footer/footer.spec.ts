@@ -45,4 +45,17 @@ describe('Footer', () => {
     expect(element.querySelector('a[href="tel:+201068017313"]')).toBeTruthy();
     expect(element.querySelector<HTMLAnchorElement>('a[href*="google.com/maps/place/MSP+DESIGNS"]')).toBeTruthy();
   });
+
+  it('keeps Careers in the footer navigation with the matching public labels', () => {
+    const fixture = TestBed.createComponent(Footer);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    const labels = Array.from(
+      element.querySelectorAll<HTMLAnchorElement>('footer .grid > div:nth-child(2) ul a'),
+      (link) => link.textContent?.trim(),
+    );
+
+    expect(labels).toEqual(['About', 'Services', 'Projects', 'Team', 'Insights', 'Careers']);
+  });
 });

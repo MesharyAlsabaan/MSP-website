@@ -38,10 +38,18 @@ interface NavLink {
     >
       <app-container>
         <nav class="flex h-20 items-center justify-between gap-6">
-          <a routerLink="/" class="flex items-baseline gap-2.5 text-ink">
-            <span class="font-display text-2xl font-semibold tracking-[-0.02em]">
-              MSP
-            </span>
+          <a
+            routerLink="/"
+            class="flex items-center gap-3 text-ink"
+            [attr.aria-label]="i18n.pick(brandLabel)"
+          >
+            <img
+              src="/images/msp-logo.png"
+              alt="MSP Designs"
+              width="48"
+              height="48"
+              class="h-12 w-12 shrink-0 object-contain dark:brightness-0 dark:invert"
+            />
             <span
               class="hidden font-mono text-[0.65rem] uppercase leading-tight tracking-[0.18em] text-muted sm:block"
               [innerHTML]="i18n.pick(brandSub)"
@@ -137,8 +145,13 @@ export class Header {
   protected readonly menuOpen = signal(false);
 
   protected readonly brandSub = {
-    en: 'Architecture<br />+ Engineering',
-    ar: 'عمارة<br />وهندسة',
+    en: 'Engineering<br />Consultancy',
+    ar: 'استشارات<br />هندسية',
+  };
+
+  protected readonly brandLabel = {
+    en: 'MSP Engineering Consultancy',
+    ar: 'إم إس بي للاستشارات الهندسية',
   };
 
   protected readonly menuOpenLabel = {
@@ -152,11 +165,11 @@ export class Header {
   };
 
   protected readonly navItems: readonly NavLink[] = [
-    { path: '/about', label: { en: 'Practice', ar: 'المكتب' } },
-    { path: '/services', label: { en: 'Disciplines', ar: 'التخصصات' } },
-    { path: '/projects', label: { en: 'Works', ar: 'الأعمال' } },
-    { path: '/team', label: { en: 'Studio', ar: 'الفريق' } },
-    { path: '/blog', label: { en: 'Journal', ar: 'المدوّنة' } },
+    { path: '/about', label: { en: 'About', ar: 'عن المكتب' } },
+    { path: '/services', label: { en: 'Services', ar: 'الخدمات' } },
+    { path: '/projects', label: { en: 'Projects', ar: 'المشاريع' } },
+    { path: '/team', label: { en: 'Team', ar: 'الفريق' } },
+    { path: '/blog', label: { en: 'Insights', ar: 'الرؤى' } },
     { path: '/contact', label: { en: 'Contact', ar: 'تواصل معنا' } },
   ];
 
