@@ -12,11 +12,11 @@ export const categoriesOf = (project: Project): readonly Term[] =>
   project.designCategories ?? [];
 
 /**
- * A project's sectors. Records predating the two-level taxonomy fall back to
- * their single legacy typology, so nothing published so far drops off the page.
+ * A project's sectors. The legacy single `typology` is deliberately NOT
+ * consulted: its keys predate this taxonomy and would file a record under a
+ * sector nobody chose for it. A project is filtered on its arrays alone.
  */
-export const sectorsOf = (project: Project): readonly Term[] =>
-  project.sectors?.length ? project.sectors : project.typology ? [project.typology] : [];
+export const sectorsOf = (project: Project): readonly Term[] => project.sectors ?? [];
 
 const has = (terms: readonly Term[], key: string) => terms.some((t) => t.key === key);
 

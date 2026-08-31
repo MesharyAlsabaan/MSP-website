@@ -80,21 +80,26 @@ describe('project-filter', () => {
     expect(matches(unclassified, null, null)).toBe(true);
   });
 
-  it('falls back to the legacy typology so older records keep a sector', () => {
-    const legacy = project('legacy', { typology: { key: 'culture', en: 'Culture', ar: 'ثقافي' } });
-
-    expect(sectorsOf(legacy).map((t) => t.key)).toEqual(['culture']);
-    expect(filterProjects([legacy], null, 'culture')).toEqual([legacy]);
-  });
-
-  it('prefers the sectors list over the legacy typology once one is set', () => {
-    const migrated = project('migrated', {
-      typology: { key: 'culture', en: 'Culture', ar: 'ثقافي' },
-      sectors: sector('education'),
+  it('never files a project under its legacy typology', () => {
+    // A compound saved as mixed-use is Residential and nothing else once the
+    // office says so; the stale key must not put it under a second sector.
+    const legacy = project('legacy', {
+      typology: { key: 'mixed-use', en: 'Commercial Residential', ar: 'تجاري سكني' },
+      sectors: sector('residential'),
     });
 
-    expect(sectorsOf(migrated).map((t) => t.key)).toEqual(['education']);
-    expect(filterProjects([migrated], null, 'culture')).toEqual([]);
+    expect(sectorsOf(legacy).map((t) => t.key)).toEqual(['residential']);
+    expect(filterProjects([legacy], null, 'residential')).toEqual([legacy]);
+    expect(filterProjects([legacy], null, 'work')).toEqual([]);
+  });
+
+  it('shows a two-sector project under either sector, from one record', () => {
+    // Al Ateeq is commercial AND residential: one record, both chips.
+    const alAteeq = project('al-ateeq', { sectors: sector('work', 'residential') });
+
+    expect(filterProjects([alAteeq], null, 'work')).toEqual([alAteeq]);
+    expect(filterProjects([alAteeq], null, 'residential')).toEqual([alAteeq]);
+    expect(filterProjects([alAteeq], null, null)).toEqual([alAteeq]);
   });
 
   it('counts each row against the selection in the other row', () => {

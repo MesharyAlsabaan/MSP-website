@@ -173,7 +173,8 @@ export class Projects {
     return this.sectorCounts().get(key) ?? 0;
   }
 
-  /** Cards name the sector, falling back to the record's legacy category. */
+  /** Cards name the first sector. The legacy label is a display-only
+   *  fallback for a record nobody has classified yet — it filters nothing. */
   protected cardLabel(project: Project): Term {
     const [first] = sectorsOf(project);
     return first ? label(SECTORS, first) : project.typology;

@@ -10,6 +10,7 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.ts",
+    "classify:projects": "ts-node -r tsconfig-paths/register src/database/seeds/classify-projects.ts",
     "test": "jest",
     "lint": "eslint \"src/**/*.ts\""
   },
