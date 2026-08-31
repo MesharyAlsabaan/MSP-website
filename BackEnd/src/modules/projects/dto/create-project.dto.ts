@@ -18,6 +18,13 @@ class TypologyDto {
   @ApiProperty() @IsString() ar: string;
 }
 
+/** A taxonomy term on any of the three axes — same shape, different lists. */
+class TermDto {
+  @ApiProperty() @IsString() key: string;
+  @ApiProperty() @IsString() en: string;
+  @ApiProperty() @IsString() ar: string;
+}
+
 class SpecDto {
   @ApiProperty({ type: Localized }) @ValidateNested() @Type(() => Localized) label: Localized;
   @ApiProperty({ type: Localized }) @ValidateNested() @Type(() => Localized) value: Localized;
@@ -29,6 +36,21 @@ export class CreateProjectDto {
 
   @ApiProperty({ type: Localized }) @ValidateNested() @Type(() => Localized) title: Localized;
   @ApiProperty({ type: TypologyDto }) @ValidateNested() @Type(() => TypologyDto) typology: TypologyDto;
+
+  // The two filter axes and the scope axis. All optional, so a client that
+  // predates them still saves, and each defaults to an empty list.
+  @ApiProperty({ type: [TermDto], required: false })
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => TermDto)
+  designCategories?: TermDto[];
+
+  @ApiProperty({ type: [TermDto], required: false })
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => TermDto)
+  sectors?: TermDto[];
+
+  @ApiProperty({ type: [TermDto], required: false })
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => TermDto)
+  disciplines?: TermDto[];
+
   @ApiProperty({ type: Localized }) @ValidateNested() @Type(() => Localized) location: Localized;
   @ApiProperty() @IsOptional() @IsString() year?: string;
   @ApiProperty() @IsOptional() @IsString() cover?: string;

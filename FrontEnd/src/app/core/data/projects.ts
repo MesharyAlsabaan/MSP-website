@@ -24,7 +24,14 @@ export interface Project {
   slug: string;
   no: string;
   title: L;
+  /** Legacy single category. Kept as the fallback sector for older records. */
   typology: Typology;
+  /** Axis 1 — design fields, the works page's top filter row. */
+  designCategories?: readonly Typology[];
+  /** Axis 2 — sectors, the works page's second filter row. */
+  sectors?: readonly Typology[];
+  /** Axis 3 — the scope MSP carried. Shown on the project page, not filtered. */
+  disciplines?: readonly Typology[];
   location: L;
   year: string;
   cover: string;
@@ -32,6 +39,7 @@ export interface Project {
   summary: L;
   description: readonly L[];
   specs: readonly ProjectSpec[];
+  /** Legacy free-text scope list, superseded by `disciplines`. */
   services: readonly L[];
   /** Highlighted on the home page. */
   featured?: boolean;
@@ -45,16 +53,6 @@ const T = {
   commercial: { key: 'commercial', en: 'Commercial', ar: 'تجاري' },
   civic: { key: 'civic', en: 'Civic', ar: 'مبنى عام' },
 } as const;
-
-/** Filter chips for the Works index, in display order. */
-export const TYPOLOGIES: readonly Typology[] = [
-  T.cultural,
-  T.mixed,
-  T.civic,
-  T.commercial,
-  T.masterplan,
-  T.sports,
-];
 
 const SPEC_LABELS = {
   client: { en: 'Client', ar: 'العميل' },

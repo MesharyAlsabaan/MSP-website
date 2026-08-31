@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminApi } from '../../../core/services/admin-api.service';
 import { Button } from '../../../shared/ui/button/button';
 import { ImageUploadField } from '../../../shared/ui/image-upload/image-upload';
+import { DESIGN_CATEGORIES, DISCIPLINES, SECTORS, Term } from '../../../core/data/taxonomy';
 
 interface L { en: string; ar: string; }
 interface Spec { label: L; value: L; }
@@ -11,7 +12,10 @@ interface Project {
   slug: string;
   no: string;
   title: L;
-  typology: { key: string; en: string; ar: string };
+  typology: Term;
+  designCategories: Term[];
+  sectors: Term[];
+  disciplines: Term[];
   location: L;
   year: string;
   cover: string;
@@ -28,6 +32,7 @@ function blank(): Project {
   return {
     slug: '', no: '', title: { en: '', ar: '' },
     typology: { key: '', en: '', ar: '' },
+    designCategories: [], sectors: [], disciplines: [],
     location: { en: '', ar: '' }, year: '', cover: '',
     gallery: [],
     summary: { en: '', ar: '' },
@@ -98,13 +103,45 @@ function blank(): Project {
                 <input [(ngModel)]="model().title.ar" dir="rtl" class="inp" /></label>
             </div>
 
-            <div class="grid grid-cols-3 gap-3">
-              <label class="block"><span class="lbl">Typology key</span>
-                <input [(ngModel)]="model().typology.key" class="inp" /></label>
-              <label class="block"><span class="lbl">Typology EN</span>
-                <input [(ngModel)]="model().typology.en" class="inp" /></label>
-              <label class="block"><span class="lbl">Typology AR</span>
-                <input [(ngModel)]="model().typology.ar" dir="rtl" class="inp" /></label>
+            <!-- Filter axis 1 — design field. Several per project; the works
+                 page crosses this row with the sectors row below. -->
+            <div class="border-t border-hairline pt-5">
+              <span class="lbl">Design categories &mdash; top filter row</span>
+              <div class="mt-3 flex flex-wrap gap-2">
+                @for (term of designCategories; track term.key) {
+                  <label [class]="termChip(has(model().designCategories, term))">
+                    <input
+                      type="checkbox"
+                      class="me-2 align-middle"
+                      [checked]="has(model().designCategories, term)"
+                      (change)="toggleCategory(term)"
+                    />
+                    {{ term.en }} · {{ term.ar }}
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Filter axis 2 — sector. -->
+            <div class="border-t border-hairline pt-5">
+              <span class="lbl">Sectors &mdash; second filter row</span>
+              <div class="mt-3 flex flex-wrap gap-2">
+                @for (term of sectors; track term.key) {
+                  <label [class]="termChip(has(model().sectors, term))">
+                    <input
+                      type="checkbox"
+                      class="me-2 align-middle"
+                      [checked]="has(model().sectors, term)"
+                      (change)="toggleSector(term)"
+                    />
+                    {{ term.en }} · {{ term.ar }}
+                  </label>
+                }
+              </div>
+              <p class="mt-3 font-mono text-[0.65rem] uppercase tracking-[0.1em] text-muted">
+                First selected is the label printed on the card:
+                <span class="text-ink">{{ model().typology.en || '—' }}</span>
+              </p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -186,24 +223,29 @@ function blank(): Project {
               </div>
             </div>
 
-            <!-- Services -->
+            <!-- Not a filter: the scope MSP actually carried, shown on the
+                 project page. Independent of the two rows above. -->
             <div class="border-t border-hairline pt-5">
-              <div class="flex items-center justify-between">
-                <span class="lbl">Services</span>
-                <button type="button" (click)="addService()" class="font-mono text-xs uppercase tracking-[0.12em] text-accent hover:underline">+ Add service</button>
-              </div>
-              <div class="mt-3 space-y-4">
-                @for (svc of model().services; track $index; let i = $index) {
-                  <div class="grid grid-cols-2 gap-3">
-                    <label class="block"><span class="lbl">Service {{ i + 1 }} (EN)</span>
-                      <input [(ngModel)]="model().services[i].en" class="inp" /></label>
-                    <label class="block"><span class="lbl">Service {{ i + 1 }} (AR)</span>
-                      <input [(ngModel)]="model().services[i].ar" dir="rtl" class="inp" /></label>
-                    <button type="button" (click)="removeService(i)" class="col-span-2 justify-self-start font-mono text-xs uppercase text-red-600 hover:underline">Remove service</button>
-                  </div>
+              <span class="lbl">Scope &amp; disciplines &mdash; project page only</span>
+              <div class="mt-3 flex flex-wrap gap-2">
+                @for (term of disciplines; track term.key) {
+                  <label [class]="termChip(has(model().disciplines, term))">
+                    <input
+                      type="checkbox"
+                      class="me-2 align-middle"
+                      [checked]="has(model().disciplines, term)"
+                      (change)="toggleDiscipline(term)"
+                    />
+                    {{ term.en }} · {{ term.ar }}
+                  </label>
                 }
-                @if (model().services.length === 0) { <p class="text-xs text-muted">No services.</p> }
               </div>
+              @if (model().services.length && !model().disciplines.length) {
+                <p class="mt-3 font-mono text-[0.65rem] uppercase tracking-[0.1em] text-muted">
+                  Older free-text scope still showing on the site:
+                  <span class="text-ink">{{ legacyScope() }}</span>
+                </p>
+              }
             </div>
 
             <div class="flex items-center gap-6 border-t border-hairline pt-5">
@@ -257,6 +299,53 @@ export class AdminProjects implements OnInit {
     });
   }
 
+  protected readonly designCategories = DESIGN_CATEGORIES;
+  protected readonly sectors = SECTORS;
+  protected readonly disciplines = DISCIPLINES;
+
+  protected has(list: Term[], term: Term): boolean {
+    return list.some((t) => t.key === term.key);
+  }
+
+  /** Adds or drops a term, storing the labels alongside the key. */
+  private toggled(list: Term[], term: Term): Term[] {
+    return this.has(list, term)
+      ? list.filter((t) => t.key !== term.key)
+      : [...list, { key: term.key, en: term.en, ar: term.ar }];
+  }
+
+  protected toggleCategory(term: Term): void {
+    const model = this.model();
+    model.designCategories = this.toggled(model.designCategories, term);
+  }
+
+  /** The card and the API's typology filter still print one category, so the
+   *  first sector picked becomes it. A record with no sector keeps whatever
+   *  legacy typology it was saved with rather than losing its label. */
+  protected toggleSector(term: Term): void {
+    const model = this.model();
+    const next = this.toggled(model.sectors, term);
+    model.sectors = next;
+    if (next.length) model.typology = { ...next[0] };
+  }
+
+  protected toggleDiscipline(term: Term): void {
+    const model = this.model();
+    model.disciplines = this.toggled(model.disciplines, term);
+  }
+
+  protected legacyScope(): string {
+    return this.model().services.map((s) => s.en).join(', ');
+  }
+
+  protected termChip(selected: boolean): string {
+    const base =
+      'cursor-pointer border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] transition-colors';
+    return selected
+      ? `${base} border-accent text-accent`
+      : `${base} border-hairline text-muted`;
+  }
+
   protected openCreate(): void { this.model.set(blank()); this.error.set(null); this.editing.set(true); }
   protected edit(p: Project): void {
     // Normalise: older/partial records may lack the rich array fields.
@@ -267,6 +356,12 @@ export class AdminProjects implements OnInit {
       description: structuredClone(p.description ?? []),
       specs: structuredClone(p.specs ?? []),
       services: structuredClone(p.services ?? []),
+      // Left empty for records saved before the two-level taxonomy: the legacy
+      // keys do not map onto the new lists, so they are classified by hand
+      // rather than guessed here.
+      designCategories: structuredClone(p.designCategories ?? []),
+      sectors: structuredClone(p.sectors ?? []),
+      disciplines: structuredClone(p.disciplines ?? []),
     };
     this.model.set(full);
     this.error.set(null);
@@ -283,9 +378,6 @@ export class AdminProjects implements OnInit {
 
   protected addSpec(): void { this.model.update((m) => ({ ...m, specs: [...m.specs, { label: { en: '', ar: '' }, value: { en: '', ar: '' } }] })); }
   protected removeSpec(i: number): void { this.model.update((m) => ({ ...m, specs: m.specs.filter((_, idx) => idx !== i) })); }
-
-  protected addService(): void { this.model.update((m) => ({ ...m, services: [...m.services, { en: '', ar: '' }] })); }
-  protected removeService(i: number): void { this.model.update((m) => ({ ...m, services: m.services.filter((_, idx) => idx !== i) })); }
 
   protected save(): void {
     this.saving.set(true);

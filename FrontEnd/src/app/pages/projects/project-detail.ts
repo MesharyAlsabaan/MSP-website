@@ -20,7 +20,9 @@ import { PublicContentService } from '../../core/services/public-content.service
 import { AssetPipe } from '../../shared/pipes/asset.pipe';
 import { Lightbox } from '../../shared/ui/lightbox/lightbox';
 import { assetUrl } from '../../core/utils/asset-url';
-import { Project } from '../../core/data/projects';
+import { L, Project } from '../../core/data/projects';
+import { DISCIPLINES, SECTORS, Term, label } from '../../core/data/taxonomy';
+import { sectorsOf } from '../../core/data/project-filter';
 
 type LoadState =
   | { status: 'loading'; project: null }
@@ -58,7 +60,7 @@ type LoadState =
 
             <div class="mt-8 flex items-center gap-5 font-mono text-xs uppercase tracking-[0.18em] text-muted">
               <span class="text-accent">{{ p.no }}</span>
-              <span>{{ i18n.pick(p.typology) }}</span>
+              <span>{{ i18n.pick(metaLabel(p)) }}</span>
               <span class="h-px flex-1 bg-hairline"></span>
               @if (p.year) {
                 <span data-project-year dir="ltr">{{ p.year }}</span>
@@ -123,13 +125,21 @@ type LoadState =
                   </dl>
                 }
 
-                @if (p.services.length) {
+                @if (scope(p).length) {
                   <p class="mt-8 font-mono text-xs uppercase tracking-[0.15em] text-accent">
                     {{ i18n.pick(t.services) }}
                   </p>
-                  <ul class="mt-4 space-y-2">
-                    @for (svc of p.services; track $index) {
-                      <li class="text-sm text-ink">{{ i18n.pick(svc) }}</li>
+                  <!-- Scope tags: a project usually carries several disciplines,
+                       so they read as a set rather than a ranked list. This is
+                       the work MSP did, not a filter — the works page's two
+                       filter rows are a separate pair of axes. -->
+                  <ul class="mt-4 flex flex-wrap gap-2">
+                    @for (item of scope(p); track $index) {
+                      <li
+                        class="border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] text-ink"
+                      >
+                        {{ i18n.pick(item) }}
+                      </li>
                     }
                   </ul>
                 }
@@ -275,10 +285,24 @@ export class ProjectDetail {
     return false;
   }
 
+  /** The scope MSP carried; older records still only have the free-text list. */
+  protected scope(project: Project): readonly L[] {
+    const disciplines = project.disciplines ?? [];
+    return disciplines.length
+      ? disciplines.map((term) => label(DISCIPLINES, term))
+      : project.services;
+  }
+
+  /** Header meta names the sector, falling back to the legacy category. */
+  protected metaLabel(project: Project): Term {
+    const [first] = sectorsOf(project);
+    return first ? label(SECTORS, first) : project.typology;
+  }
+
   protected readonly t = {
     back: { en: 'All works', ar: 'كل الأعمال' },
     enlarge: { en: 'View larger', ar: 'عرض مكبّر' },
-    services: { en: 'Services', ar: 'الخدمات' },
+    services: { en: 'Scope & Disciplines', ar: 'نطاق العمل والتخصصات' },
     next: { en: 'Next project', ar: 'المشروع التالي' },
     notFound: { en: 'Project not found.', ar: 'المشروع غير موجود.' },
   };

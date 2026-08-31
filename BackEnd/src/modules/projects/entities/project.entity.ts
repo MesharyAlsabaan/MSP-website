@@ -3,6 +3,13 @@ import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Localized } from '../../../common/types/localized.type';
 
+/** A taxonomy term as stored: a stable key plus its two labels. */
+export interface Term {
+  key: string;
+  en: string;
+  ar: string;
+}
+
 export enum ProjectStatus {
   Draft = 'draft',
   Published = 'published',
@@ -27,9 +34,28 @@ export class Project extends BaseEntity {
   @Column({ type: 'jsonb' })
   title: Localized;
 
-  @ApiProperty({ description: '{ key, en, ar } typology object' })
+  @ApiProperty({ description: 'Legacy single { key, en, ar } category; fallback sector' })
   @Column({ type: 'jsonb' })
-  typology: { key: string; en: string; ar: string };
+  typology: Term;
+
+  /*
+   * Three independent axes. The first two are the works page's two filter rows
+   * and are crossed, not merged — Interiors + Hospitality means both. A project
+   * belongs to several of each and still shows from ONE record, never a copy.
+   * The third is the scope MSP carried, shown on the project page only.
+   */
+
+  @ApiProperty({ description: 'Design fields — Architecture, Interiors, …', required: false })
+  @Column({ name: 'design_categories', type: 'jsonb', default: () => "'[]'" })
+  designCategories: Term[];
+
+  @ApiProperty({ description: 'Sectors — Culture, Residential, …', required: false })
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  sectors: Term[];
+
+  @ApiProperty({ description: 'Scope carried — Architectural Design, Supervision, …', required: false })
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  disciplines: Term[];
 
   @ApiProperty({ type: Localized })
   @Column({ type: 'jsonb' })
@@ -59,7 +85,7 @@ export class Project extends BaseEntity {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   specs: { label: Localized; value: Localized }[];
 
-  @ApiProperty({ type: [Localized] })
+  @ApiProperty({ type: [Localized], description: 'Legacy free-text scope, superseded by disciplines' })
   @Column({ type: 'jsonb', default: () => "'[]'" })
   services: Localized[];
 
