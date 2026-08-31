@@ -110,7 +110,7 @@ export class Services {
   }
 
   protected readonly t = {
-    eyebrow: { en: 'Disciplines', ar: 'التخصصات' },
+    eyebrow: { en: 'Services', ar: 'الخدمات' },
     title: {
       en: 'Five practices, one integrated team.',
       ar: 'خمسةُ تخصّصات، وفريقٌ واحد.',

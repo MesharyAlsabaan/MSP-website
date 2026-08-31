@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -26,6 +27,7 @@ const render = async (team: ReturnType<typeof member>[]) => {
   await TestBed.configureTestingModule({
     imports: [Team],
     providers: [
+      provideRouter([]),
       {
         provide: TranslationService,
         useValue: { pick: (value: { en: string }) => value.en },

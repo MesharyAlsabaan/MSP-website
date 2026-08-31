@@ -65,7 +65,7 @@ export class About {
   protected readonly i18n = inject(TranslationService);
 
   protected readonly t = {
-    eyebrow: { en: 'The Practice', ar: 'عن المكتب' },
+    eyebrow: { en: 'About', ar: 'عن المكتب' },
     statementPre: {
       en: 'We believe great buildings begin where ',
       ar: 'العمارةُ الاستثنائية تولد حين يلتقي ',

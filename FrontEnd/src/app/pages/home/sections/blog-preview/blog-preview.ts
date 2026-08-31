@@ -101,7 +101,7 @@ export class BlogPreview {
   }
 
   protected readonly t = {
-    eyebrow: { en: 'Journal', ar: 'المدوّنة' },
+    eyebrow: { en: 'Insights', ar: 'الرؤى' },
     all: { en: 'All writing', ar: 'كل المقالات' },
   };
 

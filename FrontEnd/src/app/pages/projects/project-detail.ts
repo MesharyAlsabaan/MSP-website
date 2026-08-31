@@ -18,6 +18,7 @@ import { TranslationService } from '../../core/services/translation.service';
 import { SeoService } from '../../core/services/seo.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { AssetPipe } from '../../shared/pipes/asset.pipe';
+import { Lightbox } from '../../shared/ui/lightbox/lightbox';
 import { assetUrl } from '../../core/utils/asset-url';
 import { Project } from '../../core/data/projects';
 
@@ -30,7 +31,7 @@ type LoadState =
 @Component({
   selector: 'app-project-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, RouterLink, Container, ScrollReveal, Parallax, AssetPipe],
+  imports: [NgClass, RouterLink, Container, ScrollReveal, Parallax, AssetPipe, Lightbox],
   template: `
     @if (status() === 'loading') {
       <section class="pt-12 pb-10 sm:pt-16">
@@ -143,10 +144,14 @@ type LoadState =
             <app-container>
               <div class="grid gap-6 sm:grid-cols-2">
                 @for (img of p.gallery; track $index; let i = $index) {
-                  <div
+                  <button
+                    type="button"
                     appScrollReveal
                     revealType="line"
-                    class="overflow-hidden"
+                    (click)="openViewer(i)"
+                    (contextmenu)="blockSave($event)"
+                    [attr.aria-label]="i18n.pick(t.enlarge) + ': ' + i18n.pick(p.title)"
+                    class="group relative block w-full cursor-zoom-in overflow-hidden"
                     [ngClass]="
                       i === 0
                         ? 'sm:col-span-2 aspect-[16/9]'
@@ -158,13 +163,26 @@ type LoadState =
                       [alt]="i18n.pick(p.title)"
                       loading="lazy"
                       decoding="async"
-                      class="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+                      draggable="false"
+                      (dragstart)="blockSave($event)"
+                      class="pointer-events-none h-full w-full select-none object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                     />
-                  </div>
+                    <span
+                      class="absolute inset-0 bg-ink/0 transition-colors duration-300 group-hover:bg-ink/15"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
                 }
               </div>
             </app-container>
           </section>
+
+          <app-lightbox
+            [images]="p.gallery"
+            [caption]="i18n.pick(p.title)"
+            [(index)]="viewerIndex"
+            [(open)]="viewerOpen"
+          />
         }
 
         <!-- Next project -->
@@ -242,8 +260,24 @@ export class ProjectDetail {
     return list[(idx + 1) % list.length];
   });
 
+  /** Full-screen viewer state for the gallery. */
+  protected readonly viewerOpen = signal(false);
+  protected readonly viewerIndex = signal(0);
+
+  protected openViewer(index: number): void {
+    this.viewerIndex.set(index);
+    this.viewerOpen.set(true);
+  }
+
+  /** Right-click / drag on a gallery image: viewing is allowed, saving is not. */
+  protected blockSave(event: Event): boolean {
+    event.preventDefault();
+    return false;
+  }
+
   protected readonly t = {
     back: { en: 'All works', ar: 'كل الأعمال' },
+    enlarge: { en: 'View larger', ar: 'عرض مكبّر' },
     services: { en: 'Services', ar: 'الخدمات' },
     next: { en: 'Next project', ar: 'المشروع التالي' },
     notFound: { en: 'Project not found.', ar: 'المشروع غير موجود.' },

@@ -6,6 +6,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Section } from '../../../../shared/ui/section/section';
 import { Container } from '../../../../shared/ui/container/container';
 import { SectionHeading } from '../../../../shared/ui/section-heading/section-heading';
@@ -32,7 +33,7 @@ interface Member {
 @Component({
   selector: 'app-team',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Section, Container, SectionHeading, ScrollReveal, AssetPipe],
+  imports: [RouterLink, Section, Container, SectionHeading, ScrollReveal, AssetPipe],
   template: `
     <app-section tone="surface">
       <app-container>
@@ -90,6 +91,22 @@ interface Member {
             {{ i18n.pick(t.empty) }}
           </p>
         }
+
+        @if (members().length) {
+          <div class="mt-14 border-t border-hairline pt-8">
+            <a
+              routerLink="/team"
+              class="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink transition-colors hover:text-accent"
+            >
+              {{ i18n.pick(t.all) }}
+              <span
+                class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1"
+                aria-hidden="true"
+                >&rarr;</span
+              >
+            </a>
+          </div>
+        }
       </app-container>
     </app-section>
   `,
@@ -122,12 +139,13 @@ export class Team {
   }
 
   protected readonly t = {
-    eyebrow: { en: 'Studio', ar: 'الفريق' },
+    eyebrow: { en: 'Team', ar: 'الفريق' },
     title: { en: 'A senior team, by design.', ar: 'نخبةٌ من الخبراء، باختيارٍ دقيق.' },
     intro: {
       en: 'Principals lead every commission — supported by a tight group of architects and engineers.',
       ar: 'يقود الشركاءُ كلَّ مشروعٍ بأنفسهم، تسندهم نخبةٌ من المعماريين والمهندسين.',
     },
+    all: { en: 'Meet the full team', ar: 'تعرّف على الفريق كاملاً' },
     placeholder: { en: 'Portrait placeholder', ar: 'صورة افتراضية' },
     empty: { en: 'Team members will appear here.', ar: 'سيظهر أعضاء الفريق هنا.' },
   };

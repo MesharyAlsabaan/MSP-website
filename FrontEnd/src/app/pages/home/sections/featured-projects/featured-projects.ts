@@ -120,7 +120,7 @@ export class FeaturedProjects {
   }
 
   protected readonly t = {
-    eyebrow: { en: 'Selected Works', ar: 'مختاراتٌ من أعمالنا' },
+    eyebrow: { en: 'Projects', ar: 'المشاريع' },
     all: { en: 'Full index', ar: 'الأرشيف الكامل' },
     empty: { en: 'No published projects yet.', ar: 'لا توجد مشاريع منشورة بعد.' },
   };
