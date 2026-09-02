@@ -46,7 +46,7 @@ Open:
 - **API:** http://localhost/api
 - **Swagger docs:** http://localhost/api/docs
 
-Admin login (from the seed): `admin@msp.sa` / `Admin@12345` — **change this**.
+Admin login: the seed creates `admin@msp.sa` with the password from `SEED_ADMIN_PASSWORD` (required in production). Change it in the panel after first login.
 
 ## Run services individually (development)
 
