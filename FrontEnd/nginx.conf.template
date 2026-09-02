@@ -5,6 +5,11 @@ server {
   root /usr/share/nginx/html;
   index index.html;
 
+  # nginx builds redirects from `listen`, so a directory redirect would send
+  # visitors to http://host:8080/path/ — leaking the internal port and dropping
+  # TLS. Relative redirects keep the scheme, host and port the visitor came in on.
+  absolute_redirect off;
+
   client_max_body_size 10M;
   gzip on;
   gzip_types text/css application/javascript application/json image/svg+xml;
@@ -27,7 +32,11 @@ server {
 
   # Static Angular site. Prerendered routes resolve to their own index.html;
   # client-rendered routes (/admin, /auth) fall back to the app shell.
+  #
+  # That shell is index.csr.html, NOT index.html: the latter is the prerendered
+  # home page, so serving it for /auth/login handed the browser a fully rendered
+  # homepage, which Angular then hydrated as the home route and left on screen.
   location / {
-    try_files $uri $uri/ /index.html;
+    try_files $uri $uri/ /index.csr.html;
   }
 }
