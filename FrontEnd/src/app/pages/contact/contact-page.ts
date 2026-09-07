@@ -19,6 +19,18 @@ interface ContactDetail {
   value: L;
   ltr?: boolean;
   href?: string;
+  /** A wa.me link — renders a WhatsApp icon beside the value that opens a chat. */
+  whatsapp?: string;
+}
+
+/** One office pin on the contact map. */
+interface Office {
+  city: L;
+  coordinates: string;
+  map: string;
+  /** Position on the stylised map, as percentages of its box. */
+  x: number;
+  y: number;
 }
 
 /** Wrap a single string as the same value in both languages. */
@@ -62,7 +74,7 @@ function lv(s: string): L {
                   <dt class="font-mono text-xs uppercase tracking-[0.15em] text-accent">
                     {{ i18n.pick(d.label) }}
                   </dt>
-                  <dd class="mt-2 text-lg text-ink" [attr.dir]="d.ltr ? 'ltr' : null">
+                  <dd class="mt-2 flex items-center gap-3 text-lg text-ink" [attr.dir]="d.ltr ? 'ltr' : null">
                     @if (d.href) {
                       <a
                         [href]="d.href"
@@ -71,27 +83,57 @@ function lv(s: string): L {
                         class="underline decoration-hairline underline-offset-4 transition-colors hover:text-accent"
                       >{{ i18n.pick(d.value) }}</a>
                     } @else {
-                      {{ i18n.pick(d.value) }}
+                      <span>{{ i18n.pick(d.value) }}</span>
+                    }
+                    @if (d.whatsapp) {
+                      <!-- Straight to a WhatsApp chat with the number beside it. -->
+                      <a
+                        [href]="d.whatsapp"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        [attr.aria-label]="i18n.pick(t.waChat)"
+                        [title]="i18n.pick(t.waChat)"
+                        class="inline-flex shrink-0 text-[#25D366] transition-opacity hover:opacity-75"
+                      >
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+                          <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.67c2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.42 5.82c0 4.54-3.7 8.24-8.25 8.24-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24Zm4.52 10.35c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43l-.48-.01c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29Z"/>
+                        </svg>
+                      </a>
                     }
                   </dd>
                 </div>
               }
             </dl>
 
-            <!-- Map placeholder -->
+            <!-- Map: a stylised board carrying both offices, each pin linking
+                 to its location. Not a real tile map, so the two sit where
+                 they read clearly rather than to exact scale. -->
             <div class="mt-10 aspect-[16/10] overflow-hidden border border-hairline">
               <div
                 class="relative h-full w-full bg-surface"
-                style="background-image: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), repeating-linear-gradient(0deg, var(--hairline) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px 40px);"
+                style="background-image: repeating-linear-gradient(0deg, var(--hairline) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px 40px);"
               >
-                <span
-                  class="absolute left-1/2 top-[45%] h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent ring-4 ring-accent/20"
-                ></span>
-                <span
-                  class="absolute bottom-3 left-3 font-mono text-[0.65rem] uppercase tracking-[0.15em] text-muted"
-                >
-                  24°38'N · 46°43'E
-                </span>
+                @for (o of offices; track o.coordinates) {
+                  <a
+                    [href]="o.map"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center"
+                    [style.left.%]="o.x"
+                    [style.top.%]="o.y"
+                    [attr.aria-label]="i18n.pick(o.city)"
+                  >
+                    <span
+                      class="h-3 w-3 rounded-full bg-accent ring-4 ring-accent/20 transition-transform duration-300 group-hover:scale-125"
+                    ></span>
+                    <span class="mt-1.5 font-mono text-[0.65rem] uppercase tracking-[0.12em] text-ink">
+                      {{ i18n.pick(o.city) }}
+                    </span>
+                    <span class="font-mono text-[0.6rem] tracking-[0.1em] text-muted" dir="ltr">
+                      {{ o.coordinates }}
+                    </span>
+                  </a>
+                }
               </div>
             </div>
           </div>
@@ -186,15 +228,43 @@ export class ContactPage {
     errName: { en: 'Please enter your name.', ar: 'الرجاء إدخال اسمك.' },
     errEmail: { en: 'Please enter a valid email.', ar: 'الرجاء إدخال بريدٍ إلكترونيٍّ صحيح.' },
     errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيدٍ من التفاصيل.' },
+    waChat: { en: 'Chat on WhatsApp', ar: 'محادثة عبر واتساب' },
   };
+
+  /** Both offices, shown as pins on the map. Coordinates are printed as given;
+   *  the map link uses their decimal form so it opens the right spot. */
+  protected readonly offices: readonly Office[] = [
+    {
+      city: { en: 'Riyadh', ar: 'الرياض' },
+      coordinates: "24°38'N · 46°43'E",
+      map: 'https://www.google.com/maps?q=24.6333,46.7167',
+      x: 66,
+      y: 58,
+    },
+    {
+      city: { en: 'Cairo', ar: 'القاهرة' },
+      coordinates: "30°02'N · 31°14'E",
+      map: 'https://www.google.com/maps?q=30.0333,31.2333',
+      x: 31,
+      y: 34,
+    },
+  ];
 
   protected readonly details = computed<ContactDetail[]>(() => {
     const c = this.cfg();
+    const mobile = c.whatsapp || '+966570327777';
     const result: ContactDetail[] = [
       { label: { en: 'Established', ar: 'سنة التأسيس' }, value: lv('2010'), ltr: true },
       { label: { en: 'Email', ar: 'البريد الإلكتروني' }, value: lv(c.email || 'info@msp.sa'), ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
       { label: { en: 'Riyadh office telephone', ar: 'هاتف مكتب الرياض' }, value: lv(c.phone || '+966112000087'), ltr: true, href: `tel:${c.phone || '+966112000087'}` },
-      { label: { en: 'Mobile / WhatsApp', ar: 'الجوال / واتساب' }, value: lv(c.whatsapp || '+966570327777'), ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
+      {
+        // The number calls when tapped; the icon beside it opens a WhatsApp chat.
+        label: { en: 'Mobile / WhatsApp', ar: 'الجوال / واتساب' },
+        value: lv(mobile),
+        ltr: true,
+        href: `tel:${mobile}`,
+        whatsapp: `https://wa.me/${mobile.replace(/\D/g, '')}`,
+      },
       {
         label: { en: 'Riyadh office', ar: 'فرع الرياض' },
         value: {
@@ -213,6 +283,7 @@ export class ContactPage {
       value: lv(cairoPhone),
       ltr: true,
       href: `tel:${cairoPhone}`,
+      whatsapp: `https://wa.me/${cairoPhone.replace(/\D/g, '')}`,
     });
     result.push({
       label: { en: 'Cairo branch', ar: 'فرع القاهرة' },
