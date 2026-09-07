@@ -56,8 +56,11 @@ export interface BlogPostItem {
   excerpt: L;
   body: L;
   cover: string;
+  gallery: string[];
   author: string;
   publishedAt: string | null;
+  seoTitle: L | null;
+  seoDescription: L | null;
 }
 
 /**

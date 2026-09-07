@@ -39,6 +39,10 @@ export class BlogPost extends BaseEntity {
   @Column({ default: '' })
   cover: string;
 
+  @ApiProperty({ type: [String], description: 'Supporting article image filenames or URLs' })
+  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
+  gallery: string[];
+
   @ApiProperty()
   @Column({ default: '' })
   author: string;

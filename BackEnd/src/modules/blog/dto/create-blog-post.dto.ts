@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsInt,
@@ -24,6 +25,9 @@ export class CreateBlogPostDto {
   @ApiProperty({ type: Localized }) @ValidateNested() @Type(() => Localized) body: Localized;
 
   @ApiProperty() @IsOptional() @IsString() cover?: string;
+  @ApiProperty({ type: [String] })
+  @IsOptional() @IsArray() @IsString({ each: true })
+  gallery?: string[];
   @ApiProperty() @IsOptional() @IsString() author?: string;
   @ApiProperty({ enum: BlogStatus }) @IsOptional() @IsEnum(BlogStatus) status?: BlogStatus;
   @ApiProperty() @EmptyToUndefined() @IsOptional() @IsDateString() publishedAt?: string;

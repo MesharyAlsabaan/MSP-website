@@ -222,6 +222,100 @@ async function run() {
       body: L('Long-form article body.', 'متن المقال المطوّل.'),
       cover: 'images/proj-1.jpg', author: 'MSP Studio',
       status: BlogStatus.Published, publishedAt: new Date('2026-01-15') as any, sortOrder: 1 },
+    {
+      slug: 'madinah-hotel-hospitality-rooted-in-place',
+      title: L(
+        'Madinah Hotel: Hospitality Design Rooted in Place',
+        'فندق المدينة المنورة: تصميم ضيافة يستلهم إرث المكان',
+      ),
+      category: 'Hospitality · ضيافة',
+      excerpt: L(
+        'How the meaning of welcome in Madinah can shape a contemporary hotel experience—from arrival and privacy to its social and dining spaces.',
+        'قراءة في كيفية ترجمة معنى الترحيب المتجذّر في المدينة المنورة إلى تجربة فندقية معاصرة؛ من الوصول والخصوصية إلى الفراغات الاجتماعية والمطعم.',
+      ),
+      body: L(
+        `Madinah holds a place unlike any other. In Islamic memory, the Prophetic migration is inseparable from a defining scene of welcome, shelter, and solidarity. Hospitality here is therefore more than a service standard. It is part of the meaning of the city itself.
+
+For the Madinah Hotel, this context offers a responsibility rather than a decorative theme. The design does not attempt to reproduce history or rely on literal symbols. It seeks to translate enduring values—generosity, calm, dignity, and care—into a contemporary guest experience.
+
+## Hospitality as a sense of place
+
+A hotel in Madinah receives people whose journeys, expectations, and rhythms are varied. Architect Mansour Al-Sabaan and the MSP team approached hospitality as a sequence of considerate moments: a legible arrival, intuitive movement, comfortable thresholds, and spaces that give guests clarity without losing warmth.
+
+The architectural and interior language is intended to feel composed rather than imposing. Proportion, filtered light, tactile materials, and a restrained palette work together to create an atmosphere that supports reflection and rest while remaining contemporary.
+
+## Arrival before the doorway
+
+The guest experience begins before entering the building. The façade, approach, drop-off, entrance, and first view into the lobby should read as one connected transition. Clear orientation reduces effort; shaded thresholds and measured lighting soften the move from the city into the hotel.
+
+Inside, circulation is treated as part of hospitality. Guests should understand where to go without being overwhelmed by signage. Public and private movement are balanced so that service remains efficient while the guest journey feels calm and natural.
+
+## Calm, privacy, and human scale
+
+Privacy is not an added feature in this context; it is a design principle. The relationship between open social areas and quieter zones is carefully graduated. Seating, views, acoustic comfort, and lighting help each space hold its own character while belonging to the same hotel.
+
+This thinking extends to the lobby, rooms, suites, and shared amenities. The aim is consistent: to create spaces that feel generous through comfort and attention, not through excess.
+
+## The restaurant as a social room
+
+The restaurant is one chapter in the wider hotel experience. It brings guests together around food and conversation and acts as a social room within the hospitality journey. Its layout balances open dining, more private seating, lounge moments, and service routes, allowing different patterns of use without fragmenting the space.
+
+Warm materials, layered lighting, framed views, and varied seating settings give the interior rhythm across the day. The visual identity remains connected to the hotel while the restaurant holds a distinct atmosphere of its own.
+
+## Engineering the experience
+
+An effortless guest experience depends on disciplined coordination behind the visible design. Architecture, interiors, mechanical and electrical systems, lighting, acoustics, operations, and back-of-house movement must work as one system. When that coordination succeeds, technology recedes and comfort comes forward.
+
+For MSP, designing hospitality in Madinah means listening to the place before shaping the space. The result is not a historical imitation, but a contemporary expression of welcome—one that respects the city’s cultural weight and turns care into an architectural experience.`,
+        `للمدينة المنورة مكانة لا تشبه أي مدينة أخرى. ففي الذاكرة الإسلامية ترتبط الهجرة النبوية بمشهدٍ خالد من الاستقبال والإيواء والتكافل؛ ولذلك لا تكون الضيافة فيها مجرد معيارٍ للخدمة، بل جزءًا من معنى المدينة وهويتها.
+
+في مشروع فندق المدينة المنورة، يمثّل هذا السياق مسؤولية تصميمية لا موضوعًا زخرفيًا. لا يحاول التصميم استنساخ التاريخ أو الاتكاء على رموز مباشرة، وإنما يسعى إلى ترجمة قيمٍ باقية—الكرم والسكينة والخصوصية والعناية—إلى تجربة ضيافة معاصرة.
+
+## الضيافة بوصفها معنى للمكان
+
+يستقبل الفندق في المدينة زوّارًا تتنوع رحلاتهم واحتياجاتهم وإيقاعاتهم. ومن هذا المنطلق تعامل المعماري منصور السبعان وفريق MSP مع الضيافة كسلسلة من اللحظات المدروسة: وصول واضح، وحركة سهلة، وانتقالات مريحة، وفراغات تمنح الضيف الطمأنينة والوضوح من دون أن تفقد دفئها.
+
+تتجه اللغة المعمارية والداخلية إلى الهدوء بدل الاستعراض. وتعمل النِسَب والضوء المصفّى وملمس المواد ولوحة الألوان المتزنة معًا لصناعة أجواء تساعد على التأمل والراحة ضمن تعبير معاصر.
+
+## الوصول يبدأ قبل الباب
+
+تبدأ تجربة الضيف قبل دخول المبنى؛ فالواجهة ومسار الاقتراب ومنطقة النزول والمدخل وأول إطلالة على اللوبي يجب أن تُقرأ كانتقال واحد متصل. يخفف وضوح الاتجاهات من الجهد، بينما تلطف مناطق الظل والإضاءة المتدرجة الانتقال من حركة المدينة إلى سكينة الفندق.
+
+وفي الداخل تصبح الحركة جزءًا من الضيافة. يفهم الضيف طريقه بصورة طبيعية من دون ازدحام بصري أو اعتماد مفرط على اللوحات، مع موازنة حركة الزوار والخدمة لتحافظ العمليات على كفاءتها وتبقى رحلة الضيف هادئة وسلسة.
+
+## السكينة والخصوصية والمقياس الإنساني
+
+الخصوصية هنا ليست إضافة لاحقة، بل مبدأ تصميميًا. لذلك تتدرج العلاقة بين الفراغات الاجتماعية المفتوحة والمناطق الأكثر هدوءًا بعناية. وتساعد الجلسات والإطلالات والمعالجة الصوتية والإضاءة كل فراغ على امتلاك شخصيته، مع بقائه جزءًا من هوية الفندق المتكاملة.
+
+ويمتد هذا التفكير إلى اللوبي والغرف والأجنحة والمرافق المشتركة؛ فالهدف واحد: صناعة إحساس بالرحابة يأتي من الراحة وحسن العناية بالتفاصيل، لا من المبالغة.
+
+## المطعم كغرفة اجتماعية
+
+يمثّل المطعم فصلًا من تجربة الفندق الأوسع، فهو يجمع الضيوف حول الطعام والحوار ويعمل كغرفة اجتماعية داخل رحلة الضيافة. يوازن تخطيطه بين صالة الطعام المفتوحة والجلسات الأكثر خصوصية ومناطق اللاونج ومسارات الخدمة، ليستوعب أنماط استخدام مختلفة من دون تفكيك وحدة الفراغ.
+
+وتمنح المواد الدافئة والإضاءة متعددة الطبقات والإطلالات المؤطرة وتنوّع الجلسات المكان إيقاعًا يتغير خلال اليوم. وتظل هويته البصرية متصلة بالفندق، مع احتفاظ المطعم بأجوائه المميزة.
+
+## الهندسة التي تصنع الراحة
+
+تعتمد التجربة التي تبدو سهلة للضيف على تنسيق دقيق خلف المشهد. فالعمارة والتصميم الداخلي والأنظمة الميكانيكية والكهربائية والإضاءة والصوتيات والتشغيل وحركة الخدمات يجب أن تعمل كمنظومة واحدة. وعندما ينجح هذا التنسيق، تتراجع التقنية إلى الخلف وتتقدم الراحة إلى الواجهة.
+
+بالنسبة إلى MSP، يبدأ تصميم الضيافة في المدينة المنورة بالإنصات إلى المكان قبل تشكيل الفراغ. والنتيجة ليست محاكاة تاريخية، بل تعبيرًا معاصرًا عن حسن الاستقبال؛ يحترم ثقل المدينة الثقافي ويحوّل العناية بالضيف إلى تجربة معمارية متكاملة.`,
+      ),
+      cover: '',
+      gallery: [],
+      author: 'MSP Design',
+      status: BlogStatus.Published,
+      publishedAt: new Date('2026-09-07') as any,
+      seoTitle: L(
+        'Madinah Hotel Hospitality Design Rooted in Place',
+        'تصميم فندق في المدينة المنورة يستلهم إرث الضيافة',
+      ),
+      seoDescription: L(
+        'MSP explores a contemporary hotel in Madinah shaped by welcome, privacy, calm interiors, coordinated engineering, and a distinctive restaurant experience.',
+        'يستعرض MSP تصميم فندق في المدينة المنورة يترجم قيم الضيافة والخصوصية والسكينة عبر العمارة والتصميم الداخلي والمطعم والتنسيق الهندسي.',
+      ),
+      sortOrder: 2,
+    },
   ];
   for (const post of posts) await upsert(ds, BlogPost, { slug: post.slug }, post);
   console.log(`  ✓ ${posts.length} blog posts`);

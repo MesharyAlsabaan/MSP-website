@@ -116,6 +116,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/blog/blog-page').then((m) => m.BlogPage),
       },
       {
+        path: 'blog/:slug',
+        loadComponent: () => import('./pages/blog/blog-detail').then((m) => m.BlogDetail),
+      },
+      {
         path: 'team',
         loadComponent: () => import('./pages/team/team-page').then((m) => m.TeamPage),
       },

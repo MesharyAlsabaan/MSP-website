@@ -8,6 +8,11 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    // Insight detail follows the same API-backed slug pattern as projects.
+    path: 'blog/:slug',
+    renderMode: RenderMode.Client,
+  },
+  {
     // Admin CMS + auth: dynamic, auth-gated — client-rendered, never prerendered.
     path: 'admin',
     renderMode: RenderMode.Client,

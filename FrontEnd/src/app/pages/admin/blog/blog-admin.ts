@@ -13,8 +13,11 @@ interface BlogPost {
   excerpt: L;
   body: L;
   cover: string;
+  gallery: string[];
   author: string;
   status: 'draft' | 'published';
+  seoTitle: L;
+  seoDescription: L;
   sortOrder: number;
 }
 
@@ -22,7 +25,8 @@ function blank(): BlogPost {
   return {
     slug: '', title: { en: '', ar: '' }, category: '',
     excerpt: { en: '', ar: '' }, body: { en: '', ar: '' },
-    cover: '', author: '', status: 'published', sortOrder: 0,
+    cover: '', gallery: [], author: '', status: 'published',
+    seoTitle: { en: '', ar: '' }, seoDescription: { en: '', ar: '' }, sortOrder: 0,
   };
 }
 
@@ -93,15 +97,44 @@ function blank(): BlogPost {
             <div class="block"><span class="lbl">Cover</span>
               <app-image-upload [(value)]="model().cover" /></div>
 
+            <div class="border-t border-hairline pt-5">
+              <div class="flex items-center justify-between gap-3">
+                <span class="lbl">Article gallery</span>
+                <button type="button" (click)="addGalleryImage()" class="font-mono text-xs uppercase tracking-[0.1em] text-accent">+ Add image</button>
+              </div>
+              <div class="mt-3 space-y-3">
+                @for (img of model().gallery; track $index; let i = $index) {
+                  <div class="flex items-start gap-3">
+                    <app-image-upload [(value)]="model().gallery[i]" />
+                    <button type="button" (click)="removeGalleryImage(i)" class="font-mono text-xs text-red-600">Remove</button>
+                  </div>
+                }
+                @if (model().gallery.length === 0) { <p class="text-xs text-muted">No gallery images.</p> }
+              </div>
+            </div>
+
             <label class="block"><span class="lbl">Excerpt (EN)</span>
               <textarea [(ngModel)]="model().excerpt.en" rows="2" class="inp"></textarea></label>
             <label class="block"><span class="lbl">Excerpt (AR)</span>
               <textarea [(ngModel)]="model().excerpt.ar" rows="2" dir="rtl" class="inp"></textarea></label>
 
             <label class="block"><span class="lbl">Body (EN)</span>
-              <textarea [(ngModel)]="model().body.en" rows="4" class="inp"></textarea></label>
+              <textarea [(ngModel)]="model().body.en" rows="10" class="inp"></textarea>
+              <span class="mt-1 block text-xs text-muted">Separate paragraphs with a blank line. Start section headings with ##.</span></label>
             <label class="block"><span class="lbl">Body (AR)</span>
-              <textarea [(ngModel)]="model().body.ar" rows="4" dir="rtl" class="inp"></textarea></label>
+              <textarea [(ngModel)]="model().body.ar" rows="10" dir="rtl" class="inp"></textarea>
+              <span class="mt-1 block text-xs text-muted">افصل الفقرات بسطر فارغ، وابدأ عنوان القسم بعلامة ##.</span></label>
+
+            <div class="grid grid-cols-2 gap-3 border-t border-hairline pt-5">
+              <label class="block"><span class="lbl">SEO title (EN)</span>
+                <input [(ngModel)]="model().seoTitle.en" class="inp" /></label>
+              <label class="block"><span class="lbl">SEO title (AR)</span>
+                <input [(ngModel)]="model().seoTitle.ar" dir="rtl" class="inp" /></label>
+            </div>
+            <label class="block"><span class="lbl">SEO description (EN)</span>
+              <textarea [(ngModel)]="model().seoDescription.en" rows="2" class="inp"></textarea></label>
+            <label class="block"><span class="lbl">SEO description (AR)</span>
+              <textarea [(ngModel)]="model().seoDescription.ar" rows="2" dir="rtl" class="inp"></textarea></label>
 
             <div class="flex items-center gap-6">
               <label class="block"><span class="lbl">Sort order</span>
@@ -154,8 +187,29 @@ export class AdminBlog implements OnInit {
   }
 
   protected openCreate(): void { this.model.set(blank()); this.error.set(null); this.editing.set(true); }
-  protected edit(p: BlogPost): void { this.model.set(structuredClone(p)); this.error.set(null); this.editing.set(true); }
+  protected edit(p: BlogPost): void {
+    this.model.set({
+      ...blank(),
+      ...structuredClone(p),
+      gallery: structuredClone(p.gallery ?? []),
+      seoTitle: structuredClone(p.seoTitle ?? { en: '', ar: '' }),
+      seoDescription: structuredClone(p.seoDescription ?? { en: '', ar: '' }),
+    });
+    this.error.set(null);
+    this.editing.set(true);
+  }
   protected cancel(): void { this.editing.set(false); }
+
+  protected addGalleryImage(): void {
+    this.model.update((post) => ({ ...post, gallery: [...post.gallery, ''] }));
+  }
+
+  protected removeGalleryImage(index: number): void {
+    this.model.update((post) => ({
+      ...post,
+      gallery: post.gallery.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
 
   protected save(): void {
     this.saving.set(true);
