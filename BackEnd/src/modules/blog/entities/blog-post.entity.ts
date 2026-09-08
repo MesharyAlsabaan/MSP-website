@@ -47,6 +47,10 @@ export class BlogPost extends BaseEntity {
   @Column({ default: '' })
   author: string;
 
+  @ApiProperty({ description: 'Slug of a project this article links to, for an end-of-article CTA' })
+  @Column({ name: 'related_project_slug', default: '' })
+  relatedProjectSlug: string;
+
   @ApiProperty({ enum: BlogStatus })
   @Column({ type: 'enum', enum: BlogStatus, default: BlogStatus.Published })
   status: BlogStatus;

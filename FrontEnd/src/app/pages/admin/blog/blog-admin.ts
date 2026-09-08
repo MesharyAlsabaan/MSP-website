@@ -15,6 +15,7 @@ interface BlogPost {
   cover: string;
   gallery: string[];
   author: string;
+  relatedProjectSlug: string;
   status: 'draft' | 'published';
   seoTitle: L;
   seoDescription: L;
@@ -25,7 +26,7 @@ function blank(): BlogPost {
   return {
     slug: '', title: { en: '', ar: '' }, category: '',
     excerpt: { en: '', ar: '' }, body: { en: '', ar: '' },
-    cover: '', gallery: [], author: '', status: 'published',
+    cover: '', gallery: [], author: '', relatedProjectSlug: '', status: 'published',
     seoTitle: { en: '', ar: '' }, seoDescription: { en: '', ar: '' }, sortOrder: 0,
   };
 }
@@ -93,6 +94,10 @@ function blank(): BlogPost {
               <label class="block"><span class="lbl">Author</span>
                 <input [(ngModel)]="model().author" class="inp" /></label>
             </div>
+
+            <label class="block"><span class="lbl">Related project slug</span>
+              <input [(ngModel)]="model().relatedProjectSlug" class="inp" placeholder="e.g. madinah-hotel" />
+              <span class="mt-1 block text-xs text-muted">Adds a “View project” button at the end of the article. Leave blank for none.</span></label>
 
             <div class="block"><span class="lbl">Cover</span>
               <app-image-upload [(value)]="model().cover" /></div>

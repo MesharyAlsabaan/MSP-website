@@ -61,6 +61,8 @@ export interface BlogPostItem {
   publishedAt: string | null;
   seoTitle: L | null;
   seoDescription: L | null;
+  /** Slug of a project this article links to, for an end-of-article CTA. */
+  relatedProjectSlug?: string;
 }
 
 /**

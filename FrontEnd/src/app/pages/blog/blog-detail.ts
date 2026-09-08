@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of, startWith, switchMap } from 'rxjs';
 import { Container } from '../../shared/ui/container/container';
 import { ScrollReveal } from '../../shared/directives/scroll-reveal.directive';
@@ -10,6 +10,7 @@ import { PublicContentService } from '../../core/services/public-content.service
 import { TranslationService } from '../../core/services/translation.service';
 import { SeoService } from '../../core/services/seo.service';
 import { BlogPostItem } from '../../core/models/content.model';
+import { Project } from '../../core/data/projects';
 import { assetUrl } from '../../core/utils/asset-url';
 import { parseArticleBody } from './article-body';
 
@@ -103,6 +104,24 @@ type LoadState =
           </section>
           <app-lightbox [images]="gallery()" [caption]="i18n.pick(article.title)" [(index)]="viewerIndex" [(open)]="viewerOpen" />
         }
+
+        <!-- End-of-article CTA to the related project. A routerLink, never
+             HTML from the body, so the destination is always a real route. -->
+        @if (relatedProject(); as project) {
+          <section class="border-t border-hairline pb-20 pt-12 sm:pb-24 sm:pt-16">
+            <app-container>
+              <div class="mx-auto max-w-3xl">
+                <a
+                  [routerLink]="['/projects', project.slug]"
+                  class="group inline-flex items-center gap-3 border border-ink px-6 py-4 font-mono text-xs uppercase tracking-[0.14em] text-ink transition-colors hover:bg-ink hover:text-bg"
+                >
+                  {{ ctaLabel(project) }}
+                  <span class="dir-flip transition-transform group-hover:translate-x-1">&rarr;</span>
+                </a>
+              </div>
+            </app-container>
+          </section>
+        }
       </article>
     } @else {
       <section class="flex min-h-[60vh] items-center">
@@ -146,6 +165,28 @@ export class BlogDetail {
   protected readonly gallery = computed(() => this.post()?.gallery ?? []);
   protected readonly viewerOpen = signal(false);
   protected readonly viewerIndex = signal(0);
+
+  /** The project the article points to, fetched when a slug is set so the CTA
+   *  can carry the project's real name and only appear for a real project. */
+  protected readonly relatedProject = toSignal(
+    toObservable(this.post).pipe(
+      switchMap((post) => {
+        const slug = post?.relatedProjectSlug;
+        return slug
+          ? this.content.projectBySlug(slug).pipe(catchError(() => of(null)))
+          : of(null);
+      }),
+    ),
+    { initialValue: null },
+  );
+
+  /** "View <project> Project" / "استعرض مشروع <project>", from the live title. */
+  protected ctaLabel(project: Project): string {
+    return this.i18n.pick({
+      en: `View ${project.title.en} Project`,
+      ar: `استعرض مشروع ${project.title.ar}`,
+    });
+  }
 
   protected readonly t = {
     back: { en: 'All insights', ar: 'كل الرؤى' },

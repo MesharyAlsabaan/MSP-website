@@ -29,6 +29,7 @@ export class CreateBlogPostDto {
   @IsOptional() @IsArray() @IsString({ each: true })
   gallery?: string[];
   @ApiProperty() @IsOptional() @IsString() author?: string;
+  @ApiProperty() @IsOptional() @IsString() relatedProjectSlug?: string;
   @ApiProperty({ enum: BlogStatus }) @IsOptional() @IsEnum(BlogStatus) status?: BlogStatus;
   @ApiProperty() @EmptyToUndefined() @IsOptional() @IsDateString() publishedAt?: string;
 
