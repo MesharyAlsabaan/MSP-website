@@ -69,7 +69,7 @@ interface L {
     <!-- Numbers -->
     <section class="bg-ink py-20 text-bg sm:py-24">
       <app-container>
-        <dl class="grid grid-cols-2 gap-x-8 gap-y-12 lg:grid-cols-4">
+        <dl class="grid grid-cols-2 gap-x-8 gap-y-12">
           @for (s of stats; track s.label.en; let i = $index) {
             <div appScrollReveal [revealDelay]="i * 90">
               <dt
@@ -234,11 +234,11 @@ export class AboutPage {
     timelineTitle: { en: 'A measured climb.', ar: 'مسيرةٌ ثابتة.' },
   };
 
+  // Only figures we can stand behind: the latest project number and years in
+  // practice. Built area is unknown, and awards are too few to feature yet.
   protected readonly stats = [
-    { value: 240, suffix: '+', label: { en: 'Projects delivered', ar: 'مشروع مُنجَز' } },
-    { value: 4, suffix: ' M m²', label: { en: 'Built area designed', ar: 'مساحة مُصمَّمة' } },
+    { value: 527, suffix: '+', label: { en: 'Projects delivered', ar: 'مشروع مُنجَز' } },
     { value: 16, suffix: '', label: { en: 'Years in practice', ar: 'عاماً من الخبرة' } },
-    { value: 30, suffix: '', label: { en: 'Awards & citations', ar: 'جائزة وتكريم' } },
   ];
 
   protected readonly values: readonly { no: string; title: L; body: L }[] = [
