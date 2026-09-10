@@ -31,6 +31,7 @@ export const SECTORS: readonly Term[] = [
   { key: 'culture', en: 'Culture', ar: 'ثقافي' },
   { key: 'education', en: 'Education', ar: 'تعليمي' },
   { key: 'work', en: 'Work', ar: 'أعمال ومكاتب' },
+  { key: 'commercial', en: 'Commercial', ar: 'تجاري' },
   { key: 'hospitality', en: 'Hospitality', ar: 'ضيافة' },
   { key: 'residential', en: 'Residential', ar: 'سكني' },
   { key: 'infrastructure', en: 'Infrastructure', ar: 'بنية تحتية' },

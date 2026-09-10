@@ -71,7 +71,16 @@ import { TranslationService } from '../../../../core/services/translation.servic
             >
               <div class="font-mono text-xs uppercase leading-relaxed tracking-[0.15em] text-muted">
                 <p class="text-accent">{{ i18n.pick(t.location) }}</p>
-                <p class="mt-2 text-ink" dir="ltr">24°38'N · 46°43'E</p>
+                <!-- Two studios. The column is narrow, so the coordinates sit
+                     under their city rather than trailing it and wrapping. -->
+                <div class="mt-2 space-y-2">
+                  @for (office of offices; track office.coordinates) {
+                    <p class="text-ink">
+                      {{ i18n.pick(office.city) }}
+                      <span class="block text-muted" dir="ltr">{{ office.coordinates }}</span>
+                    </p>
+                  }
+                </div>
               </div>
               <div class="font-mono text-xs uppercase leading-relaxed tracking-[0.15em] text-muted">
                 <p class="text-accent">{{ i18n.pick(t.disciplines) }}</p>
@@ -90,6 +99,12 @@ import { TranslationService } from '../../../../core/services/translation.servic
 })
 export class Hero {
   protected readonly i18n = inject(TranslationService);
+
+  /** The offices, in the order they opened. */
+  protected readonly offices = [
+    { city: { en: 'Riyadh', ar: 'الرياض' }, coordinates: "24°41'N · 46°35'E" },
+    { city: { en: 'Cairo', ar: 'القاهرة' }, coordinates: "29°58'N · 31°18'E" },
+  ];
 
   protected readonly t = {
     kicker: { en: 'Consultants', ar: 'للاستشارات الهندسية' },

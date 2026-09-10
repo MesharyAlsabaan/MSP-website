@@ -77,6 +77,7 @@ export interface CompanyInfo {
   email?: string;
   addressEn?: string;
   addressAr?: string;
+  mapUrl?: string;
   cairoPhone?: string;
   cairoAddressEn?: string;
   cairoAddressAr?: string;

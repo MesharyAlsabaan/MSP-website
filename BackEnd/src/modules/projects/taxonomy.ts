@@ -22,6 +22,7 @@ export const SECTORS = {
   culture: term('culture', 'Culture', 'ثقافي'),
   education: term('education', 'Education', 'تعليمي'),
   work: term('work', 'Work', 'أعمال ومكاتب'),
+  commercial: term('commercial', 'Commercial', 'تجاري'),
   hospitality: term('hospitality', 'Hospitality', 'ضيافة'),
   residential: term('residential', 'Residential', 'سكني'),
   infrastructure: term('infrastructure', 'Infrastructure', 'بنية تحتية'),

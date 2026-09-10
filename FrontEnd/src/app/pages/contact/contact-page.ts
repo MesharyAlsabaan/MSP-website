@@ -235,16 +235,17 @@ export class ContactPage {
    *  the map link uses their decimal form so it opens the right spot. */
   protected readonly offices: readonly Office[] = [
     {
+      // The office's own Google listing (cid opens the MSP Designs card).
       city: { en: 'Riyadh', ar: 'الرياض' },
-      coordinates: "24°38'N · 46°43'E",
-      map: 'https://www.google.com/maps?q=24.6333,46.7167',
+      coordinates: "24°41'N · 46°35'E",
+      map: 'https://www.google.com/maps?cid=14819986877967963984',
       x: 66,
       y: 58,
     },
     {
       city: { en: 'Cairo', ar: 'القاهرة' },
-      coordinates: "30°02'N · 31°14'E",
-      map: 'https://www.google.com/maps?q=30.0333,31.2333',
+      coordinates: "29°58'N · 31°18'E",
+      map: 'https://www.google.com/maps?cid=7951323106422195141',
       x: 31,
       y: 34,
     },
@@ -271,6 +272,7 @@ export class ContactPage {
           en: c.addressEn || 'King Fahd Road, Riyadh, Saudi Arabia',
           ar: c.addressAr || 'طريق الملك فهد، الرياض، المملكة العربية السعودية',
         },
+        href: c.mapUrl || 'https://www.google.com/maps?cid=14819986877967963984',
       },
       {
         label: { en: 'Hours', ar: 'ساعات العمل' },
@@ -291,7 +293,7 @@ export class ContactPage {
         en: c.cairoAddressEn || 'Cairo, Egypt',
         ar: c.cairoAddressAr || 'القاهرة، مصر',
       },
-      href: c.cairoMapUrl || 'https://www.google.com/maps/place/MSP+DESIGNS/',
+      href: c.cairoMapUrl || 'https://www.google.com/maps?cid=7951323106422195141',
     });
     return result;
   });
