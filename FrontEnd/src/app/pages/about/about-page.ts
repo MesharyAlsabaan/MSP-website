@@ -234,11 +234,11 @@ export class AboutPage {
     timelineTitle: { en: 'A measured climb.', ar: 'مسيرةٌ ثابتة.' },
   };
 
-  // Only figures we can stand behind: the latest project number and years in
-  // practice. Built area is unknown, and awards are too few to feature yet.
+  // Only figures we can stand behind, rounded and shown as "500+" / "16+".
+  // Built area is unknown, and awards are too few to feature yet.
   protected readonly stats = [
-    { value: 527, suffix: '+', label: { en: 'Projects delivered', ar: 'مشروع مُنجَز' } },
-    { value: 16, suffix: '', label: { en: 'Years in practice', ar: 'عاماً من الخبرة' } },
+    { value: 500, suffix: '+', label: { en: 'Projects delivered', ar: 'مشروع مُنجَز' } },
+    { value: 16, suffix: '+', label: { en: 'Years in practice', ar: 'عاماً من الخبرة' } },
   ];
 
   protected readonly values: readonly { no: string; title: L; body: L }[] = [

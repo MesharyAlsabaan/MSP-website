@@ -12,7 +12,23 @@ server {
 
   client_max_body_size 10M;
   gzip on;
-  gzip_types text/css application/javascript application/json image/svg+xml;
+  gzip_comp_level 6;
+  gzip_min_length 1024;
+  gzip_vary on;
+  gzip_types text/css text/plain application/javascript application/json
+             image/svg+xml application/manifest+json application/xml;
+
+  # Angular fingerprints every build asset (main-<hash>.js, styles-<hash>.css),
+  # so a given URL's bytes never change — cache them for a year and skip the
+  # revalidation round-trip on every repeat visit and navigation. This is the
+  # single biggest load-time win; without it the browser re-fetched all JS,
+  # CSS, fonts and images each time.
+  location ~* \.(?:js|mjs|css|woff2?|ttf|otf|eot|jpg|jpeg|png|webp|avif|gif|svg|ico|mp4)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    access_log off;
+    try_files $uri =404;
+  }
 
   # API, Swagger and uploaded files -> NestJS backend.
   # BACKEND_URL is env-configurable (Docker Compose: http://backend:3000,
@@ -37,6 +53,10 @@ server {
   # home page, so serving it for /auth/login handed the browser a fully rendered
   # homepage, which Angular then hydrated as the home route and left on screen.
   location / {
+    # HTML (prerendered pages + the app shell) must revalidate so a new deploy
+    # is picked up at once, even though the hashed assets it points to are
+    # cached hard above.
+    add_header Cache-Control "no-cache";
     try_files $uri $uri/ /index.csr.html;
   }
 }
