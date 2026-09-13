@@ -35,7 +35,10 @@ server {
   # Railway: http://<service>.railway.internal:3000). Using a variable in
   # proxy_pass forces nginx to re-resolve DNS, so backend redeploys with new
   # IPs keep working without restarting this container.
-  location /api/ {
+  # `^~` so this beats the static-asset regex below: uploaded files like
+  # /api/uploads/x.webp must be proxied to the backend, not looked up on the
+  # local static root (which 404s). Regex locations otherwise win over prefixes.
+  location ^~ /api/ {
     resolver ${DNS_RESOLVER} valid=10s;
     set $api_upstream ${BACKEND_URL};
     proxy_pass         $api_upstream;
