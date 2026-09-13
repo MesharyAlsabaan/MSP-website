@@ -26,7 +26,7 @@ interface Stat {
           <span class="h-px flex-1 bg-bg/15"></span>
         </div>
 
-        <dl class="mt-14 grid grid-cols-1 gap-x-8 gap-y-12">
+        <dl class="mt-14 grid grid-cols-2 gap-x-8 gap-y-12">
           @for (stat of i18n.pick(t.stats); track stat.label; let i = $index) {
             <div appScrollReveal [revealDelay]="i * 90">
               <dt
@@ -56,10 +56,12 @@ export class Stats {
     eyebrow: { en: 'By the Numbers', ar: 'بالأرقام' },
     stats: {
       en: [
-        { value: this.experienceYears, suffix: ' yrs', label: 'In practice' },
+        { value: 500, suffix: '+', label: 'Projects delivered' },
+        { value: this.experienceYears, suffix: '+', label: 'Years in practice' },
       ],
       ar: [
-        { value: this.experienceYears, suffix: ' عاماً', label: 'من الخبرة' },
+        { value: 500, suffix: '+', label: 'مشروع مُنجَز' },
+        { value: this.experienceYears, suffix: '+', label: 'عاماً من الخبرة' },
       ],
     },
   };

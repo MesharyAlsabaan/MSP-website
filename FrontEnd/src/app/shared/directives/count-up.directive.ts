@@ -46,6 +46,17 @@ export class CountUp implements OnDestroy {
       }
 
       target.textContent = '0';
+
+      // If the section is already on screen at load (e.g. a short page, or the
+      // browser restored the scroll position), the observer may never report a
+      // fresh intersection and the number would sit at 0. Run at once in that
+      // case; otherwise animate when it scrolls into view.
+      const rect = this.host.nativeElement.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        this.run(target);
+        return;
+      }
+
       this.observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
@@ -55,7 +66,7 @@ export class CountUp implements OnDestroy {
             }
           }
         },
-        { threshold: 0.4 },
+        { threshold: 0.25 },
       );
       this.observer.observe(this.host.nativeElement);
     });
