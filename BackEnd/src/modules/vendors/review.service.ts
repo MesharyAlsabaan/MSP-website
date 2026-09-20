@@ -171,6 +171,27 @@ export class ReviewService {
     return { id: out.id, status: out.status };
   }
 
+  /**
+   * Re-opens an APPROVED application for renewed/updated documents. The vendor
+   * gets a completion link; the currently approved revision stays the record
+   * of truth (and in the archive) until the resubmitted revision is approved.
+   */
+  async requestUpdate(applicationId: string, actor: Actor, items: string[], note: string) {
+    const cleaned = items.map((s) => String(s).trim().slice(0, 300)).filter(Boolean);
+    const out = await this.dataSource.transaction(async (m) => {
+      const { app, revision } = await this.lockCurrent(m, applicationId);
+      assertReviewerAction(app.status, ReviewAction.UpdateRequested);
+      app.status = QualificationStatus.NeedsCompletion;
+      await m.getRepository(VendorApplication).save(app);
+      await m.getRepository(VendorReviewEvent).save({
+        applicationId, revisionId: revision.id, action: ReviewAction.UpdateRequested, note, missingItems: cleaned, actorUserId: actor.id, actorName: actor.name,
+      });
+      await this.vendors.sendCompletionRequest(m, app, app.vendor, revision, cleaned, note);
+      return app;
+    });
+    return { id: out.id, status: out.status };
+  }
+
   async approve(applicationId: string, actor: Actor, note: string) {
     const out = await this.dataSource.transaction(async (m) => {
       const { app, revision } = await this.lockCurrent(m, applicationId);

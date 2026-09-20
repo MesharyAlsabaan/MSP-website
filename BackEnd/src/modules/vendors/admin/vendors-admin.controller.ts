@@ -100,6 +100,12 @@ export class VendorsAdminController {
     return this.review.requestCompletion(id, await this.actor(user), dto.missingItems, dto.note ?? '');
   }
 
+  @Post(':id/request-update')
+  @ApiOperation({ summary: 'Re-open an approved vendor for updated documents (renewal round)' })
+  async requestUpdate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RequestCompletionDto, @CurrentUser() user: AuthUser) {
+    return this.review.requestUpdate(id, await this.actor(user), dto.missingItems, dto.note ?? '');
+  }
+
   @Post(':id/approve')
   async approve(@Param('id', ParseUUIDPipe) id: string, @Body() dto: NoteDto, @CurrentUser() user: AuthUser) {
     return this.review.approve(id, await this.actor(user), dto.note ?? '');

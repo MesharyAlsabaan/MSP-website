@@ -70,7 +70,7 @@ export class ArchiveApi {
     return (json.data ?? (json as unknown)) as T;
   }
 
-  pending(): Promise<PendingJob[]> { return this.call('GET', '/archive/jobs'); }
+  pending(): Promise<PendingJob[]> { return this.call('GET', `/archive/jobs?agentId=${encodeURIComponent(this.agentId)}`); }
   lease(jobId: string, ttlSec: number): Promise<Lease> { return this.call('POST', `/archive/jobs/${jobId}/lease`, { agentId: this.agentId, ttlSec }); }
   renew(jobId: string, leaseToken: string, ttlSec: number): Promise<{ leaseExpiresAt: string }> { return this.call('POST', `/archive/jobs/${jobId}/renew`, { agentId: this.agentId, leaseToken, ttlSec }); }
   step(jobId: string, leaseToken: string, step: string): Promise<void> { return this.call('POST', `/archive/jobs/${jobId}/step`, { agentId: this.agentId, leaseToken, step }); }

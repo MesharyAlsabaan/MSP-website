@@ -146,7 +146,7 @@ export class VendorsService {
     const revision = await this.latestRevision(this.dataSource.manager, app.id);
     const documents = await this.dataSource.getRepository(VendorRevisionDocument).find({ where: { revisionId: revision.id } });
     const lastRequest = await this.dataSource.getRepository(VendorReviewEvent).findOne({
-      where: { applicationId: app.id, action: ReviewAction.CompletionRequested },
+      where: { applicationId: app.id, action: In([ReviewAction.CompletionRequested, ReviewAction.UpdateRequested]) },
       order: { createdAt: 'DESC' },
     });
     return {

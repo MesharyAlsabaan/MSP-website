@@ -82,4 +82,16 @@ async function main(): Promise<number> {
   return exitCode;
 }
 
-main().then((code) => process.exit(code), (err) => { process.stderr.write(`${err?.stack ?? err}\n`); process.exit(1); });
+// Let the event loop drain (keep-alive sockets close on their own) instead of a
+// hard process.exit, which trips a libuv assertion on Windows. The unref'd
+// timer is a safety net in case a handle refuses to close.
+main().then(
+  (code) => {
+    process.exitCode = code;
+    setTimeout(() => process.exit(code), 5000).unref();
+  },
+  (err) => {
+    process.stderr.write(`${err?.stack ?? err}\n`);
+    process.exitCode = 1;
+  },
+);

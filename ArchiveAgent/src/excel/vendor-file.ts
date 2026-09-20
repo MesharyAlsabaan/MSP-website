@@ -76,7 +76,8 @@ export async function writeVendorFile(file: string, input: VendorFileInput): Pro
   docs.getRow(1).font = { bold: true };
   for (const d of input.documents) {
     const r = docs.addRow([d.typeName, '', d.expiresAt ?? '', Math.round(d.sizeBytes / 1024), d.sha256]);
-    r.getCell(2).value = { text: d.originalFilename, hyperlink: d.relativePath.split('\\').map(encodeURIComponent).join('/'), tooltip: d.relativePath };
+    // Relative, unencoded, forward slashes: Excel resolves it against the workbook's folder.
+    r.getCell(2).value = { text: d.originalFilename, hyperlink: d.relativePath.replace(/\\/g, '/'), tooltip: d.relativePath };
   }
 
   const dec = wb.addWorksheet('سجل الاعتماد', rtl);

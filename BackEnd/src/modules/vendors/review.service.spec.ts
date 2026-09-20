@@ -127,6 +127,27 @@ describe('ReviewService', () => {
     expect(await ds.getRepository(VendorArchiveJob).count()).toBe(jobsBefore);
   });
 
+  it('an approved vendor can be asked for an update; the resubmitted revision is approved as v2 with its own job', async () => {
+    const { applicationId } = await submitOne();
+    await review.approve(applicationId, reviewer, '');
+    await expect(review.requestCompletion(applicationId, reviewer, ['x'], '')).rejects.toThrow(ConflictException);
+    await review.requestUpdate(applicationId, reviewer, ['السجل التجاري تجدد'], 'يرجى رفع السجل الجديد');
+    const app = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
+    expect(app.status).toBe(QualificationStatus.NeedsCompletion);
+    const vendorBefore = await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId });
+    expect(vendorBefore.approvedRevisionId).not.toBeNull(); // still approved on record while the update is pending
+    const token = await ds.getRepository('vendor_completion_tokens').count({ where: { applicationId, usedAt: null as never } });
+    expect(token).toBe(1);
+    await ds.getRepository(VendorApplicationRevision).save({ applicationId, revisionNo: 2, data: { ...profile }, submittedAt: new Date(), decision: null, decidedAt: null, decidedByUserId: null, decidedByName: '', decisionNote: '' });
+    await ds.getRepository(VendorApplication).update(applicationId, { status: QualificationStatus.UnderReview, currentRevisionNo: 2 });
+    await review.approve(applicationId, reviewer, 'تحديث');
+    const rev2 = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ applicationId, revisionNo: 2 });
+    const job = await ds.getRepository(VendorArchiveJob).findOneByOrFail({ revisionId: rev2.id });
+    expect(job.sequenceNo).toBe(2);
+    const vendorAfter = await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId });
+    expect(vendorAfter.approvedRevisionId).toBe(rev2.id);
+  });
+
   it('a re-approval after a later revision creates a job with the next sequence number', async () => {
     const { applicationId } = await submitOne();
     await review.approve(applicationId, reviewer, '');
