@@ -18,6 +18,8 @@ import { TeamModule } from './modules/team/team.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
+import { MailModule } from './modules/mail/mail.module';
+import { VendorsModule } from './modules/vendors/vendors.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { UsersModule } from './modules/users/users.module';
     ContactModule,
     SettingsModule,
     UploadsModule,
+    MailModule,
+    VendorsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

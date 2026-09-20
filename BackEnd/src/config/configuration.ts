@@ -58,4 +58,12 @@ export default () => ({
     dir: process.env.UPLOAD_DIR ?? 'uploads',
     maxMb: parseInt(process.env.MAX_UPLOAD_MB ?? '5', 10),
   },
+  /** Public site origin used in emails (review links, completion links). */
+  publicUrl: process.env.PUBLIC_URL ?? 'http://localhost:4200',
+  vendorDocs: {
+    // Pending vendor documents. NOT under uploads/ and never served statically.
+    dir: process.env.VENDOR_DOCS_DIR ?? 'vendor-docs',
+    // Review-team inbox for new/resubmitted applications; empty = no mail.
+    reviewInbox: process.env.VENDOR_REVIEW_INBOX ?? '',
+  },
 });
