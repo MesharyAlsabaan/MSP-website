@@ -102,8 +102,12 @@ export class ArchiveJobsService {
 
   // ---------------------------------------------------------------- queue
 
-  /** Jobs an agent may try to lease now: pending, or leased but expired. Oldest sequence first per vendor. */
-  async listPending(): Promise<PendingJobRow[]> {
+  /**
+   * Jobs an agent may work on now: pending, leased-but-expired, or leased by
+   * this very agent (so a restart resumes its own half-done job instead of
+   * waiting for the lease to lapse). Oldest sequence first per vendor.
+   */
+  async listPending(agentId?: string): Promise<PendingJobRow[]> {
     return this.dataSource
       .getRepository(VendorArchiveJob)
       .createQueryBuilder('j')
@@ -112,6 +116,7 @@ export class ArchiveJobsService {
       .innerJoin(VendorApplication, 'a', 'a.id = r.application_id')
       .where('j.status = :pending', { pending: ArchiveStatus.Pending })
       .orWhere('(j.status = :transferring AND j.lease_expires_at < now())', { transferring: ArchiveStatus.Transferring })
+      .orWhere('(j.status = :transferring AND :agentId::text IS NOT NULL AND j.lease_owner = :agentId)', { agentId: agentId ?? null })
       .select([
         'j.id AS "id"', 'j.sequence_no AS "sequenceNo"', 'j.status AS "status"', 'j.attempts AS "attempts"',
         'v.vendor_number AS "vendorNumber"', 'v.company_name AS "companyName"',

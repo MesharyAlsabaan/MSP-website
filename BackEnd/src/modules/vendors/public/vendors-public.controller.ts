@@ -14,6 +14,7 @@ import { Throttle } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { Public } from '../../../common/decorators/public.decorator';
 import { UPLOAD_LIMITS } from '../file-validation';
+import { decodeMultipartFilename } from '../filename-encoding';
 import { SubmitInput, UploadedDoc, VendorsService } from '../vendors.service';
 
 /** Multer field name convention: `doc__<docTypeKey>` carries one document. */
@@ -43,7 +44,7 @@ function parseMultipart(body: Record<string, string>, files: MulterFile[]): { in
   for (const f of files ?? []) {
     const m = DOC_FIELD.exec(f.fieldname);
     if (!m) throw new BadRequestException(`Unexpected file field "${f.fieldname}".`);
-    docs.push({ docTypeKey: m[1], originalname: f.originalname, buffer: f.buffer, size: f.size });
+    docs.push({ docTypeKey: m[1], originalname: decodeMultipartFilename(f.originalname), buffer: f.buffer, size: f.size });
   }
   return { input, docs };
 }

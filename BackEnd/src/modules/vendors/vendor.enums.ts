@@ -25,6 +25,8 @@ export enum ReviewAction {
   Approved = 'approved',
   Rejected = 'rejected',
   ArchiveRetried = 'archive_retried',
+  /** Staff re-opened an APPROVED vendor for updated documents (renewals). */
+  UpdateRequested = 'update_requested',
 }
 
 /** The decision recorded on one revision (null while still under review). */

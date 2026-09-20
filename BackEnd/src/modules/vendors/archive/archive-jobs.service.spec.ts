@@ -93,6 +93,15 @@ describe('ArchiveJobsService', () => {
     expect(again.leaseToken).not.toBe(lease.leaseToken);
   });
 
+  it('lists jobs leased by the asking agent (so it can resume them) but not jobs leased by others', async () => {
+    const appId = await approvedApp('شركة ز');
+    const job = await jobs.jobForApplication(appId);
+    await jobs.lease(job.id, 'agent-A', 300);
+    expect((await jobs.listPending()).find((p) => p.id === job.id)).toBeUndefined();
+    expect((await jobs.listPending('agent-B')).find((p) => p.id === job.id)).toBeUndefined();
+    expect((await jobs.listPending('agent-A')).find((p) => p.id === job.id)).toBeDefined();
+  });
+
   it('streams a document only to the lease holder and verifies the token', async () => {
     const appId = await approvedApp('شركة ب');
     const job = await jobs.jobForApplication(appId);

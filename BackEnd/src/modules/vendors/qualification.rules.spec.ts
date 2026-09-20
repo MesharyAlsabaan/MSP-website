@@ -23,6 +23,13 @@ describe('qualification transitions', () => {
     expect(() => assertReviewerAction(NeedsCompletion, ReviewAction.Rejected)).not.toThrow();
   });
 
+  it('allows an update round to be opened on an approved application only', () => {
+    expect(() => assertReviewerAction(Approved, ReviewAction.UpdateRequested)).not.toThrow();
+    for (const s of [UnderReview, NeedsCompletion, Rejected]) {
+      expect(() => assertReviewerAction(s, ReviewAction.UpdateRequested)).toThrow();
+    }
+  });
+
   it('only allows the vendor to resubmit when completion was requested', () => {
     expect(canVendorResubmit(NeedsCompletion)).toBe(true);
     expect(canVendorResubmit(UnderReview)).toBe(false);

@@ -8,8 +8,13 @@ import { QualificationStatus, ReviewAction } from './vendor.enums';
  *   under_review ──approved──▶ approved   (terminal)
  *   under_review ──rejected──▶ rejected   (terminal)
  *   needs_completion ──rejected──▶ rejected
+ *   approved ──update_requested──▶ needs_completion   (renewal round; the approved record stays until the new revision is approved)
  */
 export function assertReviewerAction(current: QualificationStatus, action: ReviewAction): void {
+  if (action === ReviewAction.UpdateRequested) {
+    if (current === QualificationStatus.Approved) return;
+    throw new ConflictException('An update round can only be opened on an approved application.');
+  }
   if (current === QualificationStatus.Approved || current === QualificationStatus.Rejected) {
     throw new ConflictException(`Application is already ${current}; no further decision is possible.`);
   }

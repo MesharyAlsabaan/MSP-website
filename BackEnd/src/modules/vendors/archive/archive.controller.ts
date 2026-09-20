@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { IsInt, IsObject, IsOptional, IsString, Length, Max, Min } from 'class-validator';
@@ -46,9 +46,9 @@ export class ArchiveController {
   constructor(private readonly jobs: ArchiveJobsService) {}
 
   @Get('jobs')
-  @ApiOperation({ summary: 'Approved revisions waiting to be archived (pending or lease expired)' })
-  pending() {
-    return this.jobs.listPending();
+  @ApiOperation({ summary: 'Approved revisions waiting to be archived (pending, lease expired, or leased by this agent)' })
+  pending(@Query('agentId') agentId?: string) {
+    return this.jobs.listPending(agentId ? String(agentId).slice(0, 128) : undefined);
   }
 
   @Post('jobs/:id/lease')

@@ -211,6 +211,8 @@ describe('Vendor journey over HTTP', () => {
     }
     const vat = manifest.documents.find((d: { docTypeKey: string }) => d.docTypeKey === 'vat-certificate');
     expect(vat.originalFilename).toBe('vat-2027.pdf');
+    const cr = manifest.documents.find((d: { docTypeKey: string }) => d.docTypeKey === 'commercial-registration');
+    expect(cr.originalFilename).toBe('السجل التجاري.pdf'); // Arabic name survives multipart
 
     await http().post(`/api/archive/jobs/${jobId}/step`).set('X-Archive-Key', agentKey).send({ agentId: 'office-1', leaseToken, step: 'filesPlaced' }).expect(201);
     await http().post(`/api/archive/jobs/${jobId}/complete`).set('X-Archive-Key', agentKey).send({ agentId: 'office-1', leaseToken, archivePath: 'T:\\test\\مقاولون عامون\\SUP-000001 - شركة الإنشاءات المتحدة' }).expect(201);
