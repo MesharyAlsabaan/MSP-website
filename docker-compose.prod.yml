@@ -16,12 +16,38 @@ services:
       timeout: 5s
       retries: 10
 
+  # One-shot deploy step: applies pending migrations and exits. `backend` only
+  # starts once this has succeeded, so a failed migration never boots the app
+  # against a half-migrated schema. First deploy on a database created by the
+  # old auto-sync: run `docker compose -f docker-compose.prod.yml run --rm
+  # migrate npm run migration:baseline:prod` once BEFORE `up` (DEPLOYMENT.md).
+  migrate:
+    build: ./BackEnd
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-msp}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-msp_db}
+      DB_SYNCHRONIZE: "false"
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+    command: ["npm", "run", "migration:run:prod"]
+
   backend:
     build: ./BackEnd
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -32,7 +58,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:-msp}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME:-msp_db}
-      DB_SYNCHRONIZE: "true"
+      DB_SYNCHRONIZE: "false"
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}

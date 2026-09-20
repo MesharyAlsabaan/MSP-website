@@ -34,7 +34,10 @@ async function run() {
   const cfg = configuration();
   const ds = new DataSource(dataSourceOptions);
   await ds.initialize();
-  console.log('Connected. Seeding…');
+  // Tables come from migrations now (synchronize is off), so bring the schema
+  // up to date before writing sample rows into it.
+  await ds.runMigrations();
+  console.log('Connected, schema up to date. Seeding…');
 
   // --- Admin user ---
   const userRepo = ds.getRepository(User);

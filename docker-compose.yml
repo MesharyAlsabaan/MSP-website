@@ -17,12 +17,34 @@ services:
       timeout: 5s
       retries: 10
 
+  # One-shot step: applies pending migrations and exits before `backend` starts.
+  migrate:
+    build: ./BackEnd
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-msp}
+      DB_PASSWORD: ${DB_PASSWORD:-msp_password}
+      DB_NAME: ${DB_NAME:-msp_db}
+      DB_SYNCHRONIZE: "false"
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-too}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?set SEED_ADMIN_PASSWORD}
+    command: ["npm", "run", "migration:run:prod"]
+
   backend:
     build: ./BackEnd
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -33,7 +55,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:-msp}
       DB_PASSWORD: ${DB_PASSWORD:-msp_password}
       DB_NAME: ${DB_NAME:-msp_db}
-      DB_SYNCHRONIZE: "true"
+      DB_SYNCHRONIZE: "false"
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-too}
