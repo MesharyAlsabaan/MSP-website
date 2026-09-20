@@ -34,6 +34,18 @@ export const routes: Routes = [
           import('./pages/admin/projects/projects-admin').then((m) => m.AdminProjects),
       },
       {
+        path: 'vendors',
+        canActivate: [roleGuard(Role.SuperAdmin, Role.VendorReviewer)],
+        loadComponent: () =>
+          import('./pages/admin/vendors/vendors-admin').then((m) => m.AdminVendors),
+      },
+      {
+        path: 'vendors/:id',
+        canActivate: [roleGuard(Role.SuperAdmin, Role.VendorReviewer)],
+        loadComponent: () =>
+          import('./pages/admin/vendors/vendor-detail-admin').then((m) => m.AdminVendorDetail),
+      },
+      {
         path: 'messages',
         canActivate: [roleGuard(Role.SuperAdmin, Role.ContentManager)],
         loadComponent: () =>
@@ -136,6 +148,16 @@ export const routes: Routes = [
         path: 'contact',
         loadComponent: () =>
           import('./pages/contact/contact-page').then((m) => m.ContactPage),
+      },
+      {
+        path: 'vendors/register',
+        loadComponent: () =>
+          import('./pages/vendors/vendor-register-page').then((m) => m.VendorRegisterPage),
+      },
+      {
+        path: 'vendors/resume/:token',
+        loadComponent: () =>
+          import('./pages/vendors/vendor-resume-page').then((m) => m.VendorResumePage),
       },
       {
         path: 'privacy',

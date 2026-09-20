@@ -19,6 +19,11 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
   { path: '/admin/partners', label: 'Partners', resource: 'partners' },
   { path: '/admin/blog', label: 'Blog', resource: 'blog' },
   {
+    path: '/admin/vendors',
+    label: 'Vendors',
+    roles: [Role.SuperAdmin, Role.VendorReviewer],
+  },
+  {
     path: '/admin/messages',
     label: 'Messages',
     resource: 'contact',
