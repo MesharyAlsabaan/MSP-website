@@ -12,6 +12,7 @@ import { Setting } from '../../modules/settings/entities/setting.entity';
 import { TeamMember } from '../../modules/team/entities/team-member.entity';
 import { Testimonial } from '../../modules/testimonials/entities/testimonial.entity';
 import { User } from '../../modules/users/entities/user.entity';
+import { seedVendorCategories } from './vendor-categories.seed';
 
 const L = (en: string, ar: string) => ({ en, ar });
 
@@ -343,6 +344,10 @@ For MSP, designing hospitality in Madinah means listening to the place before sh
     await upsert(ds, Setting, { key }, { key, value } as Partial<Setting>);
   }
   console.log(`  ✓ ${Object.keys(settings).length} settings`);
+
+  // --- Vendor categories (provisional, editable in the admin) ---
+  await seedVendorCategories(ds);
+  console.log('  ✓ vendor categories + document requirements');
 
   // touch ContactMessage repo so the table is verified to exist
   await ds.getRepository(ContactMessage).count();
