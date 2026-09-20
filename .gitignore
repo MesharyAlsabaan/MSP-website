@@ -25,3 +25,13 @@ BRANDING/
 *.indd
 *.tif
 *.tiff
+
+# Vendor documents, local mail outbox (never committed)
+BackEnd/vendor-docs/
+BackEnd/mail-outbox/
+vendor-docs/
+mail-outbox/
+ArchiveAgent/test-archive/
+ArchiveAgent/state/
+ArchiveAgent/logs/
+ArchiveAgent/config.json
