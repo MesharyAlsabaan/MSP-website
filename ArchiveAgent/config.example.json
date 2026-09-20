@@ -1,0 +1,14 @@
+{
+  "apiBaseUrl": "https://www.msp.sa/api",
+  "agentId": "office-archive-1",
+  "archiveRoot": "\\Server\Contracting\الموردون المعتمدون",
+  "pollIntervalSec": 60,
+  "leaseTtlSec": 600,
+  "logDir": "logs",
+  "stateDir": "state",
+  "registerFileName": "سجل الموردين.xlsx",
+  "vendorFileName": "بيانات المورد.xlsx",
+  "previousVersionsFolder": "_إصدارات سابقة",
+  "decisionFolder": "سجل الاعتماد",
+  "shortcutFileName": "افتح مجلد المورد.url"
+}
