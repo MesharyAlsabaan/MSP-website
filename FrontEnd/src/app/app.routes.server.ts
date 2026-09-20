@@ -13,6 +13,11 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    // Vendor completion links carry a one-time token — client-rendered only.
+    path: 'vendors/resume/:token',
+    renderMode: RenderMode.Client,
+  },
+  {
     // Admin CMS + auth: dynamic, auth-gated — client-rendered, never prerendered.
     path: 'admin',
     renderMode: RenderMode.Client,
