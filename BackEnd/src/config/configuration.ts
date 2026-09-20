@@ -32,7 +32,13 @@ export default () => ({
     username: process.env.DB_USERNAME ?? 'msp',
     password: secret('DB_PASSWORD', 'msp_password'),
     name: process.env.DB_NAME ?? 'msp_db',
-    synchronize: (process.env.DB_SYNCHRONIZE ?? 'true') === 'true',
+    // Postgres schema. Tests and migration dry-runs use an isolated schema in
+    // the same database, so they never need CREATEDB rights.
+    schema: process.env.DB_SCHEMA ?? 'public',
+    // Schema changes go through migrations (src/database/migrations). Auto-sync
+    // is an explicit opt-in for local development only — never in production,
+    // where it can silently drop columns and data.
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
   },
   jwt: {
     // Sign both tokens with a per-deployment secret. The old fallback let
