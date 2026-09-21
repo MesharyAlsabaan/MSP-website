@@ -31,7 +31,8 @@
     "vendor:migration:show:prod": "typeorm migration:show -d dist/database/vendor-data-source.js",
     "vendor:seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed-vendors.ts",
     "vendor:start:prod": "node dist/vendor-service.main.js",
-    "vendor:start:dev": "ts-node -r tsconfig-paths/register src/vendor-service.main.ts"
+    "vendor:start:dev": "ts-node -r tsconfig-paths/register src/vendor-service.main.ts",
+    "mail:test": "ts-node -r tsconfig-paths/register src/modules/mail/mail-test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

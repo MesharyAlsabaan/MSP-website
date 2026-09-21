@@ -21,6 +21,8 @@ export interface MailSendResult {
 export interface MailOptions {
   smtp: { host: string; port: number; secure: boolean; user?: string; pass?: string } | null;
   from: string;
+  /** Default Reply-To (e.g. supply@msp.sa) so vendors' replies reach the team, whatever the sending mailbox. */
+  replyTo?: string;
   /** Where messages are written as .eml when no SMTP is configured (local/test). */
   outboxDir: string;
 }
@@ -54,7 +56,7 @@ export class MailService {
 
   async send(msg: MailMessage): Promise<MailSendResult> {
     try {
-      const info = await this.transporter.sendMail({ from: this.opts.from, ...msg });
+      const info = await this.transporter.sendMail({ from: this.opts.from, replyTo: this.opts.replyTo, ...msg });
       if (this.opts.smtp) {
         this.log.log(`Sent "${msg.subject}" (${info.messageId})`);
         return { delivered: true };
@@ -87,6 +89,7 @@ export function mailOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): MailOp
         }
       : null,
     from: env.MAIL_FROM ?? 'MSP Design <no-reply@msp.sa>',
+    replyTo: env.MAIL_REPLY_TO || undefined,
     outboxDir: env.MAIL_OUTBOX_DIR ?? 'mail-outbox',
   };
 }
