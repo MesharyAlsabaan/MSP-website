@@ -8,7 +8,8 @@
  */
 import { generateKeyPairSync } from 'node:crypto';
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 3072 });
-const oneLine = (pem) => pem.trim().replace(/\n/g, '\n');
+// Real newlines become the two characters "\n" — what Railway/.env files expect on one line.
+const oneLine = (pem) => pem.trim().split('\n').join('\\n');
 console.log('JWT_PRIVATE_KEY (website / Railway only):');
 console.log(oneLine(privateKey.export({ type: 'pkcs8', format: 'pem' })));
 console.log('\nJWT_PUBLIC_KEY (office vendor service):');
