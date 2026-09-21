@@ -15,10 +15,17 @@ interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService) {
+    // Same rules as StaffTokenService.verifyAccess: pinned algorithm, issuer
+    // and the admin audience. RS256 public key when configured, HS256 in dev.
+    const o = staffTokenOptionsFromEnv(process.env, config.get<string>('jwt.secret'));
+    const keyPair = !!(o.publicKey || o.privateKey);
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('jwt.secret'),
+      secretOrKey: keyPair ? (o.publicKey ?? o.privateKey) : o.hsSecret,
+      algorithms: [keyPair ? 'RS256' : 'HS256'],
+      issuer: o.issuer,
+      audience: o.audience[0],
     });
   }
 

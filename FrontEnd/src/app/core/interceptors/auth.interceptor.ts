@@ -2,10 +2,12 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { STORAGE_KEYS } from '../constants/api.constants';
+import { isVendorPortalUrl } from './vendor.interceptor';
 
 /** Attaches the bearer token (if present) to outgoing requests. */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+  // Vendor-portal routes of the office service carry the VENDOR token (vendorInterceptor), never the staff one.
+  if (!isPlatformBrowser(inject(PLATFORM_ID)) || isVendorPortalUrl(req.url)) {
     return next(req);
   }
 

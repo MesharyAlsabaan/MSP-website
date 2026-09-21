@@ -12,6 +12,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly staffTokens: StaffTokenService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -54,11 +55,11 @@ export class AuthService {
     user: Record<string, unknown>,
   ) {
     const payload = { sub, email, role, name: String(user.name ?? '') };
+    // Access token: RS256 with iss/aud in production (StaffTokenService) so the
+    // office vendor service can verify it with the public key alone. The
+    // refresh token is only ever read back here, so HS256 is fine.
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwt.signAsync(payload, {
-        secret: this.config.get<string>('jwt.secret'),
-        expiresIn: this.config.get<string>('jwt.expiresIn'),
-      }),
+      this.staffTokens.signAccess(payload),
       this.jwt.signAsync(payload, {
         secret: this.config.get<string>('jwt.refreshSecret'),
         expiresIn: this.config.get<string>('jwt.refreshExpiresIn'),

@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { isVendorPortalUrl } from './vendor.interceptor';
 
 /**
  * On a 401, transparently refreshes the access token and retries the request
@@ -18,7 +19,9 @@ export const authRefreshInterceptor: HttpInterceptorFn = (req, next) => {
       const isAuthEndpoint =
         req.url.includes('/auth/login') || req.url.includes('/auth/refresh');
 
-      if (error.status !== 401 || isAuthEndpoint) {
+      // A vendor-portal 401 is the vendor's own session, not the staff one:
+      // never refresh or log out the staff session for it.
+      if (error.status !== 401 || isAuthEndpoint || isVendorPortalUrl(req.url)) {
         return throwError(() => error);
       }
 
