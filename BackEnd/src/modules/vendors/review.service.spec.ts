@@ -1,39 +1,21 @@
 import { ConflictException } from '@nestjs/common';
-import { mkdtempSync, readdirSync, rmSync } from 'fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { DataSource } from 'typeorm';
 import { seedVendorCategories } from '../../database/seeds/vendor-categories.seed';
-import { openTestDb } from '../../test/test-db';
+import { openVendorTestDb } from '../../test/test-db';
 import { MailService } from '../mail/mail.service';
-import { CompletionTokenService } from './completion-token.service';
-import { Vendor, VendorApplication, VendorApplicationRevision, VendorArchiveJob, VendorReviewEvent } from './entities';
+import { Vendor, VendorAccount, VendorApplication, VendorApplicationRevision, VendorArchiveJob, VendorReviewEvent } from './entities';
 import { NumberingService } from './numbering.service';
 import { ReviewService } from './review.service';
 import { LocalDiskStorage } from './storage/local-disk.storage';
 import { ArchiveStatus, QualificationStatus, ReviewAction, RevisionDecision } from './vendor.enums';
-import { UploadedDoc, VendorsService } from './vendors.service';
+import { UploadedFile, VendorsService } from './vendors.service';
 
 const PDF = (label: string): Buffer => Buffer.from(`%PDF-1.7\n% ${label}\n1 0 obj << >> endobj\n`);
-const doc = (type: string, name: string, body: Buffer): UploadedDoc => ({ docTypeKey: type, originalname: name, buffer: body, size: body.length });
+const file = (name: string, body: Buffer): UploadedFile => ({ originalname: name, buffer: body, size: body.length });
 const reviewer = { id: '11111111-1111-4111-8111-111111111111', name: 'م. منصور' };
-
-const profile = {
-  companyName: 'مؤسسة الرخام الملكي',
-  contactName: 'سعد',
-  mobile: '0555555555',
-  email: 'saad@example.test',
-  city: 'جدة',
-  commercialRegistrationNo: '4030303030',
-  primaryCategoryKey: 'finishes-stone',
-  secondaryCategoryKeys: [],
-  expiries: { 'commercial-registration': '2027-01-31', 'vat-certificate': '2026-12-31' },
-};
-const docs = () => [
-  doc('commercial-registration', 'cr.pdf', PDF('cr')),
-  doc('vat-certificate', 'vat.pdf', PDF('vat')),
-  doc('company-profile', 'profile.pdf', PDF('profile')),
-];
 
 describe('ReviewService', () => {
   let ds: DataSource;
@@ -41,29 +23,41 @@ describe('ReviewService', () => {
   let tmp: string;
   let vendors: VendorsService;
   let review: ReviewService;
+  let n = 0;
 
-  const submitOne = () => vendors.submit(profile, docs());
+  /** A verified account with a complete, submitted application. Returns the application id. */
+  const submitOne = async (): Promise<string> => {
+    n += 1;
+    const acc = await ds.getRepository(VendorAccount).save({ email: `v${n}@example.test`, contactName: 'سعد', passwordHash: 'x', emailVerifiedAt: new Date(), active: true, lastLoginAt: null });
+    await vendors.saveDraft(acc.id, { companyName: `مؤسسة الرخام ${n}`, contactName: 'سعد', mobile: '0555555555', email: acc.email, city: 'جدة', commercialRegistrationNo: '4030303030', primaryCategoryKey: 'finishes-stone', secondaryCategoryKeys: [], expiries: { 'commercial-registration': '2027-01-31', 'vat-certificate': '2026-12-31' } });
+    await vendors.addDraftDocument(acc.id, 'commercial-registration', file('cr.pdf', PDF(`cr${n}`)));
+    await vendors.addDraftDocument(acc.id, 'vat-certificate', file('vat.pdf', PDF(`vat${n}`)));
+    await vendors.addDraftDocument(acc.id, 'company-profile', file('profile.pdf', PDF(`profile${n}`)));
+    await vendors.submit(acc.id);
+    return (await vendors.getMyApplication(acc.id)).application.id;
+  };
+
+  const accountOf = async (applicationId: string): Promise<string> => {
+    const app = await ds.getRepository(VendorApplication).findOneOrFail({ where: { id: applicationId }, relations: { vendor: true } });
+    return app.vendor.accountId;
+  };
 
   beforeAll(async () => {
-    ({ ds, close } = await openTestDb());
+    ({ ds, close } = await openVendorTestDb());
     await seedVendorCategories(ds);
     tmp = mkdtempSync(join(tmpdir(), 'msp-review-'));
+    mkdirSync(join(tmp, 'outbox'));
     const mail = new MailService({ smtp: null, from: 'x@example.test', outboxDir: join(tmp, 'outbox') });
-    const tokens = new CompletionTokenService(ds);
     const storage = new LocalDiskStorage(join(tmp, 'docs'));
-    vendors = new VendorsService(ds, new NumberingService(), storage, mail, tokens, { publicUrl: 'http://localhost:4200', reviewInbox: 'team@example.test' });
+    vendors = new VendorsService(ds, new NumberingService(), storage, mail, { publicUrl: 'http://localhost:4200', reviewInbox: 'team@example.test' });
     review = new ReviewService(ds, storage, mail, vendors);
   }, 60000);
-  afterAll(async () => {
-    await close();
-    rmSync(tmp, { recursive: true, force: true });
-  });
+  afterAll(async () => { await close(); rmSync(tmp, { recursive: true, force: true }); });
 
   it('approves in one transaction: decision, status, vendor pointer, event and archive job', async () => {
-    const { applicationId } = await submitOne();
+    const applicationId = await submitOne();
     const out = await review.approve(applicationId, reviewer, 'مستوفٍ');
     expect(out.status).toBe(QualificationStatus.Approved);
-
     const app = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
     const rev = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ applicationId, revisionNo: 1 });
     const vendor = await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId });
@@ -79,85 +73,87 @@ describe('ReviewService', () => {
   });
 
   it('refuses a second decision on an approved application', async () => {
-    const { applicationId } = await submitOne();
+    const applicationId = await submitOne();
     await review.approve(applicationId, reviewer, '');
     await expect(review.reject(applicationId, reviewer, 'x')).rejects.toThrow(ConflictException);
     await expect(review.approve(applicationId, reviewer, '')).rejects.toThrow(ConflictException);
   });
 
   it('rolls the whole approval back if the archive job cannot be written', async () => {
-    const { applicationId } = await submitOne();
+    const applicationId = await submitOne();
     const app = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
     const rev = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ applicationId, revisionNo: 1 });
-    // Poison: a job row already bound to this revision makes the unique index fire.
     await ds.getRepository(VendorArchiveJob).save({ revisionId: rev.id, vendorId: app.vendorId, sequenceNo: 1, status: ArchiveStatus.Completed });
-
     await expect(review.approve(applicationId, reviewer, '')).rejects.toThrow();
-
     const after = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
     const revAfter = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ id: rev.id });
     const vendor = await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId });
     expect(after.status).toBe(QualificationStatus.UnderReview);
     expect(revAfter.decision).toBeNull();
     expect(vendor.approvedRevisionId).toBeNull();
-    const events = await ds.getRepository(VendorReviewEvent).find({ where: { applicationId } });
-    expect(events.map((e) => e.action)).toEqual([ReviewAction.Submitted]);
   });
 
-  it('requesting completion records the missing items, emails a link and blocks approval until resubmitted', async () => {
-    const { applicationId } = await submitOne();
+  it('requesting completion opens a draft for the vendor, records the notes, emails them, and blocks approval until resubmitted', async () => {
+    const applicationId = await submitOne();
     const before = readdirSync(join(tmp, 'outbox')).length;
     await review.requestCompletion(applicationId, reviewer, ['السجل التجاري غير واضح'], 'أعد رفع نسخة ملونة');
     const app = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
     expect(app.status).toBe(QualificationStatus.NeedsCompletion);
-    const rev = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ applicationId, revisionNo: 1 });
-    expect(rev.decision).toBe(RevisionDecision.NeedsCompletion);
+    expect(app.currentRevisionNo).toBe(2);
+    const v1 = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ applicationId, revisionNo: 1 });
+    expect(v1.decision).toBe(RevisionDecision.NeedsCompletion);
     const ev = await ds.getRepository(VendorReviewEvent).findOneByOrFail({ applicationId, action: ReviewAction.CompletionRequested });
     expect(ev.missingItems).toEqual(['السجل التجاري غير واضح']);
     expect(readdirSync(join(tmp, 'outbox')).length).toBe(before + 1);
     await expect(review.approve(applicationId, reviewer, '')).rejects.toThrow(/completion/);
+
+    // the vendor sees the notes in their dashboard and resubmits from the draft
+    const accountId = await accountOf(applicationId);
+    const mine = await vendors.getMyApplication(accountId);
+    expect(mine.review?.missingItems).toEqual(['السجل التجاري غير واضح']);
+    expect(mine.draft?.revisionNo).toBe(2);
+    await vendors.submit(accountId);
+    await expect(review.approve(applicationId, reviewer, 'ok')).resolves.toMatchObject({ status: QualificationStatus.Approved });
+    const job = await ds.getRepository(VendorArchiveJob).findOneByOrFail({ revisionId: mine.draft!.id });
+    expect(job.sequenceNo).toBe(2);
   });
 
   it('rejects with a reason and never creates an archive job', async () => {
-    const { applicationId } = await submitOne();
+    const applicationId = await submitOne();
     const jobsBefore = await ds.getRepository(VendorArchiveJob).count();
     await review.reject(applicationId, reviewer, 'خارج نطاق الأعمال');
-    const app = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
-    expect(app.status).toBe(QualificationStatus.Rejected);
+    expect((await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId })).status).toBe(QualificationStatus.Rejected);
     expect(await ds.getRepository(VendorArchiveJob).count()).toBe(jobsBefore);
+    const accountId = await accountOf(applicationId);
+    expect((await vendors.getMyApplication(accountId)).draft).toBeNull();
   });
 
-  it('an approved vendor can be asked for an update; the resubmitted revision is approved as v2 with its own job', async () => {
-    const { applicationId } = await submitOne();
+  it('an approved vendor can be asked for an update; the approved record stays until v2 is approved', async () => {
+    const applicationId = await submitOne();
     await review.approve(applicationId, reviewer, '');
     await expect(review.requestCompletion(applicationId, reviewer, ['x'], '')).rejects.toThrow(ConflictException);
     await review.requestUpdate(applicationId, reviewer, ['السجل التجاري تجدد'], 'يرجى رفع السجل الجديد');
     const app = await ds.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
     expect(app.status).toBe(QualificationStatus.NeedsCompletion);
     const vendorBefore = await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId });
-    expect(vendorBefore.approvedRevisionId).not.toBeNull(); // still approved on record while the update is pending
-    const token = await ds.getRepository('vendor_completion_tokens').count({ where: { applicationId, usedAt: null as never } });
-    expect(token).toBe(1);
-    await ds.getRepository(VendorApplicationRevision).save({ applicationId, revisionNo: 2, data: { ...profile }, submittedAt: new Date(), decision: null, decidedAt: null, decidedByUserId: null, decidedByName: '', decisionNote: '' });
-    await ds.getRepository(VendorApplication).update(applicationId, { status: QualificationStatus.UnderReview, currentRevisionNo: 2 });
+    expect(vendorBefore.approvedRevisionId).not.toBeNull();
+    const accountId = await accountOf(applicationId);
+    await vendors.addDraftDocument(accountId, 'commercial-registration', file('cr-2027.pdf', PDF('cr new')), '2028-01-01');
+    await vendors.submit(accountId);
     await review.approve(applicationId, reviewer, 'تحديث');
     const rev2 = await ds.getRepository(VendorApplicationRevision).findOneByOrFail({ applicationId, revisionNo: 2 });
-    const job = await ds.getRepository(VendorArchiveJob).findOneByOrFail({ revisionId: rev2.id });
-    expect(job.sequenceNo).toBe(2);
-    const vendorAfter = await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId });
-    expect(vendorAfter.approvedRevisionId).toBe(rev2.id);
+    expect((await ds.getRepository(VendorArchiveJob).findOneByOrFail({ revisionId: rev2.id })).sequenceNo).toBe(2);
+    expect((await ds.getRepository(Vendor).findOneByOrFail({ id: app.vendorId })).approvedRevisionId).toBe(rev2.id);
   });
 
-  it('a re-approval after a later revision creates a job with the next sequence number', async () => {
-    const { applicationId } = await submitOne();
-    await review.approve(applicationId, reviewer, '');
-    // simulate a later revision being approved (the admin re-opens by requesting a new submission internally)
-    const rev2 = await ds.getRepository(VendorApplicationRevision).save({
-      applicationId, revisionNo: 2, data: { ...profile }, submittedAt: new Date(), decision: null, decidedAt: null, decidedByUserId: null, decidedByName: '', decisionNote: '',
-    });
-    await ds.getRepository(VendorApplication).update(applicationId, { status: QualificationStatus.UnderReview, currentRevisionNo: 2 });
-    await review.approve(applicationId, reviewer, 'تحديث');
-    const job = await ds.getRepository(VendorArchiveJob).findOneByOrFail({ revisionId: rev2.id });
-    expect(job.sequenceNo).toBe(2);
+  it('list and detail show qualification and archive status, including drafts never submitted', async () => {
+    const acc = await ds.getRepository(VendorAccount).save({ email: 'draft-only@example.test', contactName: 'x', passwordHash: 'x', emailVerifiedAt: new Date(), active: true, lastLoginAt: null });
+    await vendors.getMyApplication(acc.id);
+    const drafts = await review.list({ page: 1, pageSize: 50, status: QualificationStatus.Draft });
+    expect(drafts.data.some((r) => r.requestNumber === null)).toBe(true);
+    const approved = await review.list({ page: 1, pageSize: 50, status: QualificationStatus.Approved });
+    expect(approved.data[0].archiveStatus).toBe('pending');
+    const d = await review.detail(approved.data[0].id);
+    expect(d.revisions[0].documents.length).toBeGreaterThan(0);
   });
 });

@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { openTestDb } from '../../test/test-db';
+import { openVendorTestDb } from '../../test/test-db';
 import { formatRequestNumber, formatVendorNumber, NumberingService } from './numbering.service';
 
 describe('number formats', () => {
@@ -20,7 +20,7 @@ describe('NumberingService (database)', () => {
   const svc = new NumberingService();
 
   beforeAll(async () => {
-    ({ ds, close } = await openTestDb());
+    ({ ds, close } = await openVendorTestDb());
   }, 60000);
   afterAll(async () => close());
 

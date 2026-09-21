@@ -233,8 +233,8 @@ export class ArchiveJobsService {
         primaryCategory: term(primary),
         secondaryCategories: vendor.secondaryCategoryKeys.map((k) => secondaries.find((c) => c.key === k)).filter((c): c is VendorCategory => !!c).map(term),
       },
-      application: { id: revision.application.id, requestNumber: revision.application.requestNumber, submitterEmail: revision.application.submitterEmail },
-      revision: { id: revision.id, revisionNo: revision.revisionNo, submittedAt: revision.submittedAt, data: revision.data },
+      application: { id: revision.application.id, requestNumber: revision.application.requestNumber ?? '', submitterEmail: revision.application.submitterEmail },
+      revision: { id: revision.id, revisionNo: revision.revisionNo, submittedAt: revision.submittedAt ?? revision.createdAt, data: revision.data },
       decision: { decidedAt: revision.decidedAt, decidedByName: revision.decidedByName, note: revision.decisionNote },
       documents: revision.documents
         .sort((a, b) => a.docTypeKey.localeCompare(b.docTypeKey) || a.originalFilename.localeCompare(b.originalFilename))

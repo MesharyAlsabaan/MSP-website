@@ -6,6 +6,7 @@ import { Response } from 'express';
 import { Public } from '../../../common/decorators/public.decorator';
 import { ArchiveJobsService } from './archive-jobs.service';
 import { ArchiveKeyGuard } from './archive-key.guard';
+import { LoopbackOnlyGuard } from './loopback-only.guard';
 
 class LeaseDto {
   @IsString() @Length(1, 128) agentId: string;
@@ -39,7 +40,7 @@ class HeartbeatDto {
 @ApiTags('Archive agent')
 @ApiHeader({ name: 'X-Archive-Key', required: true })
 @Public()
-@UseGuards(ArchiveKeyGuard)
+@UseGuards(LoopbackOnlyGuard, ArchiveKeyGuard)
 @Throttle({ default: { limit: 600, ttl: 60_000 } })
 @Controller('archive')
 export class ArchiveController {

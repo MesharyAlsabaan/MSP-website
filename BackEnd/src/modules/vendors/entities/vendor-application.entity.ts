@@ -5,15 +5,17 @@ import { QualificationStatus } from '../vendor.enums';
 import { Vendor } from './vendor.entity';
 
 /**
- * A qualification request. Its `requestNumber` (REQ-2026-0042) never changes:
- * a completion round adds a new revision (v2, v3…) to the SAME application.
+ * A qualification request. Starts as a draft; `requestNumber` (REQ-2026-0042)
+ * is issued at the first submission and never changes: a completion round
+ * adds a new draft revision (v2, v3…) to the SAME application.
  */
 @Entity('vendor_applications')
 export class VendorApplication extends BaseEntity {
-  @ApiProperty({ example: 'REQ-2026-0042' })
+  /** Issued at the first submission; null while the application is still a draft. */
+  @ApiProperty({ example: 'REQ-2026-0042', required: false })
   @Index({ unique: true })
-  @Column({ name: 'request_number', length: 16 })
-  requestNumber: string;
+  @Column({ name: 'request_number', type: 'varchar', length: 16, nullable: true })
+  requestNumber: string | null;
 
   @ApiProperty({ format: 'uuid' })
   @Index()
@@ -26,7 +28,7 @@ export class VendorApplication extends BaseEntity {
 
   @ApiProperty({ enum: QualificationStatus })
   @Index()
-  @Column({ type: 'enum', enum: QualificationStatus, default: QualificationStatus.UnderReview })
+  @Column({ type: 'enum', enum: QualificationStatus, default: QualificationStatus.Draft })
   status: QualificationStatus;
 
   /** Revision number of the latest submission (1-based). */

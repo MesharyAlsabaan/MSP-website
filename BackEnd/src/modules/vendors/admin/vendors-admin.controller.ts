@@ -7,7 +7,6 @@ import { AuthUser, CurrentUser } from '../../../common/decorators/current-user.d
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { Role } from '../../../common/enums/role.enum';
-import { User } from '../../users/entities/user.entity';
 import { ArchiveJobsService } from '../archive/archive-jobs.service';
 import { VendorCategory, VendorDocumentRequirement } from '../entities';
 import { Actor, ReviewService } from '../review.service';
@@ -170,8 +169,8 @@ export class VendorsAdminController {
     return { ok: true };
   }
 
+  /** Attribution comes from the staff token itself: this service has no users table. */
   private async actor(user: AuthUser): Promise<Actor> {
-    const u = await this.dataSource.getRepository(User).findOneBy({ id: user.id });
-    return { id: user.id, name: u?.name ?? user.email };
+    return { id: user.id, name: user.name?.trim() || user.email };
   }
 }

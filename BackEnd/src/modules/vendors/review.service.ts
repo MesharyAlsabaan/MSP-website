@@ -156,38 +156,35 @@ export class ReviewService {
 
   // ---------------------------------------------------------------- decisions
 
+  /** Asks the vendor for missing items: the current revision is marked, a new draft revision is opened for them. */
   async requestCompletion(applicationId: string, actor: Actor, missingItems: string[], note: string) {
-    const items = missingItems.map((s) => String(s).trim().slice(0, 300)).filter(Boolean);
-    const out = await this.dataSource.transaction(async (m) => {
-      const { app, revision } = await this.lockCurrent(m, applicationId);
-      assertReviewerAction(app.status, ReviewAction.CompletionRequested);
-      await this.decide(m, app, revision, RevisionDecision.NeedsCompletion, QualificationStatus.NeedsCompletion, actor, note);
-      await m.getRepository(VendorReviewEvent).save({
-        applicationId, revisionId: revision.id, action: ReviewAction.CompletionRequested, note, missingItems: items, actorUserId: actor.id, actorName: actor.name,
-      });
-      await this.vendors.sendCompletionRequest(m, app, app.vendor, revision, items, note);
-      return app;
-    });
-    return { id: out.id, status: out.status };
+    return this.openRound(applicationId, actor, missingItems, note, ReviewAction.CompletionRequested);
   }
 
   /**
-   * Re-opens an APPROVED application for renewed/updated documents. The vendor
-   * gets a completion link; the currently approved revision stays the record
-   * of truth (and in the archive) until the resubmitted revision is approved.
+   * Re-opens an APPROVED application for renewed/updated documents. The
+   * currently approved revision stays the record of truth (and in the
+   * archive) until the resubmitted revision is approved.
    */
   async requestUpdate(applicationId: string, actor: Actor, items: string[], note: string) {
+    return this.openRound(applicationId, actor, items, note, ReviewAction.UpdateRequested);
+  }
+
+  private async openRound(applicationId: string, actor: Actor, items: string[], note: string, action: ReviewAction) {
     const cleaned = items.map((s) => String(s).trim().slice(0, 300)).filter(Boolean);
     const out = await this.dataSource.transaction(async (m) => {
       const { app, revision } = await this.lockCurrent(m, applicationId);
-      assertReviewerAction(app.status, ReviewAction.UpdateRequested);
-      app.status = QualificationStatus.NeedsCompletion;
-      await m.getRepository(VendorApplication).save(app);
-      await m.getRepository(VendorReviewEvent).save({
-        applicationId, revisionId: revision.id, action: ReviewAction.UpdateRequested, note, missingItems: cleaned, actorUserId: actor.id, actorName: actor.name,
-      });
-      await this.vendors.sendCompletionRequest(m, app, app.vendor, revision, cleaned, note);
-      return app;
+      assertReviewerAction(app.status, action);
+      if (action === ReviewAction.CompletionRequested) {
+        revision.decision = RevisionDecision.NeedsCompletion;
+        revision.decidedAt = new Date();
+        revision.decidedByUserId = actor.id;
+        revision.decidedByName = actor.name;
+        revision.decisionNote = note ?? '';
+        await m.getRepository(VendorApplicationRevision).save(revision);
+      }
+      await this.vendors.openRevisionRound(m, applicationId, cleaned, note ?? '', actor, action);
+      return m.getRepository(VendorApplication).findOneByOrFail({ id: applicationId });
     });
     return { id: out.id, status: out.status };
   }

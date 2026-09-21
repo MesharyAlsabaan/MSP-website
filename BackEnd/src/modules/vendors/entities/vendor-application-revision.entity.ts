@@ -6,9 +6,10 @@ import { VendorApplication } from './vendor-application.entity';
 import { VendorRevisionDocument } from './vendor-revision-document.entity';
 
 /**
- * One submission of an application. Immutable once submitted: the data
- * snapshot and its documents are exactly what the reviewer saw, and what the
- * archive stores if this revision is the one approved.
+ * One revision of an application. While `submittedAt` is null it is the
+ * vendor's editable draft; once submitted it is immutable — the data snapshot
+ * and its documents are exactly what the reviewer saw, and what the archive
+ * stores if this revision is the one approved.
  */
 @Entity('vendor_application_revisions')
 @Index(['applicationId', 'revisionNo'], { unique: true })
@@ -29,9 +30,9 @@ export class VendorApplicationRevision extends BaseEntity {
   @Column({ type: 'jsonb' })
   data: VendorProfileData;
 
-  @ApiProperty()
-  @Column({ name: 'submitted_at', type: 'timestamptz' })
-  submittedAt: Date;
+  @ApiProperty({ required: false, description: 'null while still a draft' })
+  @Column({ name: 'submitted_at', type: 'timestamptz', nullable: true })
+  submittedAt: Date | null;
 
   @ApiProperty({ enum: RevisionDecision, required: false })
   @Column({ type: 'enum', enum: RevisionDecision, nullable: true })

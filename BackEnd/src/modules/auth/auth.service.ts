@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
+import { StaffTokenService } from './staff-token.service';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
@@ -52,7 +53,7 @@ export class AuthService {
     role: string,
     user: Record<string, unknown>,
   ) {
-    const payload = { sub, email, role };
+    const payload = { sub, email, role, name: String(user.name ?? '') };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(payload, {
         secret: this.config.get<string>('jwt.secret'),

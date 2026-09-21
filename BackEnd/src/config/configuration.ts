@@ -60,6 +60,11 @@ export default () => ({
   },
   /** Public site origin used in emails (review links, completion links). */
   publicUrl: process.env.PUBLIC_URL ?? 'http://localhost:4200',
+  /** Vendor (office service) sessions — a secret of the office service only, unrelated to staff JWTs. */
+  vendorAuth: {
+    jwtSecret: secret('VENDOR_JWT_SECRET', 'dev-vendor-secret-change-me'),
+    tokenTtl: process.env.VENDOR_TOKEN_TTL ?? '12h',
+  },
   vendorDocs: {
     // Pending vendor documents. NOT under uploads/ and never served statically.
     dir: process.env.VENDOR_DOCS_DIR ?? 'vendor-docs',

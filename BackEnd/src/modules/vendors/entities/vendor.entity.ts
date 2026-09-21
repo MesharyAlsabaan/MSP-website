@@ -14,6 +14,12 @@ export class Vendor extends BaseEntity {
   @Column({ name: 'vendor_number', length: 16 })
   vendorNumber: string;
 
+  /** The login that owns this vendor record. One account ↔ one vendor. */
+  @ApiProperty({ format: 'uuid' })
+  @Index({ unique: true })
+  @Column({ name: 'account_id', type: 'uuid' })
+  accountId: string;
+
   @ApiProperty()
   @Column({ name: 'company_name' })
   companyName: string;
