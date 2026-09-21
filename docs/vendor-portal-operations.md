@@ -1,67 +1,78 @@
-# بوابة تأهيل الموردين — دليل التشغيل والنشر
+# بوابة تأهيل الموردين — دليل التشغيل والنشر (خدمة المكتب)
 
-الحالة (2026-09-20): **مكتمل ومختبر محلياً. لم يُنشر على الإنتاج بعد.** انظر «قرارات مؤجلة» في نهاية الملف.
+الحالة (2026-09-21): **مكتمل ومختبر محلياً بمعاينة كاملة. لم يُنشر، لم يُثبَّت، لم تُغيَّر DNS.**
 
-## المكونات
-| المكون | المكان | ما يفعله |
+## المعمارية النهائية
+
+```
+المورد / الموظف ──HTTPS──▶ www.msp.sa (Railway: الواجهة + CMS الموقع فقط)
+        │                                      لا بيانات موردين هنا إطلاقاً
+        └──HTTPS──▶ vendors.msp.sa ──Cloudflare Tunnel──▶ [جهاز في المكتب]
+                                                          ├─ MSP Vendor Service (Node, 127.0.0.1:3100)
+                                                          ├─ PostgreSQL محلي: الحسابات، الطلبات، الإصدارات، المراجعات
+                                                          ├─ D:\MSP-VendorService\documents  ← المسودات وقيد المراجعة
+                                                          ├─ Archive Agent (نفس الجهاز، يتصل بـ 127.0.0.1)
+                                                          └─ \\Server\...\الموردون المعتمدون  ← المعتمد فقط + Excel
+```
+
+- **بيانات الموردين كلها في المكتب** منذ إنشاء الحساب: الحسابات، المسودات، المستندات، سجل المراجعات. Railway وGitHub لا يحتويان أي منها.
+- **الاعتماد** هو ما يُدرج المورد في «الموردون المعتمدون» والسجل المركزي؛ وليس بداية حفظ بياناته.
+- **انقطاع المكتب**: الواجهة تعرض «تعذّر الاتصال بخدمة الموردين — لم يُحفظ شيء» وتسمح بإعادة المحاولة؛ لا تخزين بديل. الإرسال والرفع idempotent فلا تكرار.
+
+## الهويات الثلاث وفصلها
+| من | كيف يثبت هويته | ماذا يصل |
 |---|---|---|
-| Backend (`BackEnd/src/modules/vendors`, `modules/mail`) | Railway | التسجيل، المراجعة، روابط الاستكمال، واجهة الأرشفة |
-| Frontend (`FrontEnd/src/app/pages/vendors`, `pages/admin/vendors`) | Railway | صفحة التسجيل `/vendors/register`، الاستكمال `/vendors/resume/<token>`، شاشة الأدمن `/admin/vendors` |
-| Archive Agent (`ArchiveAgent/`) | جهاز داخل المكتب | يسحب المعتمد ويؤرشفه ويحدّث Excel — انظر `ArchiveAgent/README.md` |
+| المورد | جلسة تُصدرها خدمة المكتب (HS256، `aud=vendor`، سر خاص بالخدمة) | حسابه وطلبه فقط `/api/vendor/*` |
+| الموظف | رمز الموقع (RS256، `iss=msp-website`، `aud` يشمل `vendor-service`) — الخدمة تتحقق بالمفتاح **العام** فقط | `/api/admin/vendors/*` حسب الدور (`SUPER_ADMIN`, `VENDOR_REVIEWER`) |
+| وكيل الأرشفة | مفتاح خدمة `X-Archive-Key` + **loopback فقط** (يرفض أي طلب عبر النفق) | `/api/archive/*` |
 
-## متغيرات البيئة الجديدة (Backend)
-| المتغير | القيمة | ملاحظة |
-|---|---|---|
-| `PUBLIC_URL` | `https://www.msp.sa` | يُبنى منه رابط المراجعة للفريق ورابط الاستكمال للمورد |
-| `VENDOR_DOCS_DIR` | مسار مجلد المستندات المؤقتة | **يجب أن يكون على تخزين دائم** (انظر القرار المؤجل 1). لا يُقدَّم علنياً أبداً |
-| `VENDOR_REVIEW_INBOX` | بريد فريق المراجعة | فارغ = لا إشعار للفريق |
-| `SMTP_HOST` `SMTP_PORT` `SMTP_SECURE` `SMTP_USER` `SMTP_PASS` `MAIL_FROM` | حساب الإرسال | فارغ `SMTP_HOST` = تُكتب الرسائل كملفات `.eml` في `MAIL_OUTBOX_DIR` بدل إرسالها (وضع الاختبار) |
-| `DB_SYNCHRONIZE` | غير مضبوط / `false` | الـ schema عبر migrations فقط |
+## متطلبات جهاز الخدمة (لم يُحدَّد بعد — ليس الـ DC)
+- Windows 10/11 Pro أو Windows Server، على الشبكة الداخلية، تشغيل مستمر.
+- Node.js 20 LTS+، PostgreSQL 16، `cloudflared`، NSSM (أو Task Scheduler).
+- قرص للبيانات (مثل `D:\MSP-VendorService\`): القاعدة + `documents\` + `mail-outbox\` + `backups\`. تقدير أولي 5–50 GB.
+- حساب خدمة محلي محدود (`svc-msp-vendor`): قراءة/كتابة على `D:\MSP-VendorService` وعلى مجلد «الموردون المعتمدون» فقط.
+- منفذ 443 للخارج (النفق) — **لا** فتح منافذ للداخل.
 
-Railway: **Pre-deploy command** للـ backend = `npm run migration:run:prod` (انظر `DEPLOYMENT.md`). الـ migrations الجديدة: `Vendors`, `VendorUpdateRound`.
+## التثبيت (خطوات مقترحة، لا تُنفَّذ قبل تحديد الجهاز)
+1. **PostgreSQL**: قاعدة `msp_vendor` ودور `msp_vendor` بكلمة مرور قوية (يحتاج `CREATE EXTENSION uuid-ossp` — مسموح للدور غير الإداري في PG 13+).
+2. **الكود**: نسخ `BackEnd/` (بدون `.env` الموقع) إلى `D:\MSP-VendorService\service`، ثم `npm ci --omit=dev && npm run build`.
+3. **الإعدادات**: `BackEnd/.env.vendor-service.example` → `.env` مع القيم الفعلية. المفتاح العام للموظفين من الخطوة 5.
+4. **القاعدة**: `npm run vendor:migration:run:prod` ثم `npm run vendor:seed` (التصنيفات التجريبية — تُراجع من الأدمن).
+5. **مفاتيح الموظفين**: `node deploy/office/generate-staff-keys.mjs` → الخاص إلى Railway (`JWT_PRIVATE_KEY`)، العام إلى `.env` الخدمة. الموقع يبدأ توقيع RS256 بمجرد ضبط المتغير؛ الرموز القديمة تنتهي خلال 15 دقيقة.
+6. **الخدمة**: NSSM → `node dist\vendor-service.main.js` بحساب `svc-msp-vendor`، تشغيل تلقائي، سجلات في `logs\`.
+7. **وكيل الأرشفة**: على نفس الجهاز، `apiBaseUrl = http://127.0.0.1:3100/api` (انظر `ArchiveAgent/README.md`)، مفتاح من الأدمن.
+8. **النفق**: `deploy/office/cloudflared-config.example.yml` — تسجيل الدخول لحساب Cloudflare الذي يدير `msp.sa`، إنشاء النفق، توجيه `vendors.msp.sa` (الاسم **متاح** حالياً: NXDOMAIN، وnameservers النطاق على Cloudflare)، تثبيت كخدمة.
+9. **Cloudflare** (لا يُفترض جاهزيته): قاعدة WAF وrate limiting على `vendors.msp.sa/api/vendor/auth/*`، وضع SSL Full، وقاعدة cache bypass للنطاق (الخدمة ترسل `no-store` أصلاً).
+10. **الواجهة**: `environment.prod.ts → vendorApiUrl = https://vendors.msp.sa/api`؛ نشر Railway.
+11. **اختبار الربط الفعلي** بحساب مورد داخلي وبريد اختبار قبل الإعلان.
 
-## الأدوار والصلاحيات
-- `SUPER_ADMIN`: كل شيء، بما فيه إدارة التصنيفات والمتطلبات ومفاتيح الوكلاء (`/api/admin/vendors/config/*`).
-- `VENDOR_REVIEWER` (جديد): المراجعة وطلب الاستكمال والاعتماد والرفض وطلب التحديث وإعادة محاولة الأرشفة. يُمنح من **Admin → Users**.
-- `CONTENT_MANAGER` / `EDITOR`: لا وصول لبيانات الموردين.
-- وكيل الأرشفة: مفتاح خدمة في الرأس `X-Archive-Key`، لا يستطيع إلا مسارات `/api/archive/*`.
+## النسخ الاحتياطي والاستعادة (يديره المكتب)
+- `deploy/office/backup-vendor-service.ps1` يومياً: `pg_dump` (لقطة متسقة بلا إيقاف) + نسخ `documents\` (ملفات مُعنونة بالمحتوى لا تتغير بعد كتابتها) + الاحتفاظ 30 يوماً. `.env` **لا يُنسخ** — مكانه مدير كلمات المرور.
+- الأرشيف المعتمد (`الموردون المعتمدون`) ضمن نسخ المكتب المعتادة.
+- الاستعادة: `pg_restore` للقاعدة + إعادة `documents\` + نفس `.env` → تشغيل الخدمة. الوكيل يستأنف من `state.json` وكل خطواته idempotent.
+
+## متغيرات البيئة
+- **خدمة المكتب**: `BackEnd/.env.vendor-service.example` (موثّق سطراً سطراً).
+- **الموقع (Railway)**: `JWT_PRIVATE_KEY`, `JWT_ISSUER=msp-website`, `JWT_AUDIENCE=msp-admin,vendor-service`. لا `VENDOR_*` ولا SMTP على Railway.
+- **بريد الإشعارات**: `VENDOR_REVIEW_INBOX=supply@msp.sa` مستقل عن حساب الإرسال (`SMTP_*`, `MAIL_FROM`) الذي يُضبط ويُختبر على حدة. أثناء التطوير: outbox ملفّي.
+
+## الأدوار
+`VENDOR_REVIEWER` (جديد) للمراجعة والقرارات وطلب التحديث؛ `SUPER_ADMIN` كل شيء بما فيه التصنيفات ومفاتيح الوكلاء. يُمنح من Admin → Users. الموردون ليسوا مستخدمين في الموقع أبداً.
 
 ## دورة الحياة
 ```
-under_review ─ request-completion ─▶ needs_completion ─ (المورد يعيد الإرسال: إصدار جديد) ─▶ under_review
-under_review ─ approve ─▶ approved ─ request-update ─▶ needs_completion ─▶ … ─▶ approved (إصدار أحدث)
+draft ─ submit ─▶ under_review ─ request-completion ─▶ needs_completion (مسودة جديدة v+1) ─ submit ─▶ under_review
+under_review ─ approve ─▶ approved ─ request-update ─▶ needs_completion ─▶ … ─▶ approved (إصدار أحدث؛ السابق يبقى مؤرشفاً)
 under_review / needs_completion ─ reject ─▶ rejected
 ```
-- رقم الطلب `REQ-YYYY-NNNN` ثابت؛ الإصدارات v1/v2/… داخله. رقم المورد `SUP-NNNNNN` ثابت للأبد.
-- الاعتماد يجمّد الإصدار المراجَع وينشئ مهمة أرشفة له **في نفس المعاملة**.
-- حالة الأرشفة (`pending / transferring / completed / failed`) مستقلة عن حالة التأهيل، وتظهر في القائمة وصفحة التفاصيل.
-- رابط الاستكمال: 14 يوماً، يُلغى عند الاستخدام، ويُرفض إن لم يكن الطلب في `needs_completion`.
+`REQ-YYYY-NNNN` يصدر عند أول إرسال ويثبت؛ `SUP-NNNNNN` عند إنشاء المورد. الاعتماد + مهمة الأرشفة معاملة واحدة.
 
-## حدود الرفع وحماية النموذج العام
-PDF/PNG/JPG/DOCX/XLSX بفحص الرأس (magic bytes)، ≤ 15 MB للملف، ≤ 80 MB للإصدار، ≤ 12 ملفاً، حقل honeypot، throttle 5 طلبات/دقيقة/IP على الإرسال. الملفات مُعنونة بالمحتوى (sha256): الملف غير المتغير بين الإصدارات يُخزَّن مرة واحدة.
+## التراجع
+إعادة نشر النسخة السابقة للموقع تُخفي البوابة؛ خدمة المكتب توقف بـ `nssm stop`؛ البيانات تبقى على الجهاز. لا حذف تلقائي في أي مكان.
 
-## التشغيل اليومي (الفريق)
-1. بريد «طلب تأهيل مورد جديد» → افتح الرابط (تسجيل دخول) → راجع البيانات وحمّل المستندات من الصفحة (تنزيل مصادَق، لا روابط عامة).
-2. قرار: **Approve** / **Request completion** (اكتب النواقص سطراً سطراً — تصل للمورد نصاً) / **Reject** (السبب في الملاحظة).
-3. بعد الاعتماد: خلال دقيقة (حسب `pollIntervalSec`) يظهر المورد في الأرشيف و`سجل الموردين.xlsx`، والحالة تتحول إلى «Archived».
-4. تجديد وثائق مورد معتمد: **Request update** → يصل المورد رابط → يرفع الجديد → Approve → الأرشيف يحفظ الإصدار السابق في `_إصدارات سابقة`.
-5. مهمة أرشفة فاشلة (بعد 10 محاولات): تظهر حمراء في اللوحة → **Retry** بعد معالجة السبب (`lastError`).
-
-## النشر على الإنتاج (خطوات مقترحة — لا تُنفَّذ قبل الموافقة)
-1. اعتماد القرارات المؤجلة أدناه.
-2. نسخة احتياطية للقاعدة + اختبار استعادة (`DEPLOYMENT.md`).
-3. baseline الـ migrations على قاعدة الإنتاج (`migration:baseline:prod` ثم `migration:run:prod`) — مرة واحدة.
-4. ضبط متغيرات البيئة أعلاه في Railway، وربط التخزين الدائم بـ `VENDOR_DOCS_DIR`.
-5. نشر Backend ثم Frontend. التحقق: `GET /api/vendors/categories` يعيد 8 تصنيفات، وصفحة `/vendors/register` تعمل.
-6. `npm run seed:vendors` مرة واحدة (أو إدخال التصنيفات النهائية من الأدمن).
-7. إنشاء مفتاح وكيل من الأدمن، تثبيت الخدمة على جهاز المكتب (`ArchiveAgent/README.md`) بمسار الأرشيف الفعلي، تشغيل `--once`، ثم كخدمة.
-8. طلب تجريبي واحد ببريد داخلي، اعتماده، والتحقق من ظهوره في الأرشيف والسجل — قبل الإعلان للموردين.
-
-**التراجع:** الميزة معزولة في مسارات `/vendors/*` و`/admin/vendors/*` و`/api/archive/*`؛ إعادة نشر النسخة السابقة توقفها دون التأثير على الموقع. الجداول الجديدة تبقى (لا حذف تلقائي) ويمكن `migration:revert` إن لزم.
-
-## قرارات مؤجلة (تُحسم بعد عرض النتائج)
-1. **التخزين المؤقت للمستندات على Railway** — الطبقة قابلة للاستبدال (`DocumentStorage`). التقدير في التقرير النهائي؛ يحتاج `railway login` لفحص Volume/النسخ الاحتياطي فعلياً.
-2. **جهاز تشغيل الخدمة** (ليس الـ DC) و**مسار الأرشيف الفعلي** (`\\Server\Contracting\الموردون المعتمدون` مقترح؛ يحتاج تحقق من المشاركة والمساحة والصلاحيات).
-3. **القائمة النهائية للتصنيفات والمستندات الإلزامية** (`BackEnd/src/database/seeds/vendor-categories.seed.ts` بيانات تجريبية).
-4. **بريد الفريق وحساب SMTP**.
-5. أي إرسال لموردين حقيقيين.
+## قرارات مؤجلة
+1. جهاز الخدمة الفعلي ومسار الأرشيف (`\\Server\Contracting\الموردون المعتمدون` مقترح؛ يحتاج تحقق).
+2. تفعيل النفق وDNS (`vendors.msp.sa`) — بعد تحديد الجهاز.
+3. القائمة النهائية للتصنيفات والمستندات الإلزامية.
+4. حساب SMTP للإرسال.
+5. سياسة الاحتفاظ بالمستندات المؤقتة بعد الاعتماد (لا حذف الآن).
