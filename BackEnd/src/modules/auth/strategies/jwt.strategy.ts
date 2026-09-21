@@ -3,11 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthUser } from '../../../common/decorators/current-user.decorator';
+import { staffTokenOptionsFromEnv } from '../staff-token.service';
 
 interface JwtPayload {
   sub: string;
   email: string;
   role: string;
+  name?: string;
 }
 
 @Injectable()
@@ -22,6 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   /** Return value is attached to request.user. */
   async validate(payload: JwtPayload): Promise<AuthUser> {
-    return { id: payload.sub, email: payload.email, role: payload.role };
+    return { id: payload.sub, email: payload.email, role: payload.role, name: payload.name };
   }
 }

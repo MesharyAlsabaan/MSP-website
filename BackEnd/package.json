@@ -22,7 +22,16 @@
     "migration:show:prod": "typeorm migration:show -d dist/database/data-source.js",
     "migration:baseline": "ts-node -r tsconfig-paths/register src/database/mark-baseline.ts",
     "migration:baseline:prod": "node dist/database/mark-baseline.js",
-    "seed:vendors": "ts-node -r tsconfig-paths/register src/database/seeds/seed-vendors.ts"
+    "seed:vendors": "ts-node -r tsconfig-paths/register src/database/seeds/seed-vendors.ts",
+    "vendor:typeorm": "typeorm-ts-node-commonjs -d src/database/vendor-data-source.ts",
+    "vendor:migration:generate": "npm run vendor:typeorm -- migration:generate",
+    "vendor:migration:run": "npm run vendor:typeorm -- migration:run",
+    "vendor:migration:show": "npm run vendor:typeorm -- migration:show",
+    "vendor:migration:run:prod": "typeorm migration:run -d dist/database/vendor-data-source.js",
+    "vendor:migration:show:prod": "typeorm migration:show -d dist/database/vendor-data-source.js",
+    "vendor:seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed-vendors.ts",
+    "vendor:start:prod": "node dist/vendor-service.main.js",
+    "vendor:start:dev": "ts-node -r tsconfig-paths/register src/vendor-service.main.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

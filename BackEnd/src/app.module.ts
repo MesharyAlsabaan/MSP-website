@@ -18,8 +18,6 @@ import { TeamModule } from './modules/team/team.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
-import { MailModule } from './modules/mail/mail.module';
-import { VendorsModule } from './modules/vendors/vendors.module';
 
 @Module({
   imports: [
@@ -40,8 +38,8 @@ import { VendorsModule } from './modules/vendors/vendors.module';
     ContactModule,
     SettingsModule,
     UploadsModule,
-    MailModule,
-    VendorsModule,
+    // Vendor qualification is NOT here: it runs as the office vendor service
+    // (src/vendor-service.main.ts) so vendor data never lives on the website host.
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

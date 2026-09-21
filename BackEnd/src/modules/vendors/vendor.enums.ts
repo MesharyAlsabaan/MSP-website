@@ -1,5 +1,7 @@
 /** Qualification of the application — what the review team decided. */
 export enum QualificationStatus {
+  /** Being prepared by the vendor; nothing submitted yet (or a completion round is open). */
+  Draft = 'draft',
   UnderReview = 'under_review',
   NeedsCompletion = 'needs_completion',
   Approved = 'approved',
@@ -53,4 +55,6 @@ export interface VendorProfileData {
   primaryCategoryKey: string;
   secondaryCategoryKeys: string[];
   notes?: string;
+  /** Expiry dates keyed by document type, collected on the form (YYYY-MM-DD). */
+  expiries?: Record<string, string>;
 }

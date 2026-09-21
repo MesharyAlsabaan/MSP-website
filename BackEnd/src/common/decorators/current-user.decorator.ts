@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  name?: string;
 }
 
 /** Injects the authenticated user (set by JwtStrategy) into a handler param. */
