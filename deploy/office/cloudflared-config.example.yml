@@ -1,0 +1,19 @@
+# cloudflared configuration for the office vendor service.
+# Install: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+# Steps (from the office host, as the service account or an admin):
+#   cloudflared tunnel login                       # opens the Cloudflare dashboard for msp.sa
+#   cloudflared tunnel create msp-vendor-service   # prints the tunnel UUID and writes the credentials file
+#   cloudflared tunnel route dns msp-vendor-service vendors.msp.sa   # creates the CNAME (proxied)
+#   cloudflared service install                    # runs as a Windows service, starts on boot
+# Nothing is opened on the router: the connection is outbound only.
+tunnel: <TUNNEL-UUID>
+credentials-file: C:\Users\svc-msp-vendor\.cloudflared\<TUNNEL-UUID>.json
+
+ingress:
+  - hostname: vendors.msp.sa
+    service: http://127.0.0.1:3100
+    originRequest:
+      noTLSVerify: false
+      connectTimeout: 10s
+  # everything else → 404
+  - service: http_status:404

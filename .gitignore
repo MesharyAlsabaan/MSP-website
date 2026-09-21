@@ -35,3 +35,7 @@ ArchiveAgent/test-archive/
 ArchiveAgent/state/
 ArchiveAgent/logs/
 ArchiveAgent/config.json
+
+# Office deployment templates are code, not data
+!deploy/office/
+!BackEnd/.env.vendor-service.example
