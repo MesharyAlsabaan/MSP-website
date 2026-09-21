@@ -13,8 +13,12 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    // Vendor completion links carry a one-time token — client-rendered only.
-    path: 'vendors/resume/:token',
+    // Vendor portal: personal, token-driven — client-rendered, never prerendered.
+    path: 'vendors',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'vendors/**',
     renderMode: RenderMode.Client,
   },
   {

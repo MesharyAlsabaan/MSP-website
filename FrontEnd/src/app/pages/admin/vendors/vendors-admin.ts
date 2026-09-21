@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AdminApi } from '../../../core/services/admin-api.service';
+import { VendorsService } from '../../../core/services/vendors.service';
 
 export interface VendorRow {
   id: string;
-  requestNumber: string;
+  requestNumber: string | null;
   vendorNumber: string;
   companyName: string;
   primaryCategoryKey: string;
-  status: 'under_review' | 'needs_completion' | 'approved' | 'rejected';
+  status: 'draft' | 'under_review' | 'needs_completion' | 'approved' | 'rejected';
   currentRevisionNo: number;
   submitterEmail: string;
   createdAt: string;
@@ -24,6 +24,7 @@ interface ArchiveStatusView {
 }
 
 export const QUAL_LABEL: Record<VendorRow['status'], string> = {
+  draft: 'Draft (not submitted)',
   under_review: 'Under review',
   needs_completion: 'Needs completion',
   approved: 'Approved',
@@ -51,6 +52,7 @@ export const ARCHIVE_LABEL: Record<NonNullable<VendorRow['archiveStatus']>, stri
         <input type="search" [value]="search()" (input)="search.set($any($event.target).value); reload()" placeholder="Search company / number / email" class="border-b border-hairline bg-transparent px-0 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none" />
         <select [value]="status()" (change)="status.set($any($event.target).value); reload()" class="border-b border-hairline bg-transparent py-2 text-sm text-ink focus:outline-none">
           <option value="">All statuses</option>
+          <option value="draft">Draft</option>
           <option value="under_review">Under review</option>
           <option value="needs_completion">Needs completion</option>
           <option value="approved">Approved</option>
@@ -103,7 +105,7 @@ export const ARCHIVE_LABEL: Record<NonNullable<VendorRow['archiveStatus']>, stri
             <a [routerLink]="['/admin/vendors', r.id]" class="group flex flex-wrap items-center gap-3">
               <span class="font-mono text-xs text-muted" dir="ltr">{{ r.vendorNumber }}</span>
               <span class="font-display text-lg text-ink group-hover:text-accent">{{ r.companyName }}</span>
-              <span class="font-mono text-xs text-muted" dir="ltr">{{ r.requestNumber }} · v{{ r.currentRevisionNo }}</span>
+              <span class="font-mono text-xs text-muted" dir="ltr">{{ r.requestNumber ?? '—' }} · v{{ r.currentRevisionNo }}</span>
               <span class="font-mono text-[10px] uppercase tracking-[0.12em]" [class]="qualClass(r.status)">{{ qual[r.status] }}</span>
               @if (r.archiveStatus) {
                 <span class="font-mono text-[10px] uppercase tracking-[0.12em]" [class]="archiveClass(r.archiveStatus)">{{ arch[r.archiveStatus] }}</span>
@@ -120,7 +122,7 @@ export const ARCHIVE_LABEL: Record<NonNullable<VendorRow['archiveStatus']>, stri
   `,
 })
 export class AdminVendors implements OnInit {
-  private readonly api = inject(AdminApi);
+  private readonly api = inject(VendorsService); // the OFFICE vendor service, staff token attached
   protected readonly rows = signal<VendorRow[]>([]);
   protected readonly total = signal(0);
   protected readonly loading = signal(true);
@@ -133,7 +135,7 @@ export class AdminVendors implements OnInit {
 
   ngOnInit(): void {
     this.reload();
-    this.api.getRaw<ArchiveStatusView>('admin/vendors/archive/status').subscribe((a) => this.archive.set(a));
+    this.api.adminGet<ArchiveStatusView>('archive/status').subscribe((a) => this.archive.set(a));
   }
 
   protected reload(): void {
@@ -151,11 +153,11 @@ export class AdminVendors implements OnInit {
     const params: Record<string, string | number> = { page: this.page, pageSize: 25 };
     if (this.search()) params['search'] = this.search();
     if (this.status()) params['status'] = this.status();
-    return this.api.list<VendorRow>('admin/vendors', params);
+    return this.api.adminList<VendorRow>(params);
   }
 
   protected qualClass(s: VendorRow['status']): string {
-    return { under_review: 'text-amber-700', needs_completion: 'text-accent', approved: 'text-emerald-700', rejected: 'text-red-600' }[s];
+    return { draft: 'text-muted', under_review: 'text-amber-700', needs_completion: 'text-accent', approved: 'text-emerald-700', rejected: 'text-red-600' }[s];
   }
   protected archiveClass(s: NonNullable<VendorRow['archiveStatus']>): string {
     return { pending: 'text-muted', transferring: 'text-amber-700', completed: 'text-emerald-700', failed: 'text-red-600' }[s];

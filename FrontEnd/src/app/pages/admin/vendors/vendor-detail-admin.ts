@@ -1,18 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { API_URL } from '../../../core/constants/api.constants';
-import { AdminApi } from '../../../core/services/admin-api.service';
+import { VendorsService } from '../../../core/services/vendors.service';
 import { ARCHIVE_LABEL, QUAL_LABEL, VendorRow } from './vendors-admin';
 
 interface Doc { id: string; docTypeKey: string; originalFilename: string; expiresAt: string | null; sizeBytes: number; mime: string; sha256: string; }
 interface Revision {
-  id: string; revisionNo: number; submittedAt: string; decision: string | null; decidedAt: string | null; decidedByName: string; decisionNote: string;
+  id: string; revisionNo: number; submittedAt: string | null; decision: string | null; decidedAt: string | null; decidedByName: string; decisionNote: string;
   data: Record<string, string | string[] | undefined>; documents: Doc[];
 }
 interface Detail {
-  application: { id: string; requestNumber: string; status: VendorRow['status']; currentRevisionNo: number; submitterEmail: string; createdAt: string };
+  application: { id: string; requestNumber: string | null; status: VendorRow['status']; currentRevisionNo: number; submitterEmail: string; createdAt: string };
   vendor: { vendorNumber: string; companyName: string; companyNameEn: string; primaryCategoryKey: string; secondaryCategoryKeys: string[]; approvedRevisionId: string | null };
   revisions: Revision[];
   events: { id: string; action: string; note: string; missingItems: string[]; actorName: string; createdAt: string }[];
@@ -49,7 +48,7 @@ const FIELDS: [string, string][] = [
       @if (current(); as rev) {
         <section class="mt-10 grid gap-10 lg:grid-cols-12">
           <div class="lg:col-span-7">
-            <h2 class="font-mono text-xs uppercase tracking-[0.15em] text-muted">Current revision · v{{ rev.revisionNo }} · submitted {{ rev.submittedAt | date: 'medium' }}</h2>
+            <h2 class="font-mono text-xs uppercase tracking-[0.15em] text-muted">Current revision · v{{ rev.revisionNo }} · {{ rev.submittedAt ? ('submitted ' + (rev.submittedAt | date: 'medium')) : 'draft — the vendor is still editing' }}</h2>
             <dl class="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-2">
               @for (f of fields; track f[0]) {
                 @if (rev.data[f[0]]) {
@@ -99,7 +98,7 @@ const FIELDS: [string, string][] = [
                 <button (click)="act('request-update')" [disabled]="busy() || !missing().trim()" class="border border-ink/30 px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] text-ink hover:bg-ink hover:text-bg disabled:opacity-50">Request update</button>
               </div>
             } @else {
-              <p class="mt-4 text-sm text-muted">{{ d.application.status === 'needs_completion' ? 'Waiting for the vendor to resubmit.' : 'This application was rejected.' }}</p>
+              <p class="mt-4 text-sm text-muted">{{ d.application.status === 'needs_completion' ? 'Waiting for the vendor to update and resubmit from their dashboard.' : d.application.status === 'draft' ? 'The vendor has not submitted yet.' : 'This application was rejected.' }}</p>
             }
             @if (error(); as e) { <p class="mt-3 font-mono text-xs text-red-600">{{ e }}</p> }
 
@@ -165,8 +164,7 @@ const FIELDS: [string, string][] = [
   `,
 })
 export class AdminVendorDetail implements OnInit {
-  private readonly api = inject(AdminApi);
-  private readonly http = inject(HttpClient);
+  private readonly api = inject(VendorsService); // the OFFICE vendor service, staff token attached
   private readonly route = inject(ActivatedRoute);
   protected readonly d = signal<Detail | null>(null);
   protected readonly note = signal('');
@@ -194,7 +192,7 @@ export class AdminVendorDetail implements OnInit {
     if (action === 'approve' && !confirm('Approve this revision? It becomes the approved record and is queued for archiving.')) return;
     this.busy.set(true);
     this.error.set(null);
-    this.api.create(`admin/vendors/${this.id}/${action}`, body).subscribe({
+    this.api.adminPost(`${this.id}/${action}`, body).subscribe({
       next: () => { this.busy.set(false); this.note.set(''); this.missing.set(''); this.load(); },
       error: (err: HttpErrorResponse) => { this.busy.set(false); this.error.set(String(err.error?.message ?? err.message)); },
     });
@@ -202,7 +200,7 @@ export class AdminVendorDetail implements OnInit {
 
   protected retry(jobId: string): void {
     this.busy.set(true);
-    this.api.create(`admin/vendors/archive/jobs/${jobId}/retry`, {}).subscribe({
+    this.api.adminPost(`archive/jobs/${jobId}/retry`, {}).subscribe({
       next: () => { this.busy.set(false); this.load(); },
       error: (err: HttpErrorResponse) => { this.busy.set(false); this.error.set(String(err.error?.message ?? err.message)); },
     });
@@ -210,7 +208,7 @@ export class AdminVendorDetail implements OnInit {
 
   /** Authenticated download: the bearer token goes on the request, the blob is saved client-side. */
   protected download(doc: Doc): void {
-    this.http.get(`${API_URL}/admin/vendors/documents/${doc.id}`, { responseType: 'blob' }).subscribe((blob) => {
+    this.api.adminDocumentBlob(doc.id).subscribe((blob) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -221,6 +219,6 @@ export class AdminVendorDetail implements OnInit {
   }
 
   private load(): void {
-    this.api.getRaw<Detail>(`admin/vendors/${this.id}`).subscribe((d) => this.d.set(d));
+    this.api.adminGet<Detail>(this.id).subscribe((d) => this.d.set(d));
   }
 }
