@@ -15,7 +15,8 @@ node_modules/
 dist/
 
 # Local data export for the server (DB dump + uploaded images) — never commit
-deploy/
+deploy/*
+!deploy/office/
 
 # Large binary source assets — keep on disk / Drive, never in git
 BRANDING/
@@ -37,5 +38,4 @@ ArchiveAgent/logs/
 ArchiveAgent/config.json
 
 # Office deployment templates are code, not data
-!deploy/office/
 !BackEnd/.env.vendor-service.example
