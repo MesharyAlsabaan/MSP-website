@@ -187,25 +187,26 @@ export class Contact {
 
   protected readonly details = computed<{ en: ContactItem[]; ar: ContactItem[] }>(() => {
     const c = this.cfg();
-    const cairoMapUrl = c.cairoMapUrl || 'https://www.google.com/maps/place/MSP+DESIGNS/';
+    const cairoMapUrl = c.cairoMapUrl || 'https://www.google.com/maps?cid=7951323106422195141';
+    const mapUrl = c.mapUrl || 'https://www.google.com/maps?cid=14819986877967963984';
     return {
       en: [
         { label: 'Established', value: '2010', ltr: true },
         { label: 'Email', value: c.email || 'info@msp.sa', ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
         { label: 'Riyadh office telephone', value: c.phone || '+966112000087', ltr: true, href: `tel:${c.phone || '+966112000087'}` },
         { label: 'Mobile / WhatsApp', value: c.whatsapp || '+966570327777', ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
-        { label: 'Riyadh office', value: c.addressEn || 'Riyadh, Saudi Arabia' },
+        { label: 'Riyadh office', value: c.addressEn || 'Irqah, Riyadh, Saudi Arabia', href: mapUrl },
         { label: 'Cairo telephone', value: c.cairoPhone || '+201068017313', ltr: true, href: `tel:${c.cairoPhone || '+201068017313'}` },
-        { label: 'Cairo branch', value: c.cairoAddressEn || 'Cairo, Egypt', href: cairoMapUrl },
+        { label: 'Cairo branch', value: c.cairoAddressEn || 'Rayhana Plaza, Zahraa El Maadi, Cairo, Egypt', href: cairoMapUrl },
       ],
       ar: [
         { label: 'سنة التأسيس', value: '2010', ltr: true },
         { label: 'البريد الإلكتروني', value: c.email || 'info@msp.sa', ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
         { label: 'هاتف مكتب الرياض', value: c.phone || '+966112000087', ltr: true, href: `tel:${c.phone || '+966112000087'}` },
         { label: 'الجوال / واتساب', value: c.whatsapp || '+966570327777', ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
-        { label: 'فرع الرياض', value: c.addressAr || 'الرياض، المملكة العربية السعودية' },
+        { label: 'فرع الرياض', value: c.addressAr || 'حي عرقة، الرياض، المملكة العربية السعودية', href: mapUrl },
         { label: 'هاتف فرع القاهرة', value: c.cairoPhone || '+201068017313', ltr: true, href: `tel:${c.cairoPhone || '+201068017313'}` },
-        { label: 'فرع القاهرة', value: c.cairoAddressAr || 'القاهرة، مصر', href: cairoMapUrl },
+        { label: 'فرع القاهرة', value: c.cairoAddressAr || 'ريحانة بلازا، زهراء المعادي، القاهرة، مصر', href: cairoMapUrl },
       ],
     };
   });

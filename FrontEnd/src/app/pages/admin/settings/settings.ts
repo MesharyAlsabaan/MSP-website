@@ -61,6 +61,7 @@ export class AdminSettings implements OnInit {
     { key: 'email', label: 'Email' },
     { key: 'addressEn', label: 'Address (English)' },
     { key: 'addressAr', label: 'Address (Arabic)' },
+    { key: 'mapUrl', label: 'Riyadh Google Maps URL' },
     { key: 'cairoPhone', label: 'Cairo phone' },
     { key: 'cairoAddressEn', label: 'Cairo address (English)' },
     { key: 'cairoAddressAr', label: 'Cairo address (Arabic)' },

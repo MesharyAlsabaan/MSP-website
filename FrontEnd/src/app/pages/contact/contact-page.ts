@@ -269,8 +269,8 @@ export class ContactPage {
       {
         label: { en: 'Riyadh office', ar: 'فرع الرياض' },
         value: {
-          en: c.addressEn || 'King Fahd Road, Riyadh, Saudi Arabia',
-          ar: c.addressAr || 'طريق الملك فهد، الرياض، المملكة العربية السعودية',
+          en: c.addressEn || 'Irqah, Riyadh, Saudi Arabia',
+          ar: c.addressAr || 'حي عرقة، الرياض، المملكة العربية السعودية',
         },
         href: c.mapUrl || 'https://www.google.com/maps?cid=14819986877967963984',
       },
@@ -290,8 +290,8 @@ export class ContactPage {
     result.push({
       label: { en: 'Cairo branch', ar: 'فرع القاهرة' },
       value: {
-        en: c.cairoAddressEn || 'Cairo, Egypt',
-        ar: c.cairoAddressAr || 'القاهرة، مصر',
+        en: c.cairoAddressEn || 'Rayhana Plaza, Zahraa El Maadi, Cairo, Egypt',
+        ar: c.cairoAddressAr || 'ريحانة بلازا، زهراء المعادي، القاهرة، مصر',
       },
       href: c.cairoMapUrl || 'https://www.google.com/maps?cid=7951323106422195141',
     });
