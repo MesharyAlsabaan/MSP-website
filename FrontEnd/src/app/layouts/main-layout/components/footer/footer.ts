@@ -144,7 +144,7 @@ export class Footer {
   protected readonly established = { en: 'Established 2010', ar: 'تأسس عام 2010' };
   protected readonly navHeading = { en: 'Navigate', ar: 'تصفّح' };
   protected readonly contactHeading = { en: 'Contact', ar: 'تواصل معنا' };
-  protected readonly cairoBranchLabel = { en: 'Cairo branch · Google Maps', ar: 'فرع القاهرة · خرائط Google' };
+  protected readonly cairoBranchLabel = { en: 'Cairo, Egypt', ar: 'القاهرة، مصر' };
   protected readonly address = { en: 'King Fahd Road, Riyadh', ar: 'طريق الملك فهد، الرياض' };
   protected readonly legal = { en: 'MSP Consultants', ar: 'إم إس بي للاستشارات' };
   protected readonly strap = {
