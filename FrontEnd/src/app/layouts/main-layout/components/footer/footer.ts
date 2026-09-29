@@ -70,7 +70,9 @@ interface NavLink {
                   <a [href]="whatsappLink()" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-ink">{{ whatsappValue() }}</a>
                 </li>
               }
-              <li>{{ i18n.pick(addressValue()) }}</li>
+              <li>
+                <a [href]="mapUrl()" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-ink">{{ i18n.pick(addressValue()) }}</a>
+              </li>
               @if (cairoPhoneValue()) {
                 <li dir="ltr">
                   <a [href]="'tel:' + cairoPhoneValue()" class="transition-colors hover:text-ink">{{ cairoPhoneValue() }}</a>
@@ -83,7 +85,7 @@ interface NavLink {
                     target="_blank"
                     rel="noopener noreferrer"
                     class="transition-colors hover:text-ink"
-                  >{{ i18n.pick(cairoBranchLabel) }}</a>
+                  >{{ i18n.pick(cairoAddressValue()) }}</a>
                 </li>
               }
             </ul>
@@ -117,8 +119,16 @@ export class Footer {
   );
   protected readonly cairoPhoneValue = computed(() => this.cfg().cairoPhone || '+201068017313');
   protected readonly cairoMapUrl = computed(
-    () => this.cfg().cairoMapUrl || 'https://www.google.com/maps/place/MSP+DESIGNS/',
+    () => this.cfg().cairoMapUrl || 'https://www.google.com/maps?cid=7951323106422195141',
   );
+  protected readonly mapUrl = computed(() => this.cfg().mapUrl || 'https://www.google.com/maps?cid=14819986877967963984');
+  protected readonly cairoAddressValue = computed(() => {
+    const c = this.cfg();
+    if (c.cairoAddressEn || c.cairoAddressAr) {
+      return { en: c.cairoAddressEn ?? '', ar: c.cairoAddressAr ?? c.cairoAddressEn ?? '' };
+    }
+    return this.cairoAddress;
+  });
   protected readonly addressValue = computed(() => {
     const c = this.cfg();
     if (c.addressEn || c.addressAr) {
@@ -144,8 +154,8 @@ export class Footer {
   protected readonly established = { en: 'Established 2010', ar: 'تأسس عام 2010' };
   protected readonly navHeading = { en: 'Navigate', ar: 'تصفّح' };
   protected readonly contactHeading = { en: 'Contact', ar: 'تواصل معنا' };
-  protected readonly cairoBranchLabel = { en: 'Cairo, Egypt', ar: 'القاهرة، مصر' };
-  protected readonly address = { en: 'King Fahd Road, Riyadh', ar: 'طريق الملك فهد، الرياض' };
+  protected readonly address = { en: 'Irqah, Riyadh', ar: 'حي عرقة، الرياض' };
+  protected readonly cairoAddress = { en: 'Rayhana Plaza, Maadi, Cairo', ar: 'ريحانة بلازا، المعادي، القاهرة' };
   protected readonly legal = { en: 'MSP Consultants', ar: 'إم إس بي للاستشارات' };
   protected readonly strap = {
     en: 'Architecture · Structure · Infrastructure',
