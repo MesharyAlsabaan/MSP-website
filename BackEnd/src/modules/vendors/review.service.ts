@@ -28,6 +28,7 @@ export interface ListQuery {
   pageSize: number;
   status?: QualificationStatus;
   archiveStatus?: ArchiveStatus;
+  country?: string;
   q?: string;
 }
 
@@ -36,6 +37,7 @@ export interface ApplicationRow {
   requestNumber: string;
   vendorNumber: string;
   companyName: string;
+  country: string;
   primaryCategoryKey: string;
   status: QualificationStatus;
   currentRevisionNo: number;
@@ -83,6 +85,7 @@ export class ReviewService {
         'a.request_number AS "requestNumber"',
         'v.vendor_number AS "vendorNumber"',
         'v.company_name AS "companyName"',
+        'v.country AS "country"',
         'v.primary_category_key AS "primaryCategoryKey"',
         'a.status AS "status"',
         'a.current_revision_no AS "currentRevisionNo"',
@@ -95,6 +98,7 @@ export class ReviewService {
 
     if (query.status) qb.andWhere('a.status = :status', { status: query.status });
     if (query.archiveStatus) qb.andWhere('lj.status = :as', { as: query.archiveStatus });
+    if (query.country) qb.andWhere('v.country = :country', { country: query.country });
     if (query.q) {
       qb.andWhere(
         new Brackets((w) =>

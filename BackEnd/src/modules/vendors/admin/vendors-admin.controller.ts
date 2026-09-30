@@ -15,6 +15,7 @@ import { ArchiveStatus, QualificationStatus } from '../vendor.enums';
 class ListDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(QualificationStatus) status?: QualificationStatus;
   @IsOptional() @IsEnum(ArchiveStatus) archiveStatus?: ArchiveStatus;
+  @IsOptional() @Matches(/^[A-Z]{2}$/) country?: string;
 }
 class RequestCompletionDto {
   @IsArray() @ArrayMaxSize(30) @IsString({ each: true }) missingItems: string[];
@@ -67,7 +68,7 @@ export class VendorsAdminController {
   @Get()
   @ApiOperation({ summary: 'Applications with qualification and archive status' })
   list(@Query() q: ListDto) {
-    return this.review.list({ page: q.page, pageSize: q.pageSize, status: q.status, archiveStatus: q.archiveStatus, q: q.search });
+    return this.review.list({ page: q.page, pageSize: q.pageSize, status: q.status, archiveStatus: q.archiveStatus, country: q.country, q: q.search });
   }
 
   @Get('archive/status')

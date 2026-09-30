@@ -20,6 +20,7 @@ const profile = {
   contactName: 'أحمد',
   mobile: '0500000000',
   email: 'vendor@example.test',
+  country: 'SA',
   city: 'الرياض',
   commercialRegistrationNo: '1010101010',
   primaryCategoryKey: 'building-materials',

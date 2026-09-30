@@ -11,6 +11,7 @@ import { SeoService } from '../../core/services/seo.service';
 import { VendorSession } from '../../core/services/vendor-session.service';
 import { DocumentView, MyApplication, VendorCategory, VendorProfile, VendorsService, vendorErrorMessage } from '../../core/services/vendors.service';
 import { ERR, FIELD, LABEL } from './vendor-auth-pages';
+import { PINNED_COUNTRIES, countryOptions } from '../../core/data/countries';
 
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.docx,.xlsx';
 const MAX_FILE_MB = 15;
@@ -83,10 +84,20 @@ const ACTION: Record<string, { en: string; ar: string }> = {
                     <div><label [class]="L" for="companyNameEn">{{ i18n.pick(t.companyNameEn) }}</label><input id="companyNameEn" formControlName="companyNameEn" [class]="F" dir="ltr" /></div>
                     <div><label [class]="L" for="cr">{{ i18n.pick(t.cr) }} *</label><input id="cr" formControlName="commercialRegistrationNo" [class]="F" dir="ltr" /></div>
                     <div><label [class]="L" for="vat">{{ i18n.pick(t.vat) }}</label><input id="vat" formControlName="vatNo" [class]="F" dir="ltr" /></div>
+                    <div>
+                      <label [class]="L" for="country">{{ i18n.pick(t.country) }} *</label>
+                      <select id="country" formControlName="country" [class]="F">
+                        <option value="">{{ i18n.pick(t.choose) }}</option>
+                        @for (c of countries(); track c.code) {
+                          <option [value]="c.code">{{ c.name }}</option>
+                          @if (c.code === lastPinned) { <option disabled>──────────</option> }
+                        }
+                      </select>
+                    </div>
                     <div><label [class]="L" for="city">{{ i18n.pick(t.city) }} *</label><input id="city" formControlName="city" [class]="F" /></div>
-                    <div><label [class]="L" for="website">{{ i18n.pick(t.website) }}</label><input id="website" formControlName="website" [class]="F" dir="ltr" placeholder="https://" /></div>
                     <div class="sm:col-span-2"><label [class]="L" for="address">{{ i18n.pick(t.address) }}</label><input id="address" formControlName="address" [class]="F" /></div>
-                    <div class="sm:col-span-2"><label [class]="L" for="specialty">{{ i18n.pick(t.specialty) }}</label><input id="specialty" formControlName="specialty" [class]="F" /></div>
+                    <div><label [class]="L" for="website">{{ i18n.pick(t.website) }}</label><input id="website" formControlName="website" [class]="F" dir="ltr" placeholder="https://" /></div>
+                    <div><label [class]="L" for="specialty">{{ i18n.pick(t.specialty) }}</label><input id="specialty" formControlName="specialty" [class]="F" /></div>
                   </div>
                 </fieldset>
                 <fieldset class="space-y-6">
@@ -211,10 +222,12 @@ export class VendorDashboardPage {
   protected readonly savedAt = signal<Date | null>(null);
   protected readonly secondary = signal(new Set<string>());
   private readonly primaryKey = signal('');
+  protected readonly countries = computed(() => countryOptions(this.i18n.isArabic() ? 'ar' : 'en'));
+  protected readonly lastPinned = PINNED_COUNTRIES[PINNED_COUNTRIES.length - 1];
   protected readonly currentCategory = computed(() => this.categories().find((c) => c.key === this.primaryKey()) ?? null);
 
   protected readonly form = new FormBuilder().nonNullable.group({
-    companyName: [''], companyNameEn: [''], commercialRegistrationNo: [''], vatNo: [''], city: [''], website: [''], address: [''], specialty: [''],
+    companyName: [''], companyNameEn: [''], commercialRegistrationNo: [''], vatNo: [''], country: [''], city: [''], website: [''], address: [''], specialty: [''],
     contactName: [''], email: [''], mobile: [''], phone: [''], primaryCategoryKey: [''], notes: [''],
   });
 
@@ -222,7 +235,7 @@ export class VendorDashboardPage {
     eyebrow: { en: 'Vendor portal', ar: 'بوابة الموردين' }, signOut: { en: 'Sign out', ar: 'خروج' }, untitled: { en: 'Your application', ar: 'طلبك' },
     loading: { en: 'Loading…', ar: 'جارٍ التحميل…' }, retry: { en: 'Try again', ar: 'إعادة المحاولة' }, fromTeam: { en: 'From the review team', ar: 'من فريق المراجعة' },
     company: { en: 'Company', ar: 'بيانات الشركة' }, companyName: { en: 'Company name', ar: 'اسم الشركة' }, companyNameEn: { en: 'Company name (English)', ar: 'الاسم بالإنجليزية' },
-    cr: { en: 'Commercial registration no.', ar: 'رقم السجل التجاري' }, vat: { en: 'VAT number', ar: 'الرقم الضريبي' }, city: { en: 'City', ar: 'المدينة' }, website: { en: 'Website', ar: 'الموقع الإلكتروني' },
+    cr: { en: 'Commercial registration no.', ar: 'رقم السجل التجاري' }, vat: { en: 'VAT number', ar: 'الرقم الضريبي' }, country: { en: 'Country', ar: 'الدولة' }, city: { en: 'City', ar: 'المدينة' }, website: { en: 'Website', ar: 'الموقع الإلكتروني' },
     address: { en: 'Address', ar: 'العنوان' }, specialty: { en: 'Specialty', ar: 'التخصص' }, contact: { en: 'Contact person', ar: 'مسؤول التواصل' }, contactName: { en: 'Name', ar: 'الاسم' },
     email: { en: 'Email', ar: 'البريد الإلكتروني' }, mobile: { en: 'Mobile', ar: 'الجوال' }, phone: { en: 'Phone', ar: 'الهاتف' }, classification: { en: 'Classification', ar: 'التصنيف' },
     primary: { en: 'Primary category', ar: 'التصنيف الأساسي' }, secondary: { en: 'Also active in', ar: 'تصنيفات ثانوية (اختياري)' }, choose: { en: 'Choose…', ar: 'اختر…' }, notes: { en: 'Notes', ar: 'ملاحظات' },

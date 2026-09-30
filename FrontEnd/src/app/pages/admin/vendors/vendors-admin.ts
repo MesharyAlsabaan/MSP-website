@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VendorsService } from '../../../core/services/vendors.service';
+import { countryName, countryOptions } from '../../../core/data/countries';
 
 export interface VendorRow {
   id: string;
   requestNumber: string | null;
   vendorNumber: string;
   companyName: string;
+  country: string;
   primaryCategoryKey: string;
   status: 'draft' | 'under_review' | 'needs_completion' | 'approved' | 'rejected';
   currentRevisionNo: number;
@@ -58,6 +60,10 @@ export const ARCHIVE_LABEL: Record<NonNullable<VendorRow['archiveStatus']>, stri
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
+        <select [value]="country()" (change)="country.set($any($event.target).value); reload()" class="border-b border-hairline bg-transparent py-2 text-sm text-ink focus:outline-none">
+          <option value="">All countries</option>
+          @for (c of countries; track c.code) { <option [value]="c.code">{{ c.name }}</option> }
+        </select>
         <span class="font-mono text-xs uppercase tracking-[0.12em] text-muted">{{ total() }} total</span>
       </div>
     </header>
@@ -105,6 +111,7 @@ export const ARCHIVE_LABEL: Record<NonNullable<VendorRow['archiveStatus']>, stri
             <a [routerLink]="['/admin/vendors', r.id]" class="group flex flex-wrap items-center gap-3">
               <span class="font-mono text-xs text-muted" dir="ltr">{{ r.vendorNumber }}</span>
               <span class="font-display text-lg text-ink group-hover:text-accent">{{ r.companyName }}</span>
+              @if (r.country) { <span class="font-mono text-xs text-muted">{{ countryName(r.country, 'en') }}</span> }
               <span class="font-mono text-xs text-muted" dir="ltr">{{ r.requestNumber ?? '—' }} · v{{ r.currentRevisionNo }}</span>
               <span class="font-mono text-[10px] uppercase tracking-[0.12em]" [class]="qualClass(r.status)">{{ qual[r.status] }}</span>
               @if (r.archiveStatus) {
@@ -128,6 +135,9 @@ export class AdminVendors implements OnInit {
   protected readonly loading = signal(true);
   protected readonly search = signal('');
   protected readonly status = signal('');
+  protected readonly country = signal('');
+  protected readonly countries = countryOptions('en');
+  protected readonly countryName = countryName;
   protected readonly archive = signal<ArchiveStatusView | null>(null);
   protected readonly qual = QUAL_LABEL;
   protected readonly arch = ARCHIVE_LABEL;
@@ -153,6 +163,7 @@ export class AdminVendors implements OnInit {
     const params: Record<string, string | number> = { page: this.page, pageSize: 25 };
     if (this.search()) params['search'] = this.search();
     if (this.status()) params['status'] = this.status();
+    if (this.country()) params['country'] = this.country();
     return this.api.adminList<VendorRow>(params);
   }
 

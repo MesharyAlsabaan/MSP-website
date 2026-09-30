@@ -78,6 +78,7 @@ export interface MyApplicationView {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const COUNTRY_RE = /^[A-Z]{2}$/;
 const EDITABLE = [QualificationStatus.Draft, QualificationStatus.NeedsCompletion];
 
 /**
@@ -224,6 +225,7 @@ export class VendorsService {
       await m.getRepository(VendorApplicationRevision).save(draft);
       vendor.companyName = data.companyName;
       vendor.companyNameEn = data.companyNameEn ?? '';
+      vendor.country = data.country;
       vendor.primaryCategoryKey = data.primaryCategoryKey;
       vendor.secondaryCategoryKeys = data.secondaryCategoryKeys;
       await m.getRepository(Vendor).save(vendor);
@@ -338,7 +340,7 @@ export class VendorsService {
     const set = <K extends keyof VendorProfileData>(k: K, v: VendorProfileData[K] | undefined) => { if (v !== undefined) out[k] = v; };
     set('companyName', s(input.companyName)); set('companyNameEn', s(input.companyNameEn)); set('specialty', s(input.specialty));
     set('contactName', s(input.contactName)); set('phone', s(input.phone, 32)); set('mobile', s(input.mobile, 32));
-    set('email', s(input.email, 254)?.toLowerCase()); set('city', s(input.city, 100)); set('address', s(input.address, 500));
+    set('email', s(input.email, 254)?.toLowerCase()); set('country', s(input.country, 2)?.toUpperCase()); set('city', s(input.city, 100)); set('address', s(input.address, 500));
     set('commercialRegistrationNo', s(input.commercialRegistrationNo, 32)); set('vatNo', s(input.vatNo, 32)); set('website', s(input.website));
     set('primaryCategoryKey', s(input.primaryCategoryKey, 64)); set('notes', s(input.notes, 2000));
     if (Array.isArray(input.secondaryCategoryKeys)) out.secondaryCategoryKeys = [...new Set(input.secondaryCategoryKeys.map((k) => s(k, 64) ?? '').filter(Boolean))];
@@ -358,10 +360,11 @@ export class VendorsService {
     const primary = required(c.primaryCategoryKey, 'Category');
     const email = required(c.email, 'Email');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new BadRequestException('Enter a valid e-mail address.');
+    if (c.country && !COUNTRY_RE.test(c.country)) throw new BadRequestException('Choose a country from the list.');
     return {
       companyName: required(c.companyName, 'Company name'), companyNameEn: c.companyNameEn, specialty: c.specialty,
       contactName: required(c.contactName, 'Contact name'), phone: c.phone, mobile: required(c.mobile, 'Mobile'), email,
-      city: required(c.city, 'City'), address: c.address, commercialRegistrationNo: required(c.commercialRegistrationNo, 'Commercial registration number'),
+      country: required(c.country, 'Country'), city: required(c.city, 'City'), address: c.address, commercialRegistrationNo: required(c.commercialRegistrationNo, 'Commercial registration number'),
       vatNo: c.vatNo, website: c.website, primaryCategoryKey: primary, secondaryCategoryKeys: (c.secondaryCategoryKeys ?? []).filter((k) => k !== primary), notes: c.notes,
     };
   }

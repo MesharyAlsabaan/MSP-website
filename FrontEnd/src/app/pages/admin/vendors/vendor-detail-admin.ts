@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { VendorsService } from '../../../core/services/vendors.service';
 import { ARCHIVE_LABEL, QUAL_LABEL, VendorRow } from './vendors-admin';
+import { countryName } from '../../../core/data/countries';
 
 interface Doc { id: string; docTypeKey: string; originalFilename: string; expiresAt: string | null; sizeBytes: number; mime: string; sha256: string; }
 interface Revision {
@@ -20,7 +21,7 @@ interface Detail {
 
 const FIELDS: [string, string][] = [
   ['companyName', 'Company'], ['companyNameEn', 'Company (EN)'], ['specialty', 'Specialty'], ['contactName', 'Contact'], ['email', 'Email'],
-  ['mobile', 'Mobile'], ['phone', 'Phone'], ['city', 'City'], ['address', 'Address'], ['commercialRegistrationNo', 'CR no.'], ['vatNo', 'VAT no.'],
+  ['mobile', 'Mobile'], ['phone', 'Phone'], ['country', 'Country'], ['city', 'City'], ['address', 'Address'], ['commercialRegistrationNo', 'CR no.'], ['vatNo', 'VAT no.'],
   ['website', 'Website'], ['notes', 'Vendor notes'],
 ];
 
@@ -52,7 +53,7 @@ const FIELDS: [string, string][] = [
             <dl class="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-2">
               @for (f of fields; track f[0]) {
                 @if (rev.data[f[0]]) {
-                  <div><dt class="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">{{ f[1] }}</dt><dd class="text-ink">{{ rev.data[f[0]] }}</dd></div>
+                  <div><dt class="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">{{ f[1] }}</dt><dd class="text-ink">{{ f[0] === 'country' ? countryName($any(rev.data[f[0]]), 'en') : rev.data[f[0]] }}</dd></div>
                 }
               }
             </dl>
@@ -174,6 +175,7 @@ export class AdminVendorDetail implements OnInit {
   protected readonly qual = QUAL_LABEL;
   protected readonly arch = ARCHIVE_LABEL;
   protected readonly fields = FIELDS;
+  protected readonly countryName = countryName;
   private readonly id = this.route.snapshot.paramMap.get('id')!;
 
   ngOnInit(): void { this.load(); }

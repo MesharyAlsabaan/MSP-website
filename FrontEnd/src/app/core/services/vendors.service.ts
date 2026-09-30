@@ -11,7 +11,7 @@ export interface VendorCategory { key: string; nameAr: string; nameEn: string; r
 
 export interface VendorProfile {
   companyName?: string; companyNameEn?: string; specialty?: string; contactName?: string; phone?: string; mobile?: string; email?: string;
-  city?: string; address?: string; commercialRegistrationNo?: string; vatNo?: string; website?: string;
+  country?: string; city?: string; address?: string; commercialRegistrationNo?: string; vatNo?: string; website?: string;
   primaryCategoryKey?: string; secondaryCategoryKeys?: string[]; notes?: string; expiries?: Record<string, string>;
 }
 export interface DocumentView { id: string; docTypeKey: string; originalFilename: string; expiresAt: string | null; sizeBytes: number; mime: string; }

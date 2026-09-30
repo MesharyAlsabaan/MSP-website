@@ -64,7 +64,7 @@ describe('Office vendor service — journey over HTTP', () => {
   const asStaff = () => ({ Authorization: `Bearer ${staffToken}` });
 
   const profile = {
-    companyName: 'شركة الإنشاءات المتحدة', contactName: 'خالد', mobile: '0501234567', email: 'khalid@example.test', city: 'الرياض',
+    companyName: 'شركة الإنشاءات المتحدة', contactName: 'خالد', mobile: '0501234567', email: 'khalid@example.test', country: 'SA', city: 'الرياض',
     commercialRegistrationNo: '1010999999', vatNo: '300000000000003', primaryCategoryKey: 'general-contractor', secondaryCategoryKeys: ['mep-subcontractor'],
     expiries: { 'commercial-registration': '2027-05-01', 'vat-certificate': '2026-12-31', 'contractor-classification': '2027-03-01' },
   };

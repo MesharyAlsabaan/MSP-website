@@ -47,6 +47,8 @@ export interface VendorProfileData {
   phone?: string;
   mobile: string;
   email: string;
+  /** ISO 3166-1 alpha-2 code, e.g. SA, CN, IN, EG. */
+  country: string;
   city: string;
   address?: string;
   commercialRegistrationNo: string;
