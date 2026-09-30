@@ -28,6 +28,12 @@ export class Vendor extends BaseEntity {
   @Column({ name: 'company_name_en', default: '' })
   companyNameEn: string;
 
+  /** ISO 3166-1 alpha-2, copied from the submitted profile so staff can filter by it. */
+  @ApiProperty({ example: 'SA' })
+  @Index()
+  @Column({ length: 2, default: '' })
+  country: string;
+
   @ApiProperty({ example: 'general-contractor' })
   @Column({ name: 'primary_category_key', length: 64 })
   primaryCategoryKey: string;

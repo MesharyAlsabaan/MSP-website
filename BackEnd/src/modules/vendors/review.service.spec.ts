@@ -26,10 +26,10 @@ describe('ReviewService', () => {
   let n = 0;
 
   /** A verified account with a complete, submitted application. Returns the application id. */
-  const submitOne = async (): Promise<string> => {
+  const submitOne = async (country = 'SA'): Promise<string> => {
     n += 1;
     const acc = await ds.getRepository(VendorAccount).save({ email: `v${n}@example.test`, contactName: 'سعد', passwordHash: 'x', emailVerifiedAt: new Date(), active: true, lastLoginAt: null });
-    await vendors.saveDraft(acc.id, { companyName: `مؤسسة الرخام ${n}`, contactName: 'سعد', mobile: '0555555555', email: acc.email, city: 'جدة', commercialRegistrationNo: '4030303030', primaryCategoryKey: 'finishes-stone', secondaryCategoryKeys: [], expiries: { 'commercial-registration': '2027-01-31', 'vat-certificate': '2026-12-31' } });
+    await vendors.saveDraft(acc.id, { companyName: `مؤسسة الرخام ${n}`, contactName: 'سعد', mobile: '0555555555', email: acc.email, country, city: 'جدة', commercialRegistrationNo: '4030303030', primaryCategoryKey: 'finishes-stone', secondaryCategoryKeys: [], expiries: { 'commercial-registration': '2027-01-31', 'vat-certificate': '2026-12-31' } });
     await vendors.addDraftDocument(acc.id, 'commercial-registration', file('cr.pdf', PDF(`cr${n}`)));
     await vendors.addDraftDocument(acc.id, 'vat-certificate', file('vat.pdf', PDF(`vat${n}`)));
     await vendors.addDraftDocument(acc.id, 'company-profile', file('profile.pdf', PDF(`profile${n}`)));
@@ -155,5 +155,15 @@ describe('ReviewService', () => {
     expect(approved.data[0].archiveStatus).toBe('pending');
     const d = await review.detail(approved.data[0].id);
     expect(d.revisions[0].documents.length).toBeGreaterThan(0);
+  });
+
+  it('filters the list by the country the vendor submitted', async () => {
+    const chinaId = await submitOne('CN');
+    const china = await review.list({ page: 1, pageSize: 50, country: 'CN' });
+    expect(china.data.map((r) => r.id)).toEqual([chinaId]);
+    expect(china.data[0].country).toBe('CN');
+    const saudi = await review.list({ page: 1, pageSize: 50, country: 'SA' });
+    expect(saudi.data.length).toBeGreaterThan(0);
+    expect(saudi.data.every((r) => r.country === 'SA')).toBe(true);
   });
 });

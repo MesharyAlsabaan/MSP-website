@@ -18,7 +18,7 @@ const PDF = (label: string): Buffer => Buffer.from(`%PDF-1.7\n% ${label}\n1 0 ob
 const file = (name: string, body: Buffer): UploadedFile => ({ originalname: name, buffer: body, size: body.length });
 const reviewer = { id: '11111111-1111-4111-8111-111111111111', name: 'reviewer' };
 const profile = (name: string, email: string) => ({
-  companyName: name, contactName: 'x', mobile: '05', email, city: 'الرياض', commercialRegistrationNo: '1',
+  companyName: name, contactName: 'x', mobile: '05', email, country: 'SA', city: 'الرياض', commercialRegistrationNo: '1',
   primaryCategoryKey: 'general-contractor', secondaryCategoryKeys: ['mep-subcontractor'],
   expiries: { 'commercial-registration': '2027-01-01', 'vat-certificate': '2027-01-01', 'contractor-classification': '2027-01-01' },
 });
