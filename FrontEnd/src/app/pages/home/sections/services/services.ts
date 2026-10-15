@@ -1,3 +1,4 @@
+import { SERVICE_PAGES } from '../../../../core/data/service-pages';
 import {
   Component,
   inject,
@@ -26,6 +27,8 @@ interface Discipline {
   readonly title: L;
   readonly description: L;
   readonly scope: L;
+  /** The dedicated service page, when one is published; otherwise /services. */
+  readonly path?: string;
 }
 
 /** Section 02 — Disciplines: a large editorial index of services. */
@@ -47,7 +50,7 @@ interface Discipline {
           @for (item of disciplines(); track item.no) {
             <li appScrollReveal class="group relative border-b border-hairline">
               <a
-                [routerLink]="'/services' | loc"
+                [routerLink]="(item.path ?? '/services') | loc"
                 class="grid grid-cols-12 items-baseline gap-4 py-7 transition-[padding] duration-500 hover:ps-3 lg:py-9"
               >
                 <span
@@ -185,5 +188,11 @@ function toDiscipline(s: ServiceItem, i: number): Discipline {
     title: s.title,
     description: s.shortDescription,
     scope: { en: '', ar: '' },
+    path: servicePagePath(s.slug),
   };
+}
+
+function servicePagePath(cmsSlug: string): string | undefined {
+  const page = SERVICE_PAGES.find((p) => p.cmsSlug === cmsSlug && p.approved);
+  return page ? `/services/${page.slug}` : undefined;
 }

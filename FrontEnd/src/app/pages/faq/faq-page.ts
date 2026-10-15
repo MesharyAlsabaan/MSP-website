@@ -1,3 +1,4 @@
+import { Cta } from '../home/sections/cta/cta';
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Container } from '../../shared/ui/container/container';
 import { ScrollReveal } from '../../shared/directives/scroll-reveal.directive';
@@ -13,7 +14,7 @@ interface L {
 @Component({
   selector: 'app-faq-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Container, ScrollReveal],
+  imports: [Cta, Container, ScrollReveal],
   template: `
     <section class="border-b border-hairline bg-bg pt-16 pb-14 sm:pt-20">
       <app-container>
@@ -53,6 +54,8 @@ interface L {
         </div>
       </app-container>
     </section>
+
+    <app-cta />
   `,
 })
 export class FaqPage {

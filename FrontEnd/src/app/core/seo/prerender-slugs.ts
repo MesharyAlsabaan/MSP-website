@@ -1,3 +1,5 @@
+import { EXCLUDED_POST_SLUGS } from '../data/excluded-content';
+
 /**
  * Build-time list of published slugs for a public collection, used to
  * prerender detail pages. Reads the same API origin as the prerender
@@ -11,7 +13,9 @@ export async function publishedSlugs(resource: 'projects' | 'blog'): Promise<str
     const res = await fetch(`${origin}/api/${resource}?pageSize=100`, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return [];
     const body = (await res.json()) as { data?: { slug?: string }[] };
-    return (body.data ?? []).map((item) => item.slug ?? '').filter(Boolean);
+    return (body.data ?? [])
+      .map((item) => item.slug ?? '')
+      .filter((slug) => slug && !(resource === 'blog' && EXCLUDED_POST_SLUGS.includes(slug)));
   } catch {
     return [];
   }

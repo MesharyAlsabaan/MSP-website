@@ -9,6 +9,9 @@ import { ApiService } from '../../core/services/api.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { CompanyInfo } from '../../core/models/content.model';
 import { isolateNumbers } from '../../core/utils/bidi';
+import { ActivatedRoute } from '@angular/router';
+import { AnalyticsService } from '../../core/services/analytics.service';
+import { SERVICE_PAGES } from '../../core/data/service-pages';
 
 interface L {
   en: string;
@@ -171,6 +174,24 @@ function lv(s: string): L {
                   }
                 </div>
                 <div>
+                  <label [class]="labelClass" for="c-phone">{{ i18n.pick(t.phone) }}</label>
+                  <input id="c-phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" formControlName="phone" [class]="fieldClass" placeholder="+966 5x xxx xxxx" />
+                  @if (showError('phone')) {
+                    <p [class]="errClass">{{ i18n.pick(t.errPhone) }}</p>
+                  }
+                </div>
+                <div>
+                  <label [class]="labelClass" for="c-service">{{ i18n.pick(t.service) }}</label>
+                  <select id="c-service" formControlName="service" [class]="fieldClass + ' bg-bg'">
+                    <option value="">{{ i18n.pick(t.serviceAny) }}</option>
+                    @for (s of servicePages; track s.slug) {
+                      <option [value]="s.slug">{{ i18n.pick(s.title) }}</option>
+                    }
+                    <option value="project-management">{{ i18n.pick(t.servicePm) }}</option>
+                    <option value="urban-planning">{{ i18n.pick(t.serviceUrban) }}</option>
+                  </select>
+                </div>
+                <div>
                   <label [class]="labelClass" for="c-msg">{{ i18n.pick(t.message) }}</label>
                   <textarea id="c-msg" formControlName="message" rows="5" [class]="fieldClass" [placeholder]="i18n.pick(t.messagePh)"></textarea>
                   @if (showError('message')) {
@@ -197,6 +218,8 @@ export class ContactPage {
   private readonly api = inject(ApiService);
   private readonly content = inject(PublicContentService);
   private readonly fb = new FormBuilder();
+  private readonly analytics = inject(AnalyticsService);
+  private readonly route = inject(ActivatedRoute);
 
   /** Company/contact info from the API; falls back to the static defaults below. */
   private readonly cfg = signal<CompanyInfo>({});
@@ -207,6 +230,8 @@ export class ContactPage {
   protected readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.maxLength(40), Validators.pattern(/^[+\d][\d\s()-]{6,}$/)]],
+    service: [''],
     message: ['', [Validators.required, Validators.minLength(10)]],
   });
 
@@ -234,6 +259,12 @@ export class ContactPage {
     errEmail: { en: 'Please enter a valid email.', ar: 'الرجاء إدخال بريد إلكتروني صحيح.' },
     errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيد من التفاصيل.' },
     waChat: { en: 'Chat on WhatsApp', ar: 'محادثة عبر واتساب' },
+    phone: { en: 'Phone (optional)', ar: 'رقم الجوال (اختياري)' },
+    errPhone: { en: 'Please check the phone number.', ar: 'الرجاء التحقق من رقم الجوال.' },
+    service: { en: 'Service of interest (optional)', ar: 'الخدمة المطلوبة (اختياري)' },
+    serviceAny: { en: 'Not sure yet', ar: 'لم أحدد بعد' },
+    servicePm: { en: 'Project Management', ar: 'إدارة المشاريع' },
+    serviceUrban: { en: 'Urban Planning', ar: 'التخطيط العمراني' },
   };
 
   /** Both offices, shown as pins on the map. Coordinates are printed as given;
@@ -304,12 +335,23 @@ export class ContactPage {
     return result;
   });
 
+  /** Services a visitor can name in the enquiry; the dedicated pages first. */
+  protected readonly servicePages = SERVICE_PAGES.filter((p) => p.approved);
+
+  /** The enquiry's subject line, in English for the office inbox. */
+  private serviceSubject(slug: string): string {
+    if (!slug) return '';
+    const page = SERVICE_PAGES.find((p) => p.slug === slug);
+    const other: Record<string, string> = { 'project-management': 'Project Management', 'urban-planning': 'Urban Planning' };
+    return `Enquiry: ${page?.title.en ?? other[slug] ?? slug}`;
+  }
+
   protected readonly labelClass = 'mb-3 block font-mono text-xs uppercase tracking-[0.12em] text-muted';
   protected readonly fieldClass =
     'w-full border-0 border-b border-hairline bg-transparent px-0 py-3 text-lg text-ink placeholder:text-muted/60 transition-colors focus:border-accent focus:outline-none';
   protected readonly errClass = 'mt-2 font-mono text-xs uppercase tracking-[0.1em] text-accent';
 
-  protected showError(c: 'name' | 'email' | 'message'): boolean {
+  protected showError(c: 'name' | 'email' | 'phone' | 'message'): boolean {
     const ctrl = this.form.controls[c];
     return ctrl.invalid && (ctrl.touched || ctrl.dirty);
   }
@@ -321,10 +363,12 @@ export class ContactPage {
     }
     this.sending.set(true);
     this.sendError.set(null);
-    this.api.post('contact', this.form.getRawValue()).subscribe({
+    const { service, ...rest } = this.form.getRawValue();
+    this.api.post('contact', { ...rest, subject: this.serviceSubject(service) }).subscribe({
       next: () => {
         this.sending.set(false);
         this.submitted.set(true);
+        this.analytics.track('generate_lead', { form: 'contact_page', service: service || 'unspecified' });
       },
       error: () => {
         this.sending.set(false);
@@ -334,6 +378,11 @@ export class ContactPage {
   }
 
   constructor() {
+    // Arriving from a service page (?service=<slug>) pre-selects that service.
+    const preselect = this.route.snapshot.queryParamMap.get('service') ?? '';
+    if (SERVICE_PAGES.some((p) => p.slug === preselect && p.approved)) {
+      this.form.controls.service.setValue(preselect);
+    }
     this.seo.update({
       title: this.i18n.pick({
         en: 'Contact Our Riyadh & Cairo Offices',
