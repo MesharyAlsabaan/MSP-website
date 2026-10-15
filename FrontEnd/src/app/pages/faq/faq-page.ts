@@ -83,7 +83,7 @@ export class FaqPage {
       q: { en: 'Where do you work?', ar: 'أين تعملون؟' },
       a: {
         en: 'We are based in Riyadh and work across the Kingdom, including the major Vision 2030 developments.',
-        ar: 'مقرّنا الرياض ونعمل في أنحاء المملكة، بما في ذلك مشاريع رؤية ٢٠٣٠ الكبرى.',
+        ar: 'مقرّنا الرياض ونعمل في أنحاء المملكة، بما في ذلك مشاريع رؤية 2030 الكبرى.',
       },
     },
     {
@@ -104,8 +104,11 @@ export class FaqPage {
 
   constructor() {
     this.seo.update({
-      title: 'FAQ',
-      description: 'Common questions about working with MSP Consultants.',
+      title: this.i18n.pick({ en: 'FAQ', ar: 'الأسئلة الشائعة' }),
+      description: this.i18n.pick({
+        en: 'Common questions about working with MSP Consultants.',
+        ar: 'أسئلة شائعة حول العمل مع MSP للاستشارات.',
+      }),
     });
   }
 }

@@ -13,6 +13,8 @@ import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.direct
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { ServiceItem } from '../../../../core/models/content.model';
+import { RouterLink } from '@angular/router';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
 
 interface L {
   en: string;
@@ -31,7 +33,7 @@ interface Discipline {
 @Component({
   selector: 'app-services',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Section, Container, SectionHeading, ScrollReveal],
+  imports: [Section, Container, SectionHeading, ScrollReveal, RouterLink, LocPipe],
   template: `
     <app-section tone="surface">
       <app-container>
@@ -46,7 +48,7 @@ interface Discipline {
           @for (item of disciplines(); track item.no) {
             <li appScrollReveal class="group relative border-b border-hairline">
               <a
-                href="/services"
+                [routerLink]="'/services' | loc"
                 class="grid grid-cols-12 items-baseline gap-4 py-7 transition-[padding] duration-500 hover:ps-3 lg:py-9"
               >
                 <span
@@ -76,7 +78,7 @@ interface Discipline {
                 </p>
 
                 <span
-                  class="dir-flip relative col-span-12 hidden justify-self-end font-display text-2xl text-ink transition-transform duration-500 group-hover:translate-x-1.5 group-hover:text-accent sm:col-span-1 sm:block"
+                  class="dir-flip relative col-span-12 hidden justify-self-end font-display text-2xl text-ink transition-transform duration-500 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 group-hover:text-accent sm:col-span-1 sm:block"
                   aria-hidden="true"
                 >
                   &rarr;

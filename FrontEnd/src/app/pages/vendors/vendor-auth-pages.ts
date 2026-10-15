@@ -8,6 +8,7 @@ import { TranslationService } from '../../core/services/translation.service';
 import { SeoService } from '../../core/services/seo.service';
 import { VendorSession } from '../../core/services/vendor-session.service';
 import { VendorsService, vendorErrorMessage } from '../../core/services/vendors.service';
+import { LocPipe } from '../../shared/pipes/loc.pipe';
 
 export const FIELD = 'w-full border-0 border-b border-hairline bg-transparent px-0 py-3 text-base text-ink placeholder:text-muted/60 transition-colors focus:border-accent focus:outline-none';
 export const LABEL = 'mb-2 block font-mono text-xs uppercase tracking-[0.12em] text-muted';
@@ -36,7 +37,7 @@ export class VendorFrame { protected readonly i18n = inject(TranslationService);
 @Component({
   selector: 'app-vendor-login-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, VendorFrame, Button],
+  imports: [ReactiveFormsModule, RouterLink, VendorFrame, Button, LocPipe],
   template: `
     <app-vendor-frame>
       <span title>{{ i18n.pick(t.title) }}</span>
@@ -46,9 +47,9 @@ export class VendorFrame { protected readonly i18n = inject(TranslationService);
         @if (error(); as e) { <p [class]="E" role="alert">{{ e }}</p> }
         <div class="flex flex-wrap items-center gap-6">
           <app-button type="submit" [disabled]="busy() || form.invalid">{{ i18n.pick(t.signIn) }}</app-button>
-          <a routerLink="/vendors/forgot-password" class="font-mono text-xs uppercase tracking-[0.12em] text-muted hover:text-accent">{{ i18n.pick(t.forgot) }}</a>
+          <a [routerLink]="'/vendors/forgot-password' | loc" class="font-mono text-xs uppercase tracking-[0.12em] text-muted hover:text-accent">{{ i18n.pick(t.forgot) }}</a>
         </div>
-        <p class="text-sm text-muted">{{ i18n.pick(t.noAccount) }} <a routerLink="/vendors/register" class="text-accent underline-offset-4 hover:underline">{{ i18n.pick(t.register) }}</a></p>
+        <p class="text-sm text-muted">{{ i18n.pick(t.noAccount) }} <a [routerLink]="'/vendors/register' | loc" class="text-accent underline-offset-4 hover:underline">{{ i18n.pick(t.register) }}</a></p>
       </form>
     </app-vendor-frame>
   `,
@@ -69,14 +70,14 @@ export class VendorLoginPage {
   };
   constructor() {
     this.seo.update({ title: 'Vendor sign in', description: 'MSP vendor portal.' });
-    if (this.session.isLoggedIn()) void this.router.navigate(['/vendors/dashboard']);
+    if (this.session.isLoggedIn()) void this.router.navigateByUrl(this.i18n.path('/vendors/dashboard'));
   }
   protected submit(): void {
     if (this.form.invalid) return;
     this.busy.set(true); this.error.set(null);
     const { email, password } = this.form.getRawValue();
     this.api.login(email, password).subscribe({
-      next: (r) => { this.session.start(r.accessToken, r.account); void this.router.navigate(['/vendors/dashboard']); },
+      next: (r) => { this.session.start(r.accessToken, r.account); void this.router.navigateByUrl(this.i18n.path('/vendors/dashboard')); },
       error: (e: HttpErrorResponse) => { this.busy.set(false); this.error.set(e.status === 403 ? this.i18n.pick({ en: 'Please verify your e-mail first (check your inbox).', ar: 'فعّل بريدك أولاً (تحقق من صندوق الوارد).' }) : vendorErrorMessage(e, this.i18n.isArabic())); },
     });
   }
@@ -85,7 +86,7 @@ export class VendorLoginPage {
 @Component({
   selector: 'app-vendor-register-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, VendorFrame, Button],
+  imports: [ReactiveFormsModule, RouterLink, VendorFrame, Button, LocPipe],
   template: `
     <app-vendor-frame>
       <span title>{{ i18n.pick(t.title) }}</span>
@@ -102,7 +103,7 @@ export class VendorLoginPage {
           <div><label [class]="L" for="r-pass">{{ i18n.pick(t.password) }}</label><input id="r-pass" type="password" formControlName="password" [class]="F" dir="ltr" autocomplete="new-password" /><p class="mt-2 text-xs text-muted">{{ i18n.pick(t.passwordHint) }}</p></div>
           @if (error(); as e) { <p [class]="E" role="alert">{{ e }}</p> }
           <app-button type="submit" [disabled]="busy() || form.invalid">{{ i18n.pick(t.create) }}</app-button>
-          <p class="text-sm text-muted">{{ i18n.pick(t.haveAccount) }} <a routerLink="/vendors" class="text-accent underline-offset-4 hover:underline">{{ i18n.pick(t.signIn) }}</a></p>
+          <p class="text-sm text-muted">{{ i18n.pick(t.haveAccount) }} <a [routerLink]="'/vendors' | loc" class="text-accent underline-offset-4 hover:underline">{{ i18n.pick(t.signIn) }}</a></p>
         </form>
       }
     </app-vendor-frame>
@@ -140,12 +141,12 @@ export class VendorRegisterPage {
 @Component({
   selector: 'app-vendor-verify-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, VendorFrame],
+  imports: [RouterLink, VendorFrame, LocPipe],
   template: `
     <app-vendor-frame>
       <span title>{{ i18n.pick(t.title) }}</span>
       <p class="text-lg text-ink">{{ i18n.pick(state()) }}</p>
-      @if (state() === t.ok) { <a routerLink="/vendors" class="mt-6 inline-block font-mono text-xs uppercase tracking-[0.12em] text-accent">{{ i18n.pick(t.signIn) }} →</a> }
+      @if (state() === t.ok) { <a [routerLink]="'/vendors' | loc" class="mt-6 inline-block font-mono text-xs uppercase tracking-[0.12em] text-accent">{{ i18n.pick(t.signIn) }} →</a> }
     </app-vendor-frame>
   `,
 })
@@ -199,11 +200,11 @@ export class VendorForgotPage {
 @Component({
   selector: 'app-vendor-reset-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, VendorFrame, Button],
+  imports: [ReactiveFormsModule, RouterLink, VendorFrame, Button, LocPipe],
   template: `
     <app-vendor-frame>
       <span title>{{ i18n.pick(t.title) }}</span>
-      @if (done()) { <p class="text-lg text-ink">{{ i18n.pick(t.done) }} <a routerLink="/vendors" class="text-accent underline-offset-4 hover:underline">{{ i18n.pick(t.signIn) }}</a></p> } @else {
+      @if (done()) { <p class="text-lg text-ink">{{ i18n.pick(t.done) }} <a [routerLink]="'/vendors' | loc" class="text-accent underline-offset-4 hover:underline">{{ i18n.pick(t.signIn) }}</a></p> } @else {
         <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-8">
           <div><label [class]="L" for="p-pass">{{ i18n.pick(t.password) }}</label><input id="p-pass" type="password" formControlName="password" [class]="F" dir="ltr" autocomplete="new-password" /></div>
           @if (error(); as e) { <p [class]="E" role="alert">{{ e }}</p> }

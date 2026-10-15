@@ -31,4 +31,23 @@ describe('SeoService', () => {
       'Premium design agency',
     );
   });
+
+  it('falls back to the default share image and a large Twitter card', () => {
+    seo.update({});
+    expect(meta.getTag('property="og:image"')?.content).toBe('https://msp.sa/images/og-msp.jpg');
+    expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
+  });
+
+  it('makes a relative page image absolute', () => {
+    seo.update({ image: '/api/uploads/a.webp' });
+    expect(meta.getTag('property="og:image"')?.content).toBe('https://msp.sa/api/uploads/a.webp');
+  });
+
+  it('writes og:url and the canonical link without query or hash', () => {
+    seo.update({ url: '/projects?sector=x#top' });
+    expect(meta.getTag('property="og:url"')?.content).toBe('https://msp.sa/projects');
+    expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'https://msp.sa/projects',
+    );
+  });
 });

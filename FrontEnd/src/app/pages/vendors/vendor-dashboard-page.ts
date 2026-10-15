@@ -250,7 +250,7 @@ export class VendorDashboardPage {
 
   constructor() {
     this.seo.update({ title: 'Vendor dashboard', description: 'MSP vendor portal.' });
-    if (!this.session.isLoggedIn()) { void this.router.navigate(['/vendors']); return; }
+    if (!this.session.isLoggedIn()) { void this.router.navigateByUrl(this.i18n.path('/vendors')); return; }
     this.form.controls.primaryCategoryKey.valueChanges.subscribe((k) => { this.primaryKey.set(k); this.secondary.update((s) => { const n = new Set(s); n.delete(k); return n; }); });
     this.load();
   }
@@ -259,7 +259,7 @@ export class VendorDashboardPage {
     this.loadError.set(null);
     forkJoin({ categories: this.api.categories(), app: this.api.mine() }).subscribe({
       next: ({ categories, app }) => { this.categories.set(categories); this.apply(app); },
-      error: (e: HttpErrorResponse) => { if (e.status === 401) { this.session.end(); void this.router.navigate(['/vendors']); } else this.loadError.set(vendorErrorMessage(e, this.i18n.isArabic())); },
+      error: (e: HttpErrorResponse) => { if (e.status === 401) { this.session.end(); void this.router.navigateByUrl(this.i18n.path('/vendors')); } else this.loadError.set(vendorErrorMessage(e, this.i18n.isArabic())); },
     });
   }
 
@@ -283,7 +283,7 @@ export class VendorDashboardPage {
     return r ? (this.i18n.isArabic() ? r.nameAr : r.nameEn) : type;
   }
   protected toggleSecondary(key: string): void { this.secondary.update((s) => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; }); }
-  protected signOut(): void { this.session.end(); void this.router.navigate(['/vendors']); }
+  protected signOut(): void { this.session.end(); void this.router.navigateByUrl(this.i18n.path('/vendors')); }
 
   private patch(): VendorProfile { return { ...this.form.getRawValue(), secondaryCategoryKeys: [...this.secondary()] }; }
 
@@ -330,7 +330,7 @@ export class VendorDashboardPage {
     this.error.set(null);
     call.subscribe({
       next: (v) => { this.busy.set(false); always?.(); onOk(v); },
-      error: (e: HttpErrorResponse) => { this.busy.set(false); always?.(); if (e.status === 401) { this.session.end(); void this.router.navigate(['/vendors']); } else this.error.set(vendorErrorMessage(e, this.i18n.isArabic())); },
+      error: (e: HttpErrorResponse) => { this.busy.set(false); always?.(); if (e.status === 401) { this.session.end(); void this.router.navigateByUrl(this.i18n.path('/vendors')); } else this.error.set(vendorErrorMessage(e, this.i18n.isArabic())); },
     });
   }
 }

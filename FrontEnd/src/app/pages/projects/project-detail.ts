@@ -23,6 +23,8 @@ import { assetUrl } from '../../core/utils/asset-url';
 import { L, Project } from '../../core/data/projects';
 import { DISCIPLINES, SECTORS, Term, label } from '../../core/data/taxonomy';
 import { sectorsOf } from '../../core/data/project-filter';
+import { LocPipe } from '../../shared/pipes/loc.pipe';
+import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 
 type LoadState =
   | { status: 'loading'; project: null }
@@ -33,7 +35,7 @@ type LoadState =
 @Component({
   selector: 'app-project-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, RouterLink, Container, ScrollReveal, Parallax, AssetPipe, Lightbox],
+  imports: [NgClass, RouterLink, Container, ScrollReveal, Parallax, AssetPipe, Lightbox, LocPipe, SrcsetPipe],
   template: `
     @if (status() === 'loading') {
       <section class="pt-12 pb-10 sm:pt-16">
@@ -52,7 +54,7 @@ type LoadState =
         <section class="border-b border-hairline bg-bg pt-12 pb-10 sm:pt-16">
           <app-container>
             <a
-              routerLink="/projects"
+              [routerLink]="'/projects' | loc"
               class="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-muted transition-colors hover:text-ink"
             >
               <span class="dir-flip">&larr;</span> {{ i18n.pick(t.back) }}
@@ -86,7 +88,11 @@ type LoadState =
             <div appScrollReveal revealType="line" class="aspect-[16/9] overflow-hidden">
               <div appParallax [parallaxSpeed]="0.05" class="-mt-[6%] h-[112%] w-full">
                 <img
+                  sizes="(min-width: 1200px) 1136px, 92vw"
+                  [attr.srcset]="p.cover | srcset"
                   [src]="p.cover | asset"
+                  width="1600"
+                  height="900"
                   [alt]="i18n.pick(p.title)"
                   class="h-full w-full object-cover"
                   fetchpriority="high"
@@ -169,7 +175,11 @@ type LoadState =
                     "
                   >
                     <img
+                      [sizes]="i === 0 ? fullSizes : halfSizes"
+                      [attr.srcset]="img | srcset"
                       [src]="img | asset"
+                      width="1200"
+                      [attr.height]="i === 0 ? 675 : 900"
                       [alt]="i18n.pick(p.title)"
                       loading="lazy"
                       decoding="async"
@@ -178,7 +188,7 @@ type LoadState =
                       class="pointer-events-none h-full w-full select-none object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                     />
                     <span
-                      class="absolute inset-0 bg-ink/0 transition-colors duration-300 group-hover:bg-ink/15"
+                      class="absolute inset-0 bg-scrim/0 transition-colors duration-300 group-hover:bg-scrim/15"
                       aria-hidden="true"
                     ></span>
                   </button>
@@ -199,7 +209,7 @@ type LoadState =
         @if (next(); as nx) {
           <section class="border-t border-hairline py-16 sm:py-20">
             <app-container>
-              <a [routerLink]="['/projects', nx.slug]" class="group block">
+              <a [routerLink]="['/projects', nx.slug] | loc" class="group block">
                 <p class="font-mono text-xs uppercase tracking-[0.18em] text-muted">
                   {{ i18n.pick(t.next) }}
                 </p>
@@ -209,7 +219,7 @@ type LoadState =
                   >
                     {{ i18n.pick(nx.title) }}
                   </h2>
-                  <span class="dir-flip shrink-0 font-display text-3xl text-accent transition-transform duration-300 group-hover:translate-x-2">&rarr;</span>
+                  <span class="dir-flip shrink-0 font-display text-3xl text-accent transition-transform duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2">&rarr;</span>
                 </div>
               </a>
             </app-container>
@@ -224,7 +234,7 @@ type LoadState =
             {{ i18n.pick(t.notFound) }}
           </h1>
           <a
-            routerLink="/projects"
+            [routerLink]="'/projects' | loc"
             class="mt-8 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent"
           >
             <span class="dir-flip">&larr;</span> {{ i18n.pick(t.back) }}
@@ -235,6 +245,10 @@ type LoadState =
   `,
 })
 export class ProjectDetail {
+  /** `sizes` for the gallery: the first image spans both columns. */
+  protected readonly fullSizes = '(min-width: 1200px) 1136px, 92vw';
+  protected readonly halfSizes = '(min-width: 1200px) 552px, (min-width: 640px) 46vw, 92vw';
+
   protected readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
   private readonly seo = inject(SeoService);
@@ -324,7 +338,7 @@ export class ProjectDetail {
           image: assetUrl(p.cover),
         });
       } else if (this.status() === 'notfound') {
-        this.seo.update({ title: 'Works' });
+        this.seo.update({ title: this.i18n.pick({ en: 'Works', ar: 'المشاريع' }) });
       }
     });
   }

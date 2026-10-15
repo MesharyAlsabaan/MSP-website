@@ -15,6 +15,8 @@ import { AssetPipe } from '../../../../shared/pipes/asset.pipe';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { TeamMember } from '../../../../core/models/content.model';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
+import { SrcsetPipe } from '../../../../shared/pipes/srcset.pipe';
 
 interface L {
   en: string;
@@ -33,7 +35,7 @@ interface Member {
 @Component({
   selector: 'app-team',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Section, Container, SectionHeading, ScrollReveal, AssetPipe],
+  imports: [RouterLink, Section, Container, SectionHeading, ScrollReveal, AssetPipe, LocPipe, SrcsetPipe],
   template: `
     <app-section tone="surface">
       <app-container>
@@ -61,7 +63,11 @@ interface Member {
               <div appScrollReveal revealType="line" class="aspect-[4/5] overflow-hidden bg-hairline/40">
                 @if (member.image) {
                   <img
+                    sizes="(min-width: 1024px) 23vw, (min-width: 640px) 46vw, 92vw"
+                    [attr.srcset]="member.image | srcset"
                     [src]="member.image | asset"
+                    width="800"
+                    height="1000"
                     [alt]="member.name"
                     loading="lazy"
                     decoding="async"
@@ -95,12 +101,12 @@ interface Member {
         @if (members().length) {
           <div class="mt-14 border-t border-hairline pt-8">
             <a
-              routerLink="/team"
+              [routerLink]="'/team' | loc"
               class="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink transition-colors hover:text-accent"
             >
               {{ i18n.pick(t.all) }}
               <span
-                class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1"
+                class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1"
                 aria-hidden="true"
                 >&rarr;</span
               >

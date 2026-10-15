@@ -25,7 +25,6 @@ export const SECTORS = {
   commercial: term('commercial', 'Commercial', 'تجاري'),
   hospitality: term('hospitality', 'Hospitality', 'ضيافة'),
   residential: term('residential', 'Residential', 'سكني'),
-  infrastructure: term('infrastructure', 'Infrastructure', 'بنية تحتية'),
   space: term('space', 'Space', 'فضاءات'),
   sports: term('sports', 'Sports', 'رياضي'),
   health: term('health', 'Health', 'صحي'),

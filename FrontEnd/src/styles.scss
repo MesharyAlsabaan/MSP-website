@@ -177,6 +177,37 @@ body::before {
   }
 }
 
+// Above-the-fold entrance (`revealOnLoad`): the same rise / wipe, played by CSS
+// from the first paint of the server HTML — no JS, no re-hide at hydration.
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal-wipe {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 -10% 0);
+  }
+}
+
+.reveal-load {
+  animation: reveal-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms) both;
+
+  &.reveal-load--line {
+    animation-name: reveal-wipe;
+    animation-duration: 1s;
+  }
+}
+
 // Slow editorial marquee.
 @keyframes marquee-scroll {
   from {
@@ -213,6 +244,10 @@ body::before {
   }
 
   // Never leave content hidden if motion is disabled.
+  .reveal-load {
+    animation: none !important;
+  }
+
   .reveal,
   .reveal-line {
     opacity: 1 !important;

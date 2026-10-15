@@ -56,7 +56,7 @@ interface L {
                 <span class="col-span-6 font-mono text-xs uppercase tracking-[0.12em] text-muted sm:col-span-2">
                   {{ i18n.pick(role.location) }}
                 </span>
-                <span class="dir-flip col-span-12 hidden justify-self-end text-accent transition-transform duration-300 group-hover:translate-x-1 sm:col-span-1 sm:block">&rarr;</span>
+                <span class="dir-flip col-span-12 hidden justify-self-end text-accent transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 sm:col-span-1 sm:block">&rarr;</span>
               </a>
             </li>
           }
@@ -114,8 +114,11 @@ export class CareersPage {
 
   constructor() {
     this.seo.update({
-      title: 'Careers',
-      description: 'Join MSP Consultants — open architecture and engineering roles in Riyadh.',
+      title: this.i18n.pick({ en: 'Careers', ar: 'الوظائف' }),
+      description: this.i18n.pick({
+        en: 'Join MSP Consultants — open architecture and engineering roles in Riyadh.',
+        ar: 'انضم إلى MSP للاستشارات — وظائف شاغرة في العمارة والهندسة في الرياض.',
+      }),
     });
   }
 }

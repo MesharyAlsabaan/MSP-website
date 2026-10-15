@@ -30,7 +30,7 @@ const render = async (team: ReturnType<typeof member>[]) => {
       provideRouter([]),
       {
         provide: TranslationService,
-        useValue: { pick: (value: { en: string }) => value.en },
+        useValue: { pick: (value: { en: string }) => value.en, path: (p: string) => p },
       },
       { provide: PublicContentService, useValue: { team: () => of(team) } },
     ],

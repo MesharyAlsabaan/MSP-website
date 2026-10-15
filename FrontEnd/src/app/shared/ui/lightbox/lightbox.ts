@@ -32,7 +32,7 @@ import { TranslationService } from '../../../core/services/translation.service';
   template: `
     @if (open()) {
       <div
-        class="fixed inset-0 z-[100] flex flex-col bg-ink/95 backdrop-blur-sm"
+        class="fixed inset-0 z-[100] flex flex-col bg-scrim/95 backdrop-blur-sm"
         role="dialog"
         aria-modal="true"
         [attr.aria-label]="i18n.pick(t.viewer)"
@@ -44,14 +44,14 @@ import { TranslationService } from '../../../core/services/translation.service';
           class="flex items-center justify-between px-5 py-4 sm:px-8"
           (click)="$event.stopPropagation()"
         >
-          <p class="font-mono text-xs uppercase tracking-[0.16em] text-bg/70" dir="ltr">
+          <p class="font-mono text-xs uppercase tracking-[0.16em] text-on-scrim/70" dir="ltr">
             {{ index() + 1 }} / {{ images().length }}
           </p>
           <button
             type="button"
             (click)="close()"
             [attr.aria-label]="i18n.pick(t.close)"
-            class="grid h-10 w-10 place-items-center border border-bg/30 font-display text-2xl leading-none text-bg transition-colors hover:border-accent hover:text-accent"
+            class="grid h-10 w-10 place-items-center border border-on-scrim/30 font-display text-2xl leading-none text-on-scrim transition-colors hover:border-accent hover:text-accent"
           >
             &times;
           </button>
@@ -64,7 +64,7 @@ import { TranslationService } from '../../../core/services/translation.service';
               type="button"
               (click)="prev($event)"
               [attr.aria-label]="i18n.pick(t.previous)"
-              class="dir-flip absolute start-2 z-10 grid h-12 w-12 place-items-center text-3xl text-bg/70 transition-colors hover:text-accent sm:start-6"
+              class="dir-flip absolute start-2 z-10 grid h-12 w-12 place-items-center text-3xl text-on-scrim/70 transition-colors hover:text-accent sm:start-6"
             >
               &lsaquo;
             </button>
@@ -89,7 +89,7 @@ import { TranslationService } from '../../../core/services/translation.service';
               type="button"
               (click)="next($event)"
               [attr.aria-label]="i18n.pick(t.next)"
-              class="dir-flip absolute end-2 z-10 grid h-12 w-12 place-items-center text-3xl text-bg/70 transition-colors hover:text-accent sm:end-6"
+              class="dir-flip absolute end-2 z-10 grid h-12 w-12 place-items-center text-3xl text-on-scrim/70 transition-colors hover:text-accent sm:end-6"
             >
               &rsaquo;
             </button>
@@ -98,7 +98,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 
         @if (caption()) {
           <p
-            class="px-5 pb-6 text-center font-mono text-xs uppercase tracking-[0.14em] text-bg/60 sm:px-8"
+            class="px-5 pb-6 text-center font-mono text-xs uppercase tracking-[0.14em] text-on-scrim/60 sm:px-8"
             (click)="$event.stopPropagation()"
           >
             {{ caption() }}

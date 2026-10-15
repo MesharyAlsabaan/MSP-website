@@ -22,6 +22,8 @@
     "migration:show:prod": "typeorm migration:show -d dist/database/data-source.js",
     "migration:baseline": "ts-node -r tsconfig-paths/register src/database/mark-baseline.ts",
     "migration:baseline:prod": "node dist/database/mark-baseline.js",
+    "images:variants": "ts-node -r tsconfig-paths/register src/scripts/image-variants.ts",
+    "images:variants:prod": "node dist/scripts/image-variants.js",
     "seed:vendors": "ts-node -r tsconfig-paths/register src/database/seeds/seed-vendors.ts",
     "vendor:typeorm": "typeorm-ts-node-commonjs -d src/database/vendor-data-source.ts",
     "vendor:migration:generate": "npm run vendor:typeorm -- migration:generate",
@@ -54,6 +56,7 @@
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.34.5",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {

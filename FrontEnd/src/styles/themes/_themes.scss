@@ -15,6 +15,18 @@
   --accent: #b85c38; // warm clay / terracotta
   --accent-ink: #f6f4ee; // text/icon color on top of accent
 
+  // Scrim: the shade laid over photography (captions, lightbox). Photos are
+  // the same in both themes, so the scrim never inverts — it stays ink-dark
+  // with paper-light text on top. Identical in `.dark` on purpose.
+  --scrim: #1a1712;
+  --on-scrim: #f6f4ee;
+
+  // Band: the inverted full-bleed section (stats). A warm charcoal — softer
+  // than the ink, same brown family — in light; in dark it becomes an inset
+  // panel deeper than the page instead of a bright slab.
+  --band: #2e2620;
+  --on-band: #f6f4ee;
+
   color-scheme: light;
 }
 
@@ -24,9 +36,12 @@
   --ink: #f1ece1; // warm bone
   --muted: #9a9182; // muted warm taupe
   --border: #2c281f; // low-contrast warm border
-  --hairline: #38322789; // faint warm hairline
+  --hairline: #3d362c; // warm hairline, solid so rules stay visible
   --accent: #d6794f; // lighter clay for contrast on dark
   --accent-ink: #14110d;
+
+  --band: #0b0907; // deeper than the page, so it still reads as an inset band
+  --on-band: #f1ece1;
 
   color-scheme: dark;
 }

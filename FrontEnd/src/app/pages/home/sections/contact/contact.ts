@@ -50,22 +50,37 @@ interface ContactItem {
               }}<span class="italic text-accent">{{ i18n.pick(t.headingEm) }}</span>
             </h2>
 
+            <!-- Phones: one-thumb actions before the list (tel / WhatsApp). -->
+            <div class="mt-10 grid grid-cols-2 gap-3 sm:hidden">
+              <a
+                [href]="'tel:' + quick().phone"
+                class="inline-flex min-h-12 items-center justify-center bg-ink px-3 font-mono text-xs font-medium uppercase tracking-[0.12em] text-bg"
+              >{{ i18n.pick(t.call) }}</a>
+              <a
+                [href]="quick().whatsapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex min-h-12 items-center justify-center border border-ink/30 px-3 font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink"
+              >{{ i18n.pick(t.whatsapp) }}</a>
+            </div>
+
             <dl class="mt-12 space-y-8">
               @for (detail of i18n.pick(details()); track detail.label) {
                 <div class="border-t border-hairline pt-4">
                   <dt class="font-mono text-xs uppercase tracking-[0.15em] text-accent">
                     {{ detail.label }}
                   </dt>
-                  <dd class="mt-2 text-lg text-ink" [attr.dir]="detail.ltr ? 'ltr' : null">
+                  <dd class="mt-2 text-lg text-ink">
                     @if (detail.href) {
                       <a
+                        [attr.dir]="detail.ltr ? 'ltr' : null"
                         [href]="detail.href"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="underline decoration-hairline underline-offset-4 transition-colors hover:text-accent"
                       >{{ detail.value }}</a>
                     } @else {
-                      {{ detail.value }}
+                      <span [attr.dir]="detail.ltr ? 'ltr' : null">{{ detail.value }}</span>
                     }
                   </dd>
                 </div>
@@ -173,7 +188,9 @@ export class Contact {
     email: { en: 'Email', ar: 'البريد الإلكتروني' },
     message: { en: 'About your project', ar: 'نبذة عن مشروعك' },
     messagePh: { en: 'Site, scale, ambition…', ar: 'الموقع، والنطاق، والطموح…' },
-    send: { en: 'Send enquiry →', ar: 'أرسل طلبك →' },
+    send: { en: 'Send enquiry →', ar: 'أرسل طلبك ←' },
+    call: { en: 'Call Riyadh', ar: 'اتصل بالرياض' },
+    whatsapp: { en: 'WhatsApp', ar: 'واتساب' },
     errName: { en: 'Please enter your name.', ar: 'الرجاء إدخال اسمك.' },
     errEmail: { en: 'Please enter a valid email.', ar: 'الرجاء إدخال بريدٍ إلكترونيٍّ صحيح.' },
     errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيدٍ من التفاصيل.' },
@@ -184,6 +201,13 @@ export class Contact {
   protected readonly fieldClass =
     'w-full border-0 border-b border-hairline bg-transparent px-0 py-3 text-lg text-ink placeholder:text-muted/60 transition-colors focus:border-accent focus:outline-none';
   protected readonly errorClass = 'mt-2 font-mono text-xs uppercase tracking-[0.1em] text-accent';
+
+  /** Primary phone and WhatsApp link for the phone-only quick actions. */
+  protected readonly quick = computed(() => {
+    const c = this.cfg();
+    const whatsapp = c.whatsapp || '+966570327777';
+    return { phone: c.phone || '+966112000087', whatsapp: `https://wa.me/${whatsapp.replace(/\D/g, '')}` };
+  });
 
   protected readonly details = computed<{ en: ContactItem[]; ar: ContactItem[] }>(() => {
     const c = this.cfg();

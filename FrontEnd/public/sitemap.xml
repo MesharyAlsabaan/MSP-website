@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static pages only. Project and insight pages come from the API and need a
+     generated sitemap (tracked as follow-up work). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://msp.sa/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/about"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/about"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/services</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/services"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/services"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/services"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/services</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/services"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/services"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/services"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/projects</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/projects"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/projects"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/projects"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/projects</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/projects"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/projects"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/projects"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/team</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/team"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/team"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/team"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/team</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/team"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/team"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/team"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/blog</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/blog"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/blog"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/blog"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/blog</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/blog"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/blog"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/blog"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/careers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/careers"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/careers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/careers"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/careers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/careers"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/careers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/careers"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/faq</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/faq"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/faq"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/faq"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/faq</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/faq"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/faq"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/faq"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/contact"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/contact"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/privacy"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/privacy"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/terms"/>
+  </url>
+  <url>
+    <loc>https://msp.sa/ar/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://msp.sa/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://msp.sa/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://msp.sa/terms"/>
+  </url>
+</urlset>

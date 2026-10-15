@@ -57,7 +57,7 @@ export class RiyadhClock implements OnDestroy {
   }
 
   private format(): string {
-    const locale = this.i18n.lang() === 'ar' ? 'ar-SA' : 'en-GB';
+    const locale = this.i18n.lang() === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB';
     try {
       return new Intl.DateTimeFormat(locale, {
         timeZone: 'Asia/Riyadh',

@@ -8,8 +8,16 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    path: 'ar/projects/:slug',
+    renderMode: RenderMode.Client,
+  },
+  {
     // Insight detail follows the same API-backed slug pattern as projects.
     path: 'blog/:slug',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'ar/blog/:slug',
     renderMode: RenderMode.Client,
   },
   {
@@ -18,7 +26,15 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    path: 'ar/vendors',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'vendors/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'ar/vendors/**',
     renderMode: RenderMode.Client,
   },
   {

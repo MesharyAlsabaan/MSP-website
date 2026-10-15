@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Logger,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -18,6 +19,7 @@ import { existsSync } from 'fs';
 import { extname, join } from 'path';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
+import { generateVariants } from './image-variants';
 
 const ALLOWED = /\.(jpg|jpeg|png|webp|gif|svg)$/i;
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'uploads';
@@ -53,6 +55,8 @@ function safeName(original: string): string {
 @Roles(Role.ContentManager, Role.Editor)
 @Controller('uploads')
 export class UploadsController {
+  private readonly logger = new Logger(UploadsController.name);
+
   constructor(private readonly config: ConfigService) {}
 
   @Post()
@@ -78,8 +82,16 @@ export class UploadsController {
       },
     }),
   )
-  upload(@UploadedFile() file: { filename: string; size: number }) {
+  async upload(@UploadedFile() file: { filename: string; size: number }) {
     if (!file) throw new BadRequestException('No file provided');
+    // Responsive web copies beside the untouched original. A failure here must
+    // not lose the upload: the site falls back to the original until the
+    // backfill script (`npm run images:variants`) fills the gap.
+    try {
+      await generateVariants(UPLOAD_DIR, file.filename);
+    } catch (err) {
+      this.logger.warn(`Could not create web copies of ${file.filename}: ${(err as Error).message}`);
+    }
     const prefix = this.config.get<string>('apiPrefix');
     return {
       filename: file.filename,
