@@ -57,7 +57,9 @@ async function bootstrap() {
     }
     res.sendFile(hit.path, {
       headers: {
-        'Cache-Control': hit.isCopy ? 'public, max-age=31536000, immutable' : 'public, max-age=86400',
+        // The fallback is short-lived so caches (Cloudflare) come back for the
+        // copy once it exists; a copy never changes.
+        'Cache-Control': hit.isCopy ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
       },
     });
   });
