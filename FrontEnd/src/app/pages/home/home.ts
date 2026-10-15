@@ -1,5 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { SeoService } from '../../core/services/seo.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { Hero } from './sections/hero/hero';
 import { About } from './sections/about/about';
 import { Services } from './sections/services/services';
@@ -52,11 +53,14 @@ import { Contact } from './sections/contact/contact';
 })
 export class Home {
   private readonly seo = inject(SeoService);
+  private readonly i18n = inject(TranslationService);
 
   constructor() {
     this.seo.update({
-      description:
-        'MSP Consultants — an architecture & engineering consultancy in Riyadh. Architecture, structural and MEP engineering, urban planning, and project management.',
+      description: this.i18n.pick({
+        en: 'MSP Consultants — an architecture & engineering consultancy in Riyadh. Architecture, structural and MEP engineering, urban planning, and project management.',
+        ar: 'MSP للاستشارات — مكتب استشارات معمارية وهندسية في الرياض. العمارة، والهندسة الإنشائية والكهروميكانيكية، والتخطيط العمراني، وإدارة المشاريع.',
+      }),
     });
   }
 }

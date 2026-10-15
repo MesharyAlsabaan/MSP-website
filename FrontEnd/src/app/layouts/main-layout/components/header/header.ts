@@ -11,6 +11,7 @@ import { ThemeToggle } from '../../../../shared/ui/theme-toggle/theme-toggle';
 import { LangToggle } from '../../../../shared/ui/lang-toggle/lang-toggle';
 import { RiyadhClock } from '../../../../shared/ui/riyadh-clock/riyadh-clock';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
 
 interface NavLink {
   readonly path: string;
@@ -31,6 +32,7 @@ interface NavLink {
     ThemeToggle,
     LangToggle,
     RiyadhClock,
+    LocPipe,
   ],
   template: `
     <header
@@ -39,12 +41,12 @@ interface NavLink {
       <app-container>
         <nav class="flex h-20 items-center justify-between gap-6">
           <a
-            routerLink="/"
+            [routerLink]="'/' | loc"
             class="flex items-center gap-3 text-ink"
             [attr.aria-label]="i18n.pick(brandLabel)"
           >
             <img
-              src="/images/msp-logo.png"
+              src="/images/msp-logo-144.png"
               alt="MSP Designs"
               width="48"
               height="48"
@@ -62,7 +64,7 @@ interface NavLink {
             @for (item of navItems; track item.path) {
               <li>
                 <a
-                  [routerLink]="item.path"
+                  [routerLink]="item.path | loc"
                   routerLinkActive="text-ink"
                   [routerLinkActiveOptions]="{ exact: item.path === '/' }"
                   class="text-muted transition-colors hover:text-ink"
@@ -120,7 +122,7 @@ interface NavLink {
                 @for (item of navItems; track item.path) {
                   <li>
                     <a
-                      [routerLink]="item.path"
+                      [routerLink]="item.path | loc"
                       routerLinkActive="text-accent"
                       [routerLinkActiveOptions]="{ exact: item.path === '/' }"
                       (click)="closeMenu()"

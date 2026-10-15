@@ -12,12 +12,13 @@ import { PublicContentService } from '../../core/services/public-content.service
 import { SeoService } from '../../core/services/seo.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { TeamMember } from '../../core/models/content.model';
+import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 
 /** Public team index backed exclusively by active records from the content API. */
 @Component({
   selector: 'app-team-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Container, ScrollReveal, AssetPipe],
+  imports: [Container, ScrollReveal, AssetPipe, SrcsetPipe],
   template: `
     <section class="border-b border-hairline bg-bg pt-16 pb-12 sm:pt-20">
       <app-container>
@@ -55,7 +56,11 @@ import { TeamMember } from '../../core/models/content.model';
                 <div class="aspect-[4/5] overflow-hidden bg-hairline/40">
                   @if (member.photo) {
                     <img
+                      sizes="(min-width: 1024px) 23vw, (min-width: 640px) 46vw, 92vw"
+                      [attr.srcset]="member.photo | srcset"
                       [src]="member.photo | asset"
+                      width="800"
+                      height="1000"
                       [alt]="member.name"
                       loading="lazy"
                       decoding="async"
@@ -114,8 +119,11 @@ export class TeamPage {
 
   constructor() {
     this.seo.update({
-      title: 'Studio',
-      description: 'Meet the architects, engineers, and specialists at MSP.',
+      title: this.i18n.pick({ en: 'Studio', ar: 'الفريق' }),
+      description: this.i18n.pick({
+        en: 'Meet the architects, engineers, and specialists at MSP.',
+        ar: 'تعرّف على المعماريين والمهندسين والمتخصصين في MSP.',
+      }),
     });
 
     afterNextRender(() => {

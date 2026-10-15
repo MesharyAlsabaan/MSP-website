@@ -8,6 +8,7 @@ import { SeoService } from '../../core/services/seo.service';
 import { ApiService } from '../../core/services/api.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { CompanyInfo } from '../../core/models/content.model';
+import { isolateNumbers } from '../../core/utils/bidi';
 
 interface L {
   en: string;
@@ -74,16 +75,17 @@ function lv(s: string): L {
                   <dt class="font-mono text-xs uppercase tracking-[0.15em] text-accent">
                     {{ i18n.pick(d.label) }}
                   </dt>
-                  <dd class="mt-2 flex items-center gap-3 text-lg text-ink" [attr.dir]="d.ltr ? 'ltr' : null">
+                  <dd class="mt-2 flex items-center gap-3 text-lg text-ink">
                     @if (d.href) {
                       <a
+                        [attr.dir]="d.ltr ? 'ltr' : null"
                         [href]="d.href"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="underline decoration-hairline underline-offset-4 transition-colors hover:text-accent"
                       >{{ i18n.pick(d.value) }}</a>
                     } @else {
-                      <span>{{ i18n.pick(d.value) }}</span>
+                      <span [attr.dir]="d.ltr ? 'ltr' : null">{{ i18n.pick(d.value) }}</span>
                     }
                     @if (d.whatsapp) {
                       <!-- Straight to a WhatsApp chat with the number beside it. -->
@@ -224,7 +226,7 @@ export class ContactPage {
     email: { en: 'Email', ar: 'البريد الإلكتروني' },
     message: { en: 'About your project', ar: 'نبذة عن مشروعك' },
     messagePh: { en: 'Site, scale, ambition…', ar: 'الموقع، والنطاق، والطموح…' },
-    send: { en: 'Send enquiry →', ar: 'أرسل طلبك →' },
+    send: { en: 'Send enquiry →', ar: 'أرسل طلبك ←' },
     errName: { en: 'Please enter your name.', ar: 'الرجاء إدخال اسمك.' },
     errEmail: { en: 'Please enter a valid email.', ar: 'الرجاء إدخال بريدٍ إلكترونيٍّ صحيح.' },
     errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيدٍ من التفاصيل.' },
@@ -254,6 +256,7 @@ export class ContactPage {
   protected readonly details = computed<ContactDetail[]>(() => {
     const c = this.cfg();
     const mobile = c.whatsapp || '+966570327777';
+    const hours = c.workingHours ?? { en: 'Sun–Thu · 9:00–17:00', ar: 'الأحد–الخميس · 9:00–17:00' };
     const result: ContactDetail[] = [
       { label: { en: 'Established', ar: 'سنة التأسيس' }, value: lv('2010'), ltr: true },
       { label: { en: 'Email', ar: 'البريد الإلكتروني' }, value: lv(c.email || 'info@msp.sa'), ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
@@ -276,7 +279,7 @@ export class ContactPage {
       },
       {
         label: { en: 'Hours', ar: 'ساعات العمل' },
-        value: c.workingHours ?? { en: 'Sun–Thu · 9:00–17:00', ar: 'الأحد–الخميس · ٩:٠٠–١٧:٠٠' },
+        value: { en: hours.en, ar: isolateNumbers(hours.ar) },
       },
     ];
     const cairoPhone = c.cairoPhone || '+201068017313';
@@ -329,8 +332,11 @@ export class ContactPage {
 
   constructor() {
     this.seo.update({
-      title: 'Contact',
-      description: 'Get in touch with MSP Consultants — architecture & engineering in Riyadh.',
+      title: this.i18n.pick({ en: 'Contact', ar: 'تواصل معنا' }),
+      description: this.i18n.pick({
+        en: 'Get in touch with MSP Consultants — architecture & engineering in Riyadh.',
+        ar: 'تواصل مع MSP للاستشارات — العمارة والهندسة في الرياض.',
+      }),
     });
 
     afterNextRender(() => {

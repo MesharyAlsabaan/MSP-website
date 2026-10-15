@@ -94,7 +94,7 @@ export class LegalPage {
   }
 }
 
-const UPDATED: L = { en: 'Updated June 2026', ar: 'حُدّثت يونيو ٢٠٢٦' };
+const UPDATED: L = { en: 'Updated June 2026', ar: 'حُدّثت يونيو 2026' };
 
 const PRIVACY: LegalDoc = {
   title: { en: 'Privacy Policy', ar: 'سياسة الخصوصية' },

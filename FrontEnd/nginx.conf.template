@@ -55,11 +55,31 @@ server {
   # That shell is index.csr.html, NOT index.html: the latter is the prerendered
   # home page, so serving it for /auth/login handed the browser a fully rendered
   # homepage, which Angular then hydrated as the home route and left on screen.
-  location / {
-    # HTML (prerendered pages + the app shell) must revalidate so a new deploy
-    # is picked up at once, even though the hashed assets it points to are
-    # cached hard above.
+  #
+  # Only the client-rendered routes get the shell. They're dynamic (slugs,
+  # tokens, auth), so the server can't know whether they exist — the app shows
+  # its own not-found view. Prerendered files under these prefixes (e.g. a
+  # static project page) still win via $uri/.
+  location ~ ^/(ar/)?(admin|auth|vendors|projects/[^/]+|blog/[^/]+)(/|$) {
     add_header Cache-Control "no-cache";
     try_files $uri $uri/ /index.csr.html;
+  }
+
+  # Arabic edition: unknown /ar/... paths get the Arabic 404 page.
+  location /ar/ {
+    add_header Cache-Control "no-cache";
+    error_page 404 /ar/404/index.html;
+    try_files $uri $uri/ =404;
+  }
+
+  # Everything else is a prerendered page or a static file. Anything not on
+  # disk is a real 404 (status 404, not a 200 app shell that search engines
+  # index as a duplicate home page).
+  location / {
+    # HTML must revalidate so a new deploy is picked up at once, even though
+    # the hashed assets it points to are cached hard above.
+    add_header Cache-Control "no-cache";
+    error_page 404 /404/index.html;
+    try_files $uri $uri/ =404;
   }
 }

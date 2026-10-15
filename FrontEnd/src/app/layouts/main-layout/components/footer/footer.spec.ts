@@ -11,7 +11,7 @@ describe('Footer', () => {
       imports: [Footer],
       providers: [
         provideRouter([]),
-        { provide: TranslationService, useValue: { pick: (value: { en: string }) => value.en } },
+        { provide: TranslationService, useValue: { pick: (value: { en: string }) => value.en, path: (p: string) => p } },
         {
           provide: PublicContentService,
           useValue: {

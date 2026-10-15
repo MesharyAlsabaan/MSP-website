@@ -10,6 +10,7 @@ import { SeoService } from '../../core/services/seo.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { AssetPipe } from '../../shared/pipes/asset.pipe';
 import { TeamMember } from '../../core/models/content.model';
+import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 
 interface L {
   en: string;
@@ -20,7 +21,7 @@ interface L {
 @Component({
   selector: 'app-about-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Container, Section, SectionHeading, ScrollReveal, CountUp, Cta, AssetPipe],
+  imports: [Container, Section, SectionHeading, ScrollReveal, CountUp, Cta, AssetPipe, SrcsetPipe],
   template: `
     <!-- Header -->
     <section class="border-b border-hairline bg-bg pt-16 pb-14 sm:pt-20">
@@ -67,18 +68,18 @@ interface L {
     </app-section>
 
     <!-- Numbers -->
-    <section class="bg-ink py-20 text-bg sm:py-24">
+    <section class="bg-band dark:border-y dark:border-hairline py-20 text-on-band sm:py-24">
       <app-container>
         <dl class="grid grid-cols-2 gap-x-8 gap-y-12">
           @for (s of stats; track s.label.en; let i = $index) {
             <div appScrollReveal [revealDelay]="i * 90">
               <dt
                 [appCountUp]="s.value"
-                class="font-display text-5xl font-medium leading-none tracking-[-0.02em] text-bg sm:text-6xl"
+                class="font-display text-5xl font-medium leading-none tracking-[-0.02em] text-on-band sm:text-6xl"
               >
                 <span data-count>0</span><span class="text-accent">{{ s.suffix }}</span>
               </dt>
-              <dd class="mt-4 border-t border-bg/15 pt-4 font-mono text-xs uppercase tracking-[0.12em] text-bg/60">
+              <dd class="mt-4 border-t border-on-band/15 pt-4 font-mono text-xs uppercase tracking-[0.12em] text-on-band/60">
                 {{ i18n.pick(s.label) }}
               </dd>
             </div>
@@ -134,7 +135,11 @@ interface L {
                 <div appScrollReveal revealType="line" class="aspect-[4/5] overflow-hidden bg-hairline/40">
                   @if (member.photo) {
                     <img
+                      sizes="(min-width: 1024px) 23vw, (min-width: 640px) 46vw, 92vw"
+                      [attr.srcset]="member.photo | srcset"
                       [src]="member.photo | asset"
+                      width="800"
+                      height="1000"
                       [alt]="member.name"
                       loading="lazy"
                       decoding="async"
@@ -212,7 +217,7 @@ export class AboutPage {
     },
     storyLead: {
       en: 'We started in 2010 with a simple conviction: design and engineering should never be two conversations.',
-      ar: 'بدأنا عام ٢٠١٠ بقناعةٍ بسيطة: ألا يكون التصميم والهندسة حديثين منفصلين.',
+      ar: 'بدأنا عام 2010 بقناعةٍ بسيطة: ألا يكون التصميم والهندسة حديثين منفصلين.',
     },
     story1: {
       en: 'From a small Riyadh studio, MSP grew into a multidisciplinary practice trusted with civic landmarks, towers, and masterplans across the Kingdom.',
@@ -294,7 +299,7 @@ export class AboutPage {
     },
     {
       year: '2024',
-      title: { en: 'Vision 2030 projects', ar: 'مشاريع رؤية ٢٠٣٠' },
+      title: { en: 'Vision 2030 projects', ar: 'مشاريع رؤية 2030' },
       // Client names stay out of public copy until the office approves them.
       body: { en: 'Commissions widen across residential, commercial and hospitality work.', ar: 'اتساع التكليفات لتشمل السكني والتجاري والضيافة.' },
     },
@@ -302,9 +307,11 @@ export class AboutPage {
 
   constructor() {
     this.seo.update({
-      title: 'Practice',
-      description:
-        'MSP Consultants — an integrated architecture & engineering practice in Riyadh. Our story, values, leadership, and trajectory.',
+      title: this.i18n.pick({ en: 'Practice', ar: 'عن المكتب' }),
+      description: this.i18n.pick({
+        en: 'MSP Consultants — an integrated architecture & engineering practice in Riyadh. Our story, values, leadership, and trajectory.',
+        ar: 'MSP للاستشارات — مكتب متكامل للعمارة والهندسة في الرياض. قصتنا وقيمنا وقيادتنا ومسيرتنا.',
+      }),
     });
 
     // Browser-only fetch: keeps the route prerenderable (static skeleton shell).
