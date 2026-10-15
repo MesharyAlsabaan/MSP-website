@@ -1,15 +1,29 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_URL } from '../constants/api.constants';
 
 type QueryParams = Record<string, string | number | boolean>;
 
+/**
+ * Where the server reaches the API while prerendering. The browser uses the
+ * same-origin `/api`, but at build time there is no page origin, so a relative
+ * URL must be made absolute. Override with PRERENDER_API_ORIGIN.
+ */
+function serverApiOrigin(): string {
+  const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env;
+  return (env?.['PRERENDER_API_ORIGIN'] ?? 'https://msp.sa').replace(/\/+$/, '');
+}
+
 /** Thin typed wrapper over HttpClient rooted at the configured API URL. */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = API_URL;
+  private readonly base =
+    isPlatformServer(inject(PLATFORM_ID)) && API_URL.startsWith('/')
+      ? `${serverApiOrigin()}${API_URL}`
+      : API_URL;
 
   get<T>(path: string, params?: QueryParams): Observable<T> {
     return this.http.get<T>(this.url(path), { params: this.toParams(params) });

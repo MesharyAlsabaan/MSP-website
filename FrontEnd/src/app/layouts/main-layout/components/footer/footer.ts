@@ -4,6 +4,7 @@ import { Container } from '../../../../shared/ui/container/container';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { CompanyInfo } from '../../../../core/models/content.model';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
 
 interface NavLink {
   readonly path: string;
@@ -13,14 +14,14 @@ interface NavLink {
 @Component({
   selector: 'app-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Container],
+  imports: [RouterLink, Container, LocPipe],
   template: `
     <footer class="border-t border-hairline bg-surface">
       <app-container>
         <div class="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div>
             <a
-              routerLink="/"
+              [routerLink]="'/' | loc"
               class="font-display text-3xl font-semibold tracking-[-0.02em] text-ink"
             >
               MSP
@@ -44,7 +45,7 @@ interface NavLink {
               @for (item of links; track item.path) {
                 <li>
                   <a
-                    [routerLink]="item.path"
+                    [routerLink]="item.path | loc"
                     class="text-sm text-muted transition-colors hover:text-ink"
                   >
                     {{ i18n.pick(item.label) }}
@@ -62,20 +63,20 @@ interface NavLink {
               <li>
                 <a [href]="'mailto:' + emailValue()" class="transition-colors hover:text-ink">{{ emailValue() }}</a>
               </li>
-              <li dir="ltr">
-                <a [href]="'tel:' + phoneValue()" class="transition-colors hover:text-ink">{{ phoneValue() }}</a>
+              <li>
+                <a dir="ltr" [href]="'tel:' + phoneValue()" class="transition-colors hover:text-ink">{{ phoneValue() }}</a>
               </li>
               @if (whatsappValue()) {
-                <li dir="ltr">
-                  <a [href]="whatsappLink()" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-ink">{{ whatsappValue() }}</a>
+                <li>
+                  <a dir="ltr" [href]="whatsappLink()" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-ink">{{ whatsappValue() }}</a>
                 </li>
               }
               <li>
                 <a [href]="mapUrl()" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-ink">{{ i18n.pick(addressValue()) }}</a>
               </li>
               @if (cairoPhoneValue()) {
-                <li dir="ltr">
-                  <a [href]="'tel:' + cairoPhoneValue()" class="transition-colors hover:text-ink">{{ cairoPhoneValue() }}</a>
+                <li>
+                  <a dir="ltr" [href]="'tel:' + cairoPhoneValue()" class="transition-colors hover:text-ink">{{ cairoPhoneValue() }}</a>
                 </li>
               }
               @if (cairoMapUrl()) {
@@ -147,8 +148,8 @@ export class Footer {
   }
 
   protected readonly tagline = {
-    en: 'An architecture & engineering consultancy designing buildings, infrastructure, and cities that endure.',
-    ar: 'بيتُ خبرةٍ في العمارة والهندسة، نُصمّم مبانٍ وبنىً تحتيةً ومدناً تدوم.',
+    en: 'An architecture & engineering consultancy designing buildings, interiors, and cities that endure.',
+    ar: 'بيتُ خبرةٍ في العمارة والهندسة، نُصمّم مبانيَ وفضاءاتٍ داخليةً ومدناً تدوم.',
   };
   protected readonly city = { en: 'Riyadh · Saudi Arabia', ar: 'الرياض · المملكة العربية السعودية' };
   protected readonly established = { en: 'Established 2010', ar: 'تأسس عام 2010' };
@@ -158,8 +159,8 @@ export class Footer {
   protected readonly cairoAddress = { en: 'Rayhana Plaza, Maadi, Cairo', ar: 'ريحانة بلازا، المعادي، القاهرة' };
   protected readonly legal = { en: 'MSP Consultants', ar: 'إم إس بي للاستشارات' };
   protected readonly strap = {
-    en: 'Architecture · Structure · Infrastructure',
-    ar: 'عمارة · إنشاءات · بنية تحتية',
+    en: 'Architecture · Structure · Interior Design',
+    ar: 'عمارة · إنشاءات · التصميم الداخلي',
   };
 
   protected readonly links: readonly NavLink[] = [

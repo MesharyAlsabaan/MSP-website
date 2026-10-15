@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   Directive,
   ElementRef,
   inject,
@@ -20,9 +21,19 @@ import { isPlatformBrowser } from '@angular/common';
  * ignores `clip-path`, so it works for both variants.
  *
  * SSR-safe (renders final state on the server) and disabled under reduced motion.
+ *
+ * `revealOnLoad` is for above-the-fold content (the hero): the same entrance
+ * runs as a CSS animation from the first paint of the server HTML, instead of
+ * hiding the already-painted content at hydration and fading it back in. That
+ * keeps the motion while the text counts as painted right away (LCP).
  */
 @Directive({
   selector: '[appScrollReveal]',
+  host: {
+    '[class.reveal-load]': 'revealOnLoad()',
+    '[class.reveal-load--line]': "revealOnLoad() && revealType() === 'line'",
+    '[style.--reveal-delay]': "revealOnLoad() ? revealDelay() + 'ms' : null",
+  },
 })
 export class ScrollReveal implements OnDestroy {
   /** Optional stagger delay in milliseconds. */
@@ -30,6 +41,9 @@ export class ScrollReveal implements OnDestroy {
 
   /** `rise` fades/lifts the element; `line` clip-wipes it up (for headlines). */
   readonly revealType = input<'rise' | 'line'>('rise');
+
+  /** Play the entrance on page load with CSS (above the fold) instead of on scroll. */
+  readonly revealOnLoad = input(false, { transform: booleanAttribute });
 
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -39,6 +53,7 @@ export class ScrollReveal implements OnDestroy {
     if (!this.isBrowser) return;
 
     afterNextRender(() => {
+      if (this.revealOnLoad()) return;
       const el = this.host.nativeElement;
       el.classList.add(this.revealType() === 'line' ? 'reveal-line' : 'reveal');
       if (this.revealDelay()) {

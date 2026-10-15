@@ -91,7 +91,7 @@ export class About {
         { label: 'Standards', value: 'SBC · ISO · LEED' },
       ],
       ar: [
-        { label: 'التأسيس', value: 'الرياض، ٢٠١٠' },
+        { label: 'التأسيس', value: 'الرياض، 2010' },
         { label: 'التخصصات', value: 'خمسة، داخلياً' },
         { label: 'القطاعات', value: 'مدني · تجاري · سكني' },
         { label: 'المعايير', value: 'كود البناء · آيزو · ليد' },

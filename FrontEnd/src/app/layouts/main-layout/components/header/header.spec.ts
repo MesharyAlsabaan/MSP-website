@@ -19,7 +19,8 @@ describe('Header mobile navigation', () => {
             pick: (value: { en: string }) => value.en,
             isArabic: () => false,
             lang: () => 'en',
-            toggle: () => {},
+            path: (p: string) => p,
+            counterpartUrl: () => "/ar",
           },
         },
       ],
@@ -36,7 +37,7 @@ describe('Header mobile navigation', () => {
 
     expect(brand).toBeTruthy();
     expect(brand?.getAttribute('aria-label')).toBe('MSP Engineering Consultancy');
-    expect(logo?.getAttribute('src')).toBe('/images/msp-logo.png');
+    expect(logo?.getAttribute('src')).toBe('/images/msp-logo-144.png');
     expect(logo?.getAttribute('alt')).toBe('MSP Designs');
   });
 

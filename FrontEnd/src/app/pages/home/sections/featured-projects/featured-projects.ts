@@ -14,12 +14,14 @@ import { TranslationService } from '../../../../core/services/translation.servic
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { AssetPipe } from '../../../../shared/pipes/asset.pipe';
 import { Project } from '../../../../core/data/projects';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
+import { SrcsetPipe } from '../../../../shared/pipes/srcset.pipe';
 
 /** Section 03 — Selected Works: a uniform, aligned grid of featured projects. */
 @Component({
   selector: 'app-featured-projects',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Section, Container, ScrollReveal, AssetPipe],
+  imports: [RouterLink, Section, Container, ScrollReveal, AssetPipe, LocPipe, SrcsetPipe],
   template: `
     <app-section>
       <app-container>
@@ -31,11 +33,11 @@ import { Project } from '../../../../core/data/projects';
             <span>{{ i18n.pick(t.eyebrow) }}</span>
           </div>
           <a
-            routerLink="/projects"
+            [routerLink]="'/projects' | loc"
             class="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink"
           >
             {{ i18n.pick(t.all) }}
-            <span class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+            <span class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1">&rarr;</span>
           </a>
         </div>
 
@@ -52,11 +54,15 @@ import { Project } from '../../../../core/data/projects';
         } @else if (projects().length) {
           <div class="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2">
             @for (project of projects(); track project.slug) {
-            <a [routerLink]="['/projects', project.slug]" class="group block">
+            <a [routerLink]="['/projects', project.slug] | loc" class="group block">
               <div appScrollReveal revealType="line" class="aspect-[4/3] overflow-hidden bg-hairline/40">
                 @if (project.cover) {
                   <img
+                    sizes="(min-width: 1200px) 552px, (min-width: 640px) 46vw, 92vw"
+                    [attr.srcset]="project.cover | srcset"
                     [src]="project.cover | asset"
+                    width="1200"
+                    height="900"
                     [alt]="i18n.pick(project.title)"
                     loading="lazy"
                     decoding="async"

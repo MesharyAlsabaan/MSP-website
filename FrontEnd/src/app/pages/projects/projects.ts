@@ -9,6 +9,8 @@ import { AssetPipe } from '../../shared/pipes/asset.pipe';
 import { Project } from '../../core/data/projects';
 import { DESIGN_CATEGORIES, SECTORS, Term, label } from '../../core/data/taxonomy';
 import { countsFor, filterProjects, sectorsOf } from '../../core/data/project-filter';
+import { LocPipe } from '../../shared/pipes/loc.pipe';
+import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 
 /**
  * Works index — a two-level filter over a uniform grid.
@@ -20,7 +22,7 @@ import { countsFor, filterProjects, sectorsOf } from '../../core/data/project-fi
 @Component({
   selector: 'app-projects',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Container, ScrollReveal, AssetPipe],
+  imports: [RouterLink, Container, ScrollReveal, AssetPipe, LocPipe, SrcsetPipe],
   template: `
     <!-- Page header -->
     <section class="border-b border-hairline bg-bg pt-16 pb-12 sm:pt-20">
@@ -98,11 +100,15 @@ import { countsFor, filterProjects, sectorsOf } from '../../core/data/project-fi
         } @else {
           <div class="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             @for (project of filtered(); track project.slug) {
-              <a [routerLink]="['/projects', project.slug]" class="group block">
+              <a [routerLink]="['/projects', project.slug] | loc" class="group block">
                 <div appScrollReveal revealType="line" class="aspect-[4/3] overflow-hidden bg-hairline/40">
                   @if (project.cover) {
                     <img
+                      sizes="(min-width: 1200px) 357px, (min-width: 1024px) 30vw, (min-width: 640px) 46vw, 92vw"
+                      [attr.srcset]="project.cover | srcset"
                       [src]="project.cover | asset"
+                      width="1200"
+                      height="900"
                       [alt]="i18n.pick(project.title)"
                       loading="lazy"
                       decoding="async"
@@ -184,8 +190,8 @@ export class Projects {
     eyebrow: { en: 'Works', ar: 'الأعمال' },
     title: { en: 'Selected works.', ar: 'أعمالٌ مختارة.' },
     intro: {
-      en: 'Buildings, infrastructure, and places across the Kingdom — from civic landmarks to masterplans.',
-      ar: 'مبانٍ وبنىً تحتية وأماكنُ في أنحاء المملكة — من المعالم العامة إلى المخطّطات الشاملة.',
+      en: 'Buildings, interiors, and places across the Kingdom — from civic landmarks to masterplans.',
+      ar: 'مبانٍ وفضاءاتٌ داخلية وأماكنُ في أنحاء المملكة — من المعالم العامة إلى المخطّطات الشاملة.',
     },
     all: { en: 'All', ar: 'الكل' },
     allSectors: { en: 'All sectors', ar: 'كل القطاعات' },
@@ -194,9 +200,11 @@ export class Projects {
 
   constructor() {
     this.seo.update({
-      title: 'Works',
-      description:
-        'Selected architecture and engineering projects by MSP Consultants across Saudi Arabia.',
+      title: this.i18n.pick({ en: 'Works', ar: 'المشاريع' }),
+      description: this.i18n.pick({
+        en: 'Selected architecture and engineering projects by MSP Consultants across Saudi Arabia.',
+        ar: 'مشاريع معمارية وهندسية مختارة من أعمال MSP للاستشارات في أنحاء المملكة العربية السعودية.',
+      }),
     });
 
     // Browser-only fetch: keeps the route prerenderable (static skeleton shell).

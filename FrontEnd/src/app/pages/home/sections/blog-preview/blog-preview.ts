@@ -12,6 +12,8 @@ import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.direct
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { BlogPostItem } from '../../../../core/models/content.model';
+import { RouterLink } from '@angular/router';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
 
 interface L {
   en: string;
@@ -31,7 +33,7 @@ interface Post {
 @Component({
   selector: 'app-blog-preview',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Section, Container, ScrollReveal],
+  imports: [Section, Container, ScrollReveal, RouterLink, LocPipe],
   template: `
     <app-section>
       <app-container>
@@ -43,11 +45,11 @@ interface Post {
             <span>{{ i18n.pick(t.eyebrow) }}</span>
           </div>
           <a
-            href="/blog"
+            [routerLink]="'/blog' | loc"
             class="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink"
           >
             {{ i18n.pick(t.all) }}
-            <span class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+            <span class="dir-flip text-accent transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1">&rarr;</span>
           </a>
         </div>
 
@@ -55,7 +57,7 @@ interface Post {
           @for (post of posts(); track post.key) {
             <li appScrollReveal class="group border-b border-hairline">
               <a
-                href="/blog"
+                [routerLink]="'/blog' | loc"
                 class="grid grid-cols-12 items-baseline gap-4 py-8 transition-[padding] duration-500 hover:ps-3"
               >
                 <span class="col-span-12 font-mono text-xs uppercase tracking-[0.12em] text-muted sm:col-span-3 lg:col-span-2">
@@ -113,8 +115,8 @@ export class BlogPreview {
         ar: 'التصميم عند الخمسين: التبريد السلبي في الخليج',
       },
       category: 'Sustainability',
-      date: { en: 'May 2026', ar: 'مايو ٢٠٢٦' },
-      readingTime: { en: '6 min', ar: '٦ دقائق' },
+      date: { en: 'May 2026', ar: 'مايو 2026' },
+      readingTime: { en: '6 min', ar: '6 دقائق' },
     },
     {
       key: 'structure-as-architecture',
@@ -123,8 +125,8 @@ export class BlogPreview {
         ar: 'حين يصبح الإنشاء عمارة',
       },
       category: 'Engineering',
-      date: { en: 'Apr 2026', ar: 'أبريل ٢٠٢٦' },
-      readingTime: { en: '8 min', ar: '٨ دقائق' },
+      date: { en: 'Apr 2026', ar: 'أبريل 2026' },
+      readingTime: { en: '8 min', ar: '8 دقائق' },
     },
     {
       key: 'city-after-oil',
@@ -133,15 +135,15 @@ export class BlogPreview {
         ar: 'تخطيط المدن في عصر ما بعد النفط',
       },
       category: 'Urbanism',
-      date: { en: 'Mar 2026', ar: 'مارس ٢٠٢٦' },
-      readingTime: { en: '5 min', ar: '٥ دقائق' },
+      date: { en: 'Mar 2026', ar: 'مارس 2026' },
+      readingTime: { en: '5 min', ar: '5 دقائق' },
     },
   ];
 }
 
 /** Arabic minute count, with the dual/plural forms Arabic actually uses. */
 function arabicMinutes(n: number): string {
-  const digits = n.toLocaleString('ar-EG');
+  const digits = n.toLocaleString('ar-EG-u-nu-latn');
   if (n === 1) return 'دقيقة واحدة';
   if (n === 2) return 'دقيقتان';
   if (n <= 10) return `${digits} دقائق`;
@@ -166,7 +168,7 @@ function toPost(post: BlogPostItem): Post {
     key: post.id,
     title: post.title,
     category: post.category,
-    date: { en: fmt('en-GB'), ar: fmt('ar-EG') },
+    date: { en: fmt('en-GB'), ar: fmt('ar-EG-u-nu-latn') },
     readingTime: readingTime(post),
   };
 }
