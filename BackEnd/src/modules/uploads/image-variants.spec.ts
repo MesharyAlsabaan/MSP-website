@@ -2,7 +2,14 @@ import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os';
 import { join } from 'path';
 import sharp from 'sharp';
-import { VARIANT_DIR, generateVariants, variantFallback, variantName } from './image-variants';
+import {
+  VARIANT_DIR,
+  generateVariants,
+  resetScheduledVariants,
+  scheduleVariants,
+  variantFallback,
+  variantName,
+} from './image-variants';
 
 async function image(dir: string, name: string, width: number, height: number) {
   await sharp({ create: { width, height, channels: 3, background: { r: 180, g: 92, b: 56 } } })
@@ -65,5 +72,37 @@ describe('image variants', () => {
     expect(variantFallback(dir, 'b.999.webp')).toBeNull();
     expect(variantFallback(dir, '..%2Fsecret.1024.webp')).toBeNull();
     expect(variantFallback(dir, 'missing.1024.webp')).toBeNull();
+  });
+
+  describe('self-healing copies', () => {
+    beforeEach(() => resetScheduledVariants());
+
+    it('creates the missing copies in the background after a fallback', async () => {
+      await image(dir, 'c.webp', 2000, 1000);
+      expect(variantFallback(dir, 'c.640.webp')?.isCopy).toBe(false);
+      await scheduleVariants(dir, 'c.webp');
+      expect(variantFallback(dir, 'c.640.webp')).toEqual({ path: join(dir, VARIANT_DIR, 'c.640.webp'), isCopy: true });
+      expect(existsSync(join(dir, VARIANT_DIR, 'c.1600.webp'))).toBe(true);
+    });
+
+    it('processes each original only once, however often it is requested', async () => {
+      await image(dir, 'd.webp', 2000, 1000);
+      const errors: unknown[] = [];
+      await Promise.all([1, 2, 3].map(() => scheduleVariants(dir, 'd.webp', (e) => errors.push(e))));
+      rmSync(join(dir, VARIANT_DIR), { recursive: true, force: true });
+      await scheduleVariants(dir, 'd.webp');
+      expect(existsSync(join(dir, VARIANT_DIR, 'd.640.webp'))).toBe(false);
+      expect(errors).toEqual([]);
+    });
+
+    it('never throws on a broken file; it reports and carries on', async () => {
+      writeFileSync(join(dir, 'broken.jpg'), 'not an image');
+      await image(dir, 'e.webp', 2000, 1000);
+      const errors: unknown[] = [];
+      await expect(scheduleVariants(dir, 'broken.jpg', (e) => errors.push(e))).resolves.toBeUndefined();
+      await scheduleVariants(dir, 'e.webp');
+      expect(errors).toHaveLength(1);
+      expect(existsSync(join(dir, VARIANT_DIR, 'e.640.webp'))).toBe(true);
+    });
   });
 });

@@ -117,3 +117,38 @@ export function variantFallback(
   }
   return null;
 }
+
+/**
+ * Self-healing copies: when a copy was requested but only the original
+ * exists, queue that original for processing so the next request gets the
+ * copy. Runs in the background (the caller never waits), one image at a time
+ * so a burst of first requests cannot spike CPU, and at most once per
+ * original per process. Failures are logged by the caller's `onError` and
+ * otherwise ignored — the original keeps being served.
+ */
+const queued = new Set<string>();
+let queue: Promise<void> = Promise.resolve();
+
+export function scheduleVariants(
+  uploadDir: string,
+  originalFilename: string,
+  onError: (err: unknown) => void = () => {},
+): Promise<void> {
+  const key = join(uploadDir, originalFilename);
+  if (queued.has(key) || !isRaster(originalFilename)) return queue;
+  queued.add(key);
+  queue = queue.then(() =>
+    generateVariants(uploadDir, originalFilename).then(
+      () => undefined,
+      (err: unknown) => {
+        onError(err);
+      },
+    ),
+  );
+  return queue;
+}
+
+/** Test hook: forget what has been scheduled. */
+export function resetScheduledVariants(): void {
+  queued.clear();
+}

@@ -1,16 +1,18 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
-import { join } from 'path';
+import { basename, join } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { VARIANT_DIR, variantFallback } from './modules/uploads/image-variants';
+import { VARIANT_DIR, scheduleVariants, variantFallback } from './modules/uploads/image-variants';
+
+const variantLog = new Logger('ImageVariants');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -46,6 +48,13 @@ async function bootstrap() {
   app.use(`/${prefix}/uploads/${VARIANT_DIR}`, (req: Request, res: Response, next: NextFunction) => {
     const hit = variantFallback(uploadDir, req.path.replace(/^\//, ''));
     if (!hit) return next();
+    // No copy yet: serve the original now and create the copies in the
+    // background, so the site heals itself without a manual backfill.
+    if (!hit.isCopy) {
+      scheduleVariants(uploadDir, basename(hit.path), (err) =>
+        variantLog.warn(`Could not create web copies of ${basename(hit.path)}: ${(err as Error).message}`),
+      );
+    }
     res.sendFile(hit.path, {
       headers: {
         'Cache-Control': hit.isCopy ? 'public, max-age=31536000, immutable' : 'public, max-age=86400',
