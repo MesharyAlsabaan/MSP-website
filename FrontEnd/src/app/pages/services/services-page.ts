@@ -1,5 +1,6 @@
-import { Component, inject, signal, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Container } from '../../shared/ui/container/container';
 import { Section } from '../../shared/ui/section/section';
 import { SectionHeading } from '../../shared/ui/section-heading/section-heading';
@@ -9,18 +10,18 @@ import { TranslationService } from '../../core/services/translation.service';
 import { SeoService } from '../../core/services/seo.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { AssetPipe } from '../../shared/pipes/asset.pipe';
+import { ORG_ID } from '../../core/seo/structured-data';
+import { LocPipe } from '../../shared/pipes/loc.pipe';
 import { ServiceItem } from '../../core/models/content.model';
+import { L, SERVICE_DETAILS, SERVICE_PAGES } from '../../core/data/service-pages';
 
-interface L {
-  en: string;
-  ar: string;
-}
 
-/** Services / Disciplines page — deep-dive into the five practices + process. */
+
+/** Services / Disciplines page — a deep-dive into each discipline + process. */
 @Component({
   selector: 'app-services-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, Container, Section, SectionHeading, ScrollReveal, Cta, AssetPipe],
+  imports: [NgClass, RouterLink, Container, Section, SectionHeading, ScrollReveal, Cta, AssetPipe, LocPipe],
   template: `
     <!-- Header -->
     <section class="border-b border-hairline bg-bg pt-16 pb-14 sm:pt-20">
@@ -28,7 +29,9 @@ interface L {
         <div class="flex items-center gap-5 font-mono text-xs uppercase tracking-[0.18em] text-muted">
           <span class="text-accent">{{ i18n.pick(t.eyebrow) }}</span>
           <span class="h-px flex-1 bg-hairline"></span>
-          <span dir="ltr">05</span>
+          @if (!loading() && services().length) {
+            <span dir="ltr">{{ pad(services().length) }}</span>
+          }
         </div>
         <h1
           appScrollReveal
@@ -88,9 +91,47 @@ interface L {
                   <h2 class="mt-3 t-section font-display font-medium tracking-[-0.03em] text-ink">
                     {{ i18n.pick(item.title) }}
                   </h2>
-                  <p class="mt-5 max-w-md text-lg leading-relaxed text-muted">
-                    {{ i18n.pick(item.fullDescription) }}
-                  </p>
+                  @if (details[item.slug]; as d) {
+                    <p class="mt-5 max-w-md text-lg leading-relaxed text-muted">
+                      {{ i18n.pick(d.description) }}
+                    </p>
+                    <span class="mt-6 block font-mono text-xs uppercase tracking-[0.18em] text-accent">
+                      {{ i18n.pick(t.needsLabel) }}
+                    </span>
+                    <p class="mt-2 max-w-md text-sm leading-relaxed text-muted">{{ i18n.pick(d.needs) }}</p>
+                    <span class="mt-6 block font-mono text-xs uppercase tracking-[0.18em] text-accent">
+                      {{ i18n.pick(t.scopeLabel) }}
+                    </span>
+                    <ul class="mt-2 max-w-md border-t border-hairline">
+                      @for (s of d.scope; track s.en) {
+                        <li class="border-b border-hairline py-2 text-sm leading-relaxed text-ink">{{ i18n.pick(s) }}</li>
+                      }
+                    </ul>
+                    <span class="mt-6 block font-mono text-xs uppercase tracking-[0.18em] text-accent">
+                      {{ i18n.pick(t.typesLabel) }}
+                    </span>
+                    <p class="mt-2 max-w-md text-sm leading-relaxed text-muted">{{ i18n.pick(d.projectTypes) }}</p>
+                  } @else {
+                    <p class="mt-5 max-w-md text-lg leading-relaxed text-muted">
+                      {{ i18n.pick(item.fullDescription) }}
+                    </p>
+                  }
+                  <a
+                    [routerLink]="'/projects' | loc"
+                    class="mt-6 inline-block font-mono text-xs uppercase tracking-[0.12em] text-accent hover:underline"
+                  >
+                    {{ i18n.pick(t.projectsLink) }}{{ i18n.pick(item.title) }}
+                    <span class="dir-flip inline-block" aria-hidden="true">&rarr;</span>
+                  </a>
+                  @if (pageFor(item.slug); as sp) {
+                    <a
+                      [routerLink]="['/services', sp.slug] | loc"
+                      class="mt-3 block font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent"
+                    >
+                      {{ i18n.pick(t.moreLink) }}{{ i18n.pick(sp.title) }}
+                      <span class="dir-flip inline-block" aria-hidden="true">&rarr;</span>
+                    </a>
+                  }
                 </div>
               </div>
             }
@@ -138,71 +179,121 @@ export class ServicesPage {
 
   protected readonly t = {
     eyebrow: { en: 'Disciplines', ar: 'التخصصات' },
-    title: { en: 'Five disciplines, one team.', ar: 'خمسة تخصّصات، فريقٌ واحد.' },
+    title: { en: 'Integrated consultancy, across disciplines.', ar: 'استشارات هندسية متكاملة عبر التخصّصات.' },
     intro: {
-      en: 'Every capability to take a project from first idea to handover — coordinated in-house, so design and engineering never pull apart.',
-      ar: 'كلُّ ما يلزم لأخذ المشروع من الفكرة الأولى إلى التسليم — بتنسيقٍ داخلي، فلا ينفصل التصميم عن الهندسة.',
+      en: 'Architecture, engineering, planning and project management, coordinated as one consultancy — so that design intent, technical performance and cost are resolved together, from the first brief to handover.',
+      ar: 'العمارة والهندسة والتخطيط وإدارة المشاريع، منسّقة ضمن جهة استشارية واحدة، لتُحسم الفكرة التصميمية والأداء الفني والتكلفة معاً، من المتطلبات الأولى حتى التسليم.',
     },
     empty: { en: 'No disciplines published yet.', ar: 'لا توجد تخصّصات منشورة بعد.' },
+    needsLabel: { en: 'Client needs addressed', ar: 'احتياجات العميل' },
+    scopeLabel: { en: 'Scope', ar: 'نطاق الخدمة' },
+    typesLabel: { en: 'Relevant project types', ar: 'أنواع المشاريع ذات الصلة' },
+    projectsLink: { en: 'View projects related to ', ar: 'اطّلع على مشاريع ذات صلة: ' },
+    moreLink: { en: 'More about ', ar: 'المزيد عن ' },
     processEyebrow: { en: 'Process', ar: 'منهجية العمل' },
-    processTitle: { en: 'From brief to handover.', ar: 'من الفكرة إلى التسليم.' },
+    processTitle: { en: 'From brief to handover.', ar: 'من المتطلبات إلى التسليم.' },
     processIntro: {
-      en: 'A clear, milestone-driven path that keeps cost, programme, and quality in sight at every stage.',
-      ar: 'مسارٌ واضحٌ بمحطّاتٍ محدّدة يُبقي التكلفة والبرنامج والجودة تحت العين في كل مرحلة.',
+      en: 'A clear, staged path. At every step we give independent professional advice, keep quality, programme and cost in view, and keep the people who will use the building at the centre.',
+      ar: 'مسار واضح بمراحل محدّدة. نقدّم في كل خطوة مشورة مهنية مستقلة، ونُبقي الجودة والجدول الزمني والتكلفة في الحسبان، ونضع مستخدمي المبنى في صميم القرار.',
     },
   };
+
+  /**
+   * Per-discipline detail, keyed by CMS slug. The CMS holds only a one-line
+   * description; this map adds scope and context. A slug with no entry here
+   * falls back to the CMS text. `interior-design` and `supervision` are ready
+   * for when the CMS publishes those slugs.
+   */
+  protected readonly details = SERVICE_DETAILS;
+
+  /** The dedicated page for a CMS service, once it is approved for publication. */
+  protected pageFor(cmsSlug: string) {
+    return SERVICE_PAGES.find((p) => p.cmsSlug === cmsSlug && p.approved) ?? null;
+  }
 
   protected readonly process: readonly { no: string; title: L; body: L }[] = [
     {
       no: '01',
-      title: { en: 'Brief & feasibility', ar: 'الفكرة والجدوى' },
-      body: { en: 'We frame the problem, test the site, and set the budget and ambition.', ar: 'نصوغ المسألة، ونختبر الموقع، ونحدّد الميزانية والطموح.' },
+      title: { en: 'Brief & feasibility', ar: 'المتطلبات والجدوى' },
+      body: {
+        en: 'We listen, test the site and the brief, and constructively challenge assumptions where a better outcome is possible — before budget and ambition are fixed.',
+        ar: 'نستمع، ونختبر الموقع والمتطلبات، ونناقش الافتراضات بموضوعية حيث تتاح نتيجة أفضل، قبل تثبيت الميزانية والطموح.',
+      },
     },
     {
       no: '02',
       title: { en: 'Concept design', ar: 'التصميم المفاهيمي' },
-      body: { en: 'A clear architectural idea, tested early against structure and cost.', ar: 'فكرةٌ معماريةٌ واضحة، تُختبر مبكراً أمام الإنشاء والتكلفة.' },
+      body: {
+        en: 'A clear architectural idea shaped around the people who will use the building, tested early against structure, services and cost.',
+        ar: 'فكرة معمارية واضحة تتشكّل حول مستخدمي المبنى، وتُختبر مبكراً أمام متطلبات الإنشاء والأنظمة والتكلفة.',
+      },
     },
     {
       no: '03',
       title: { en: 'Detailed design', ar: 'التصميم التفصيلي' },
-      body: { en: 'Architecture and engineering resolved together, down to the junction.', ar: 'تُحلّ العمارة والهندسة معاً، حتى أدقّ وصلة.' },
+      body: {
+        en: 'Architecture and engineering developed together and coordinated digitally, so that decisions hold up on site.',
+        ar: 'تتطوّر العمارة والهندسة معاً وتُنسَّق رقمياً، لتصمد القرارات عند التنفيذ في الموقع.',
+      },
     },
     {
       no: '04',
       title: { en: 'Documentation', ar: 'إعداد المستندات' },
-      body: { en: 'Coordinated drawings and specifications ready for tender.', ar: 'مخطّطاتٌ ومواصفاتٌ منسّقة جاهزة للطرح.' },
+      body: {
+        en: 'Drawings and specifications checked across disciplines and ready for tender.',
+        ar: 'مخطّطات ومواصفات مُراجَعة بين التخصّصات وجاهزة للطرح.',
+      },
     },
     {
       no: '05',
       title: { en: 'Construction', ar: 'التنفيذ' },
-      body: { en: 'We supervise on site, protecting design intent, cost, and programme.', ar: 'نُشرف في الموقع، حمايةً لنيّة التصميم والتكلفة والبرنامج.' },
+      body: {
+        en: 'Where supervision is part of our appointment, we oversee the works as the client’s consultant, protecting design intent, quality and programme.',
+        ar: 'حين يكون الإشراف ضمن نطاق تكليفنا، نتابع الأعمال بصفتنا استشاري العميل، حفاظاً على الفكرة التصميمية والجودة والجدول الزمني.',
+      },
     },
     {
       no: '06',
       title: { en: 'Handover', ar: 'التسليم' },
-      body: { en: 'A building delivered complete, documented, and ready to perform.', ar: 'مبنىً يُسلَّم مكتملاً وموثّقاً وجاهزاً للأداء.' },
+      body: {
+        en: 'A complete, documented building, handed over with an eye to how it will be used, operated and maintained for years to come.',
+        ar: 'مبنى مكتمل وموثّق، يُسلَّم مع مراعاة طريقة استخدامه وتشغيله وصيانته لسنوات قادمة.',
+      },
     },
   ];
 
   constructor() {
-    this.seo.update({
-      title: this.i18n.pick({ en: 'Disciplines', ar: 'التخصصات' }),
-      description: this.i18n.pick({
-        en: 'Architecture, structural and MEP engineering, urban planning, and project management — the five in-house disciplines of MSP Consultants.',
-        ar: 'العمارة، والهندسة الإنشائية والكهروميكانيكية، والتخطيط العمراني، وإدارة المشاريع — التخصصات الخمسة لدى MSP للاستشارات من داخل المكتب.',
-      }),
-    });
+    this.updateSeo([]);
 
-    // Browser-only fetch: keeps the route prerenderable (static skeleton shell).
-    afterNextRender(() => {
-      this.content.services().subscribe({
-        next: (list) => {
-          this.services.set(list);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.content.services().subscribe({
+      next: (list) => {
+        this.services.set(list);
+        this.updateSeo(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  /** Page metadata, with one schema.org Service per published discipline. */
+  private updateSeo(list: ServiceItem[]): void {
+    this.seo.update({
+      title: this.i18n.pick({
+        en: 'Architectural Design & Engineering Services, Riyadh',
+        ar: 'خدمات التصميم المعماري والاستشارات الهندسية في الرياض',
+      }),
+      description: this.i18n.pick({
+        en: 'Architectural and interior design, structural and MEP engineering, urban planning, project management and construction supervision: MSP consultancy services in Riyadh.',
+        ar: 'تصميم معماري وداخلي، وهندسة إنشائية وكهروميكانيكية، وتخطيط عمراني، وإدارة مشاريع، وإشراف هندسي: خدمات MSP الاستشارية في الرياض.',
+      }),
+      schema: list.map((item) => ({
+        '@type': 'Service',
+        name: this.i18n.pick(item.title),
+        description: this.i18n.pick(this.details[item.slug]?.description ?? item.fullDescription),
+        serviceType: item.title.en,
+        provider: { '@id': ORG_ID },
+        areaServed: { '@type': 'Country', name: 'Saudi Arabia' },
+      })),
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Section } from '../../../../shared/ui/section/section';
 import { Container } from '../../../../shared/ui/container/container';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.directive';
@@ -91,11 +91,9 @@ export class Testimonials {
   });
 
   constructor() {
-    afterNextRender(() => {
-      this.content.testimonials().subscribe({
-        next: (list) => this.fetched.set(list.map(toQuote)),
-        error: () => this.fetched.set([]),
-      });
+    this.content.testimonials().subscribe({
+      next: (list) => this.fetched.set(list.map(toQuote)),
+      error: () => this.fetched.set([]),
     });
   }
 

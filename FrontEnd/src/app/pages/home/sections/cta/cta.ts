@@ -48,13 +48,13 @@ export class Cta {
   protected readonly i18n = inject(TranslationService);
 
   protected readonly t = {
-    kicker: { en: '(10) — Commissions open for 2026', ar: '(10) — أبوابنا مفتوحة لتكليفات 2026' },
-    headingPre: { en: "Let's build something ", ar: 'لنبنِ معاً شيئاً ' },
-    headingEm: { en: 'that lasts.', ar: 'يدوم.' },
+    kicker: { en: '(10) — Start a conversation', ar: '(10) — لنبدأ الحوار' },
+    headingPre: { en: "Let's talk about ", ar: 'لنتحدّث عن ' },
+    headingEm: { en: 'your project.', ar: 'مشروعك.' },
     cta: { en: 'Start a project', ar: 'ابدأ مشروعك' },
     note: {
-      en: "Tell us about your site and ambition. We reply within one business day.",
-      ar: 'أخبرنا عن موقعك وطموحك، ونعود إليك خلال يوم عملٍ واحد.',
+      en: 'Tell us about your site, your brief, and the people it will serve. We will get back to you to arrange a first conversation.',
+      ar: 'حدّثنا عن موقعك ومتطلباتك ومن سيخدمهم المشروع، وسنعود إليك لترتيب لقاء أولي.',
     },
   };
 }

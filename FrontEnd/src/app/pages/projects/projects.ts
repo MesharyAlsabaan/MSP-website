@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Container } from '../../shared/ui/container/container';
 import { ScrollReveal } from '../../shared/directives/scroll-reveal.directive';
@@ -188,10 +188,10 @@ export class Projects {
 
   protected readonly t = {
     eyebrow: { en: 'Works', ar: 'الأعمال' },
-    title: { en: 'Selected works.', ar: 'أعمالٌ مختارة.' },
+    title: { en: 'Selected works.', ar: 'أعمال مختارة.' },
     intro: {
-      en: 'Buildings, interiors, and places across the Kingdom — from civic landmarks to masterplans.',
-      ar: 'مبانٍ وفضاءاتٌ داخلية وأماكنُ في أنحاء المملكة — من المعالم العامة إلى المخطّطات الشاملة.',
+      en: 'A selection of residential, hospitality and commercial work — villas and compounds, a hotel and serviced apartments, offices and commercial-residential buildings — showing how our disciplines come together in practice.',
+      ar: 'مختارات من مشاريعنا السكنية والتجارية ومشاريع الضيافة، من الفلل والمجمّعات السكنية إلى فندق وشقق فندقية ومبانٍ مكتبية وتجارية سكنية، تعكس كيف تتكامل تخصّصاتنا في الممارسة.',
     },
     all: { en: 'All', ar: 'الكل' },
     allSectors: { en: 'All sectors', ar: 'كل القطاعات' },
@@ -200,22 +200,23 @@ export class Projects {
 
   constructor() {
     this.seo.update({
-      title: this.i18n.pick({ en: 'Works', ar: 'المشاريع' }),
-      description: this.i18n.pick({
-        en: 'Selected architecture and engineering projects by MSP Consultants across Saudi Arabia.',
-        ar: 'مشاريع معمارية وهندسية مختارة من أعمال MSP للاستشارات في أنحاء المملكة العربية السعودية.',
+      title: this.i18n.pick({
+        en: 'Architecture & Engineering Projects in Saudi Arabia',
+        ar: 'مشاريع معمارية وهندسية في السعودية',
       }),
+      description: this.i18n.pick({
+        en: 'Residential, hospitality and commercial projects by MSP in Riyadh and Madinah: villas and compounds, a hotel, serviced apartments and office buildings.',
+        ar: 'مشاريع MSP السكنية والتجارية ومشاريع الضيافة في الرياض والمدينة المنورة: فلل ومجمعات سكنية وفندق وشقق فندقية ومبانٍ مكتبية.',
+      }),
+      type: 'CollectionPage',
     });
 
-    // Browser-only fetch: keeps the route prerenderable (static skeleton shell).
-    afterNextRender(() => {
-      this.content.projects().subscribe({
-        next: (list) => {
-          this.projects.set(list);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.content.projects().subscribe({
+      next: (list) => {
+        this.projects.set(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

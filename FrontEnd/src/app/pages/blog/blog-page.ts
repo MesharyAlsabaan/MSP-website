@@ -1,4 +1,4 @@
-import { Component, inject, signal, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Container } from '../../shared/ui/container/container';
 import { ScrollReveal } from '../../shared/directives/scroll-reveal.directive';
 import { TranslationService } from '../../core/services/translation.service';
@@ -102,32 +102,33 @@ export class BlogPage {
 
   protected readonly t = {
     eyebrow: { en: 'Insights', ar: 'الرؤى' },
-    title: { en: 'Perspectives on place and practice.', ar: 'رؤىٌ في المكان والممارسة.' },
+    title: { en: 'Perspectives on place and practice.', ar: 'رؤى في المكان والممارسة.' },
     intro: {
-      en: 'Architecture, engineering, and hospitality explored through the places we design.',
-      ar: 'قراءاتٌ في العمارة والهندسة والضيافة من خلال الأماكن التي نصمّمها.',
+      en: 'MSP’s perspectives on architecture, engineering and the experiences buildings make possible — the beginning of a knowledge platform we intend to develop over time.',
+      ar: 'رؤى MSP في العمارة والهندسة والتجارب التي تتيحها المباني، وهي بداية منصّة معرفية نعتزم تطويرها مع الوقت.',
     },
-    empty: { en: 'No articles published yet.', ar: 'لا توجد مقالاتٌ منشورة بعد.' },
+    empty: { en: 'No articles published yet.', ar: 'لا توجد مقالات منشورة بعد.' },
   };
 
   constructor() {
     this.seo.update({
-      title: this.i18n.pick({ en: 'Insights', ar: 'الرؤى' }),
-      description: this.i18n.pick({
-        en: 'MSP perspectives on architecture, engineering, hospitality, and designing for place in Saudi Arabia.',
-        ar: 'رؤى MSP في العمارة والهندسة والضيافة والتصميم المنتمي إلى المكان في المملكة العربية السعودية.',
+      title: this.i18n.pick({
+        en: 'Insights on Architecture & Engineering',
+        ar: 'رؤى في العمارة والهندسة',
       }),
+      description: this.i18n.pick({
+        en: 'MSP perspectives on architecture, engineering and the human experience of buildings, from hospitality design to designing for place in Saudi Arabia.',
+        ar: 'رؤى MSP في العمارة والهندسة والتجربة الإنسانية في المباني، من تصميم منشآت الضيافة إلى التصميم النابع من المكان في المملكة.',
+      }),
+      type: 'CollectionPage',
     });
 
-    // Browser-only fetch: keeps the route prerenderable (static skeleton shell).
-    afterNextRender(() => {
-      this.content.posts().subscribe({
-        next: (list) => {
-          this.posts.set(list);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.content.posts().subscribe({
+      next: (list) => {
+        this.posts.set(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 }
