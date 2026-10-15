@@ -13,11 +13,11 @@ export class BlogService {
     @InjectRepository(BlogPost) private readonly repo: Repository<BlogPost>,
   ) {}
 
-  async findAll(query: QueryBlogPostDto): Promise<Paginated<BlogPost>> {
+  async findAll(query: QueryBlogPostDto, preview = false): Promise<Paginated<BlogPost>> {
     const { page, pageSize, category, includeDrafts, search } = query;
     const qb = this.repo.createQueryBuilder('post');
 
-    if (includeDrafts !== 'true') {
+    if (!(preview && includeDrafts === 'true')) {
       qb.andWhere('post.status = :status', { status: BlogStatus.Published });
     }
     if (category) {
@@ -40,14 +40,18 @@ export class BlogService {
     return paginate(data, total, page, pageSize);
   }
 
-  async findBySlug(slug: string): Promise<BlogPost> {
-    const post = await this.repo.findOne({ where: { slug } });
+  async findBySlug(slug: string, preview = false): Promise<BlogPost> {
+    const post = await this.repo.findOne({
+      where: preview ? { slug } : { slug, status: BlogStatus.Published },
+    });
     if (!post) throw new NotFoundException('Blog post not found');
     return post;
   }
 
-  async findOne(id: string): Promise<BlogPost> {
-    const post = await this.repo.findOne({ where: { id } });
+  async findOne(id: string, preview = false): Promise<BlogPost> {
+    const post = await this.repo.findOne({
+      where: preview ? { id } : { id, status: BlogStatus.Published },
+    });
     if (!post) throw new NotFoundException('Blog post not found');
     return post;
   }
@@ -57,7 +61,7 @@ export class BlogService {
   }
 
   async update(id: string, dto: UpdateBlogPostDto): Promise<BlogPost> {
-    const post = await this.findOne(id);
+    const post = await this.findOne(id, true);
     Object.assign(post, dto);
     return this.repo.save(post);
   }

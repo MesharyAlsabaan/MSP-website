@@ -13,11 +13,11 @@ export class ProjectsService {
     @InjectRepository(Project) private readonly repo: Repository<Project>,
   ) {}
 
-  async findAll(query: QueryProjectDto): Promise<Paginated<Project>> {
+  async findAll(query: QueryProjectDto, preview = false): Promise<Paginated<Project>> {
     const { page, pageSize, typology, featured, includeDrafts, search } = query;
     const qb = this.repo.createQueryBuilder('p');
 
-    if (includeDrafts !== 'true') {
+    if (!(preview && includeDrafts === 'true')) {
       qb.andWhere('p.status = :status', { status: ProjectStatus.Published });
     }
     if (typology) {
@@ -40,14 +40,18 @@ export class ProjectsService {
     return paginate(data, total, page, pageSize);
   }
 
-  async findBySlug(slug: string): Promise<Project> {
-    const project = await this.repo.findOne({ where: { slug } });
+  async findBySlug(slug: string, preview = false): Promise<Project> {
+    const project = await this.repo.findOne({
+      where: preview ? { slug } : { slug, status: ProjectStatus.Published },
+    });
     if (!project) throw new NotFoundException('Project not found');
     return project;
   }
 
-  async findOne(id: string): Promise<Project> {
-    const project = await this.repo.findOne({ where: { id } });
+  async findOne(id: string, preview = false): Promise<Project> {
+    const project = await this.repo.findOne({
+      where: preview ? { id } : { id, status: ProjectStatus.Published },
+    });
     if (!project) throw new NotFoundException('Project not found');
     return project;
   }
@@ -57,7 +61,7 @@ export class ProjectsService {
   }
 
   async update(id: string, dto: UpdateProjectDto): Promise<Project> {
-    const project = await this.findOne(id);
+    const project = await this.findOne(id, true);
     Object.assign(project, dto);
     return this.repo.save(project);
   }

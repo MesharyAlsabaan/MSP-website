@@ -13,11 +13,11 @@ export class ServicesService {
     @InjectRepository(Service) private readonly repo: Repository<Service>,
   ) {}
 
-  async findAll(query: QueryServiceDto): Promise<Paginated<Service>> {
+  async findAll(query: QueryServiceDto, preview = false): Promise<Paginated<Service>> {
     const { page, pageSize, featured, includeDrafts, search } = query;
     const qb = this.repo.createQueryBuilder('s');
 
-    if (includeDrafts !== 'true') {
+    if (!(preview && includeDrafts === 'true')) {
       qb.andWhere('s.published = true');
     }
     if (featured === 'true') {
@@ -37,14 +37,18 @@ export class ServicesService {
     return paginate(data, total, page, pageSize);
   }
 
-  async findBySlug(slug: string): Promise<Service> {
-    const service = await this.repo.findOne({ where: { slug } });
+  async findBySlug(slug: string, preview = false): Promise<Service> {
+    const service = await this.repo.findOne({
+      where: preview ? { slug } : { slug, published: true },
+    });
     if (!service) throw new NotFoundException('Service not found');
     return service;
   }
 
-  async findOne(id: string): Promise<Service> {
-    const service = await this.repo.findOne({ where: { id } });
+  async findOne(id: string, preview = false): Promise<Service> {
+    const service = await this.repo.findOne({
+      where: preview ? { id } : { id, published: true },
+    });
     if (!service) throw new NotFoundException('Service not found');
     return service;
   }
@@ -54,7 +58,7 @@ export class ServicesService {
   }
 
   async update(id: string, dto: UpdateServiceDto): Promise<Service> {
-    const service = await this.findOne(id);
+    const service = await this.findOne(id, true);
     Object.assign(service, dto);
     return this.repo.save(service);
   }

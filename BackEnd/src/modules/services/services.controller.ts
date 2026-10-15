@@ -10,6 +10,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { canPreviewContent } from '../../common/auth/content-preview';
+import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -25,20 +27,20 @@ export class ServicesController {
 
   @Public()
   @Get()
-  findAll(@Query() query: QueryServiceDto) {
-    return this.services.findAll(query);
+  findAll(@Query() query: QueryServiceDto, @CurrentUser() user?: AuthUser) {
+    return this.services.findAll(query, canPreviewContent(user));
   }
 
   @Public()
   @Get('slug/:slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.services.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: AuthUser) {
+    return this.services.findBySlug(slug, canPreviewContent(user));
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.services.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user?: AuthUser) {
+    return this.services.findOne(id, canPreviewContent(user));
   }
 
   @ApiBearerAuth()
