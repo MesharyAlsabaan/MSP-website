@@ -1,3 +1,4 @@
+import { Cta } from '../home/sections/cta/cta';
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Container } from '../../shared/ui/container/container';
@@ -22,7 +23,7 @@ import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 @Component({
   selector: 'app-projects',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Container, ScrollReveal, AssetPipe, LocPipe, SrcsetPipe],
+  imports: [Cta, RouterLink, Container, ScrollReveal, AssetPipe, LocPipe, SrcsetPipe],
   template: `
     <!-- Page header -->
     <section class="border-b border-hairline bg-bg pt-16 pb-12 sm:pt-20">
@@ -140,6 +141,8 @@ import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
         }
       </app-container>
     </section>
+
+    <app-cta />
   `,
 })
 export class Projects {

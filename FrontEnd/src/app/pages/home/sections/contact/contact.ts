@@ -11,6 +11,8 @@ import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.direct
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { CompanyInfo } from '../../../../core/models/content.model';
+import { ApiService } from '../../../../core/services/api.service';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
 
 interface ContactItem {
   label: string;
@@ -151,7 +153,12 @@ interface ContactItem {
                   }
                 </div>
 
-                <app-button type="submit">{{ i18n.pick(t.send) }}</app-button>
+                @if (sendError()) {
+                  <p [class]="errorClass">{{ i18n.pick(t.sendFailed) }}</p>
+                }
+                <app-button type="submit" [disabled]="sending()">
+                  {{ sending() ? i18n.pick(t.sending) : i18n.pick(t.send) }}
+                </app-button>
               </form>
             }
           </div>
@@ -167,6 +174,10 @@ export class Contact {
   private readonly cfg = signal<CompanyInfo>({});
 
   protected readonly submitted = signal(false);
+  protected readonly sending = signal(false);
+  protected readonly sendError = signal(false);
+  private readonly api = inject(ApiService);
+  private readonly analytics = inject(AnalyticsService);
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -189,6 +200,11 @@ export class Contact {
     message: { en: 'About your project', ar: 'نبذة عن مشروعك' },
     messagePh: { en: 'Site, scale, ambition…', ar: 'الموقع، والحجم، والطموح…' },
     send: { en: 'Send enquiry →', ar: 'أرسل طلبك ←' },
+    sending: { en: 'Sending…', ar: 'جارٍ الإرسال…' },
+    sendFailed: {
+      en: 'Could not send — please try again or email info@msp.sa.',
+      ar: 'تعذّر الإرسال — حاول مجدداً أو راسلنا على info@msp.sa.',
+    },
     call: { en: 'Call Riyadh', ar: 'اتصل بمكتب الرياض' },
     whatsapp: { en: 'WhatsApp', ar: 'واتساب' },
     errName: { en: 'Please enter your name.', ar: 'الرجاء إدخال اسمك.' },
@@ -240,12 +256,29 @@ export class Contact {
     return c.invalid && (c.touched || c.dirty);
   }
 
+  /**
+   * Sends the enquiry to the same endpoint as the contact page. Success is
+   * shown only once the server has accepted it; a failure keeps the form and
+   * points the visitor to email instead.
+   */
   protected onSubmit(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.sending()) {
       this.form.markAllAsTouched();
       return;
     }
-    this.submitted.set(true);
+    this.sending.set(true);
+    this.sendError.set(false);
+    this.api.post('contact', this.form.getRawValue()).subscribe({
+      next: () => {
+        this.sending.set(false);
+        this.submitted.set(true);
+        this.analytics.track('generate_lead', { form: 'home' });
+      },
+      error: () => {
+        this.sending.set(false);
+        this.sendError.set(true);
+      },
+    });
   }
 
   constructor() {

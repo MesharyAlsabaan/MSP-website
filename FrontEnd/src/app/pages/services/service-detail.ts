@@ -83,7 +83,7 @@ import { ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
       @if (related().length) {
         <app-section>
           <app-container>
-            <app-section-heading index="—" [eyebrow]="i18n.pick(t.projectsEyebrow)" [title]="i18n.pick(t.projectsTitle)" />
+            <app-section-heading index="—" [eyebrow]="i18n.pick(t.projectsEyebrow)" [title]="i18n.pick(p.relatedTitle ?? t.projectsTitle)" />
             <ul class="mt-12 border-t border-hairline">
               @for (project of related(); track project.slug) {
                 <li class="border-b border-hairline">
@@ -104,6 +104,22 @@ import { ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
           </app-container>
         </app-section>
       }
+
+      <!-- Consultation: straight to the enquiry form with this service selected. -->
+      <section class="border-t border-hairline py-14 sm:py-16">
+        <app-container>
+          <div class="flex flex-wrap items-center justify-between gap-6">
+            <p class="max-w-xl text-lg leading-relaxed text-ink/90">{{ i18n.pick(t.consultText) }}</p>
+            <a
+              [routerLink]="'/contact' | loc"
+              [queryParams]="{ service: p.slug }"
+              class="inline-flex items-center justify-center gap-2.5 bg-ink px-6 py-3.5 font-mono text-xs font-medium uppercase tracking-[0.12em] text-bg transition-all duration-300 hover:bg-accent hover:text-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            >
+              {{ i18n.pick(t.consultCta) }}
+            </a>
+          </div>
+        </app-container>
+      </section>
 
       <app-cta />
     } @else {
@@ -160,6 +176,11 @@ export class ServiceDetail {
     projectsEyebrow: { en: 'Projects', ar: 'المشاريع' },
     projectsTitle: { en: 'Related projects.', ar: 'مشاريع ذات صلة.' },
     notFound: { en: 'Service not found.', ar: 'الخدمة غير موجودة.' },
+    consultText: {
+      en: 'Tell us about your site and brief. We will respond to arrange an initial consultation.',
+      ar: 'حدّثنا عن موقعك ومتطلبات مشروعك، وسنتواصل معك لترتيب استشارة أولية.',
+    },
+    consultCta: { en: 'Request a consultation', ar: 'اطلب استشارة' },
   };
 
   constructor() {

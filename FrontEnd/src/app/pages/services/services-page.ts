@@ -144,6 +144,33 @@ import { L, SERVICE_DETAILS, SERVICE_PAGES } from '../../core/data/service-pages
       </app-container>
     </app-section>
 
+    <!-- Dedicated service pages (includes services not yet listed in the CMS) -->
+    <app-section>
+      <app-container>
+        <app-section-heading
+          index="—"
+          [eyebrow]="i18n.pick(t.pagesEyebrow)"
+          [title]="i18n.pick(t.pagesTitle)"
+        />
+        <ul class="mt-12 grid gap-px overflow-hidden border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
+          @for (sp of servicePages; track sp.slug) {
+            <li class="bg-bg">
+              <a [routerLink]="['/services', sp.slug] | loc" class="group block h-full p-7 lg:p-8">
+                <h3 class="font-display text-xl font-medium text-ink transition-colors group-hover:text-accent">
+                  {{ i18n.pick(sp.title) }}
+                </h3>
+                <p class="mt-2 text-sm leading-relaxed text-muted">{{ i18n.pick(sp.seoDescription) }}</p>
+                <span class="mt-4 inline-block font-mono text-xs uppercase tracking-[0.12em] text-accent">
+                  {{ i18n.pick(t.moreLink) }}{{ i18n.pick(sp.title) }}
+                  <span class="dir-flip inline-block" aria-hidden="true">&rarr;</span>
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      </app-container>
+    </app-section>
+
     <!-- Process -->
     <app-section tone="surface">
       <app-container>
@@ -190,6 +217,8 @@ export class ServicesPage {
     typesLabel: { en: 'Relevant project types', ar: 'أنواع المشاريع ذات الصلة' },
     projectsLink: { en: 'View projects related to ', ar: 'اطّلع على مشاريع ذات صلة: ' },
     moreLink: { en: 'More about ', ar: 'المزيد عن ' },
+    pagesEyebrow: { en: 'Service pages', ar: 'صفحات الخدمات' },
+    pagesTitle: { en: 'Explore each service in detail.', ar: 'تعرّف على كل خدمة بالتفصيل.' },
     processEyebrow: { en: 'Process', ar: 'منهجية العمل' },
     processTitle: { en: 'From brief to handover.', ar: 'من المتطلبات إلى التسليم.' },
     processIntro: {
@@ -205,6 +234,7 @@ export class ServicesPage {
    * for when the CMS publishes those slugs.
    */
   protected readonly details = SERVICE_DETAILS;
+  protected readonly servicePages = SERVICE_PAGES.filter((p) => p.approved);
 
   /** The dedicated page for a CMS service, once it is approved for publication. */
   protected pageFor(cmsSlug: string) {

@@ -69,6 +69,18 @@ server {
     return 301 /$1projects/SBC;
   }
 
+  # Placeholder content that is still published in the CMS but excluded from
+  # the site (src/app/core/data/excluded-content.ts): a real 404, so search
+  # engines drop it.
+  location = /blog/designing-for-the-desert {
+    error_page 404 /404/index.html;
+    return 404;
+  }
+  location = /ar/blog/designing-for-the-desert {
+    error_page 404 /ar/404/index.html;
+    return 404;
+  }
+
   # Static Angular site. Prerendered routes resolve to their own index.html;
   # client-rendered routes (/admin, /auth) fall back to the app shell.
   #

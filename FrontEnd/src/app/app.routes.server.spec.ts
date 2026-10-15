@@ -20,8 +20,8 @@ describe('Server routes', () => {
     },
   );
 
-  it('keeps the vendor portal and admin client-rendered', () => {
-    for (const path of ['vendors', 'vendors/**', 'admin/**', 'auth/**']) {
+  it('keeps the admin and sign-in client-rendered', () => {
+    for (const path of ['admin', 'admin/**', 'auth/**']) {
       expect(serverRoutes.find((route) => route.path === path)?.renderMode).toBe(RenderMode.Client);
     }
   });

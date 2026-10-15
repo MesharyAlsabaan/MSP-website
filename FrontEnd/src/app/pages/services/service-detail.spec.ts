@@ -50,8 +50,19 @@ function render(slug: string, approved: boolean) {
 }
 
 describe('Service pages', () => {
-  it('ships with no page approved — nothing is published until management signs off', () => {
-    expect(APPROVED_SERVICE_SLUGS).toEqual([]);
+  it('publishes only services with verified project evidence', () => {
+    expect([...APPROVED_SERVICE_SLUGS].sort()).toEqual(
+      ['architectural-design', 'construction-supervision', 'interior-design', 'mep-engineering', 'structural-engineering'],
+    );
+    // No CMS project records project management or urban planning yet.
+    expect(APPROVED_SERVICE_SLUGS).not.toContain('project-management');
+    expect(APPROVED_SERVICE_SLUGS).not.toContain('urban-planning');
+  });
+
+  it('offers a consultation that pre-selects the service on the contact form', () => {
+    const { el } = render('interior-design', true);
+    const cta = el.querySelector('a[href^="/contact"]');
+    expect(cta?.getAttribute('href')).toBe('/contact?service=interior-design');
   });
 
   it('has full detail content for every registered page', () => {

@@ -191,8 +191,10 @@ export interface ServicePage {
   seoTitle: L;
   seoDescription: L;
   intro: L;
-  /** How MSP delivers this service — DRAFT until approved. */
+  /** How MSP delivers this service. */
   method: readonly { title: L; body: L }[];
+  /** Heading for the related-projects list, when the generic one would overstate. */
+  relatedTitle?: L;
 }
 
 export const SERVICE_PAGES: readonly ServicePage[] = [
@@ -200,7 +202,7 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     slug: 'architectural-design',
     cmsSlug: 'architecture',
     discipline: 'architectural-design',
-    approved: false,
+    approved: true,
     title: { en: 'Architectural Design', ar: 'التصميم المعماري' },
     seoTitle: { en: 'Architectural Design Services in Riyadh', ar: 'خدمات التصميم المعماري في الرياض' },
     seoDescription: {
@@ -246,7 +248,7 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     slug: 'interior-design',
     cmsSlug: 'interior-design',
     discipline: 'interior-design',
-    approved: false,
+    approved: true,
     title: { en: 'Interior Design', ar: 'التصميم الداخلي' },
     seoTitle: { en: 'Interior Design Consultancy in Riyadh', ar: 'استشارات التصميم الداخلي في الرياض' },
     seoDescription: {
@@ -289,10 +291,104 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     ],
   },
   {
+    slug: 'structural-engineering',
+    cmsSlug: 'structural',
+    discipline: 'engineering-design',
+    approved: true,
+    title: { en: 'Structural Engineering', ar: 'الهندسة الإنشائية' },
+    seoTitle: { en: 'Structural Engineering Design in Riyadh', ar: 'التصميم الإنشائي في الرياض' },
+    seoDescription: {
+      en: 'Structural engineering by MSP in Riyadh: safe, efficient and buildable structures, designed alongside the architecture to the applicable Saudi codes.',
+      ar: 'الهندسة الإنشائية لدى MSP في الرياض: منشآت آمنة وكفؤة وقابلة للتنفيذ، تُصمَّم بالتوازي مع التصميم المعماري ووفق الأكواد السعودية المعمول بها.',
+    },
+    intro: {
+      en: 'Structural engineering that gives the architecture a safe, efficient and buildable frame — developed with the design from the start, so that the structure supports the spaces rather than constraining them.',
+      ar: 'هندسة إنشائية تمنح التصميم المعماري هيكلاً آمناً وكفؤاً وقابلاً للتنفيذ، تتطور مع التصميم منذ البداية ليخدم المنشأ الفراغات بدلاً من أن يقيّدها.',
+    },
+    method: [
+      {
+        title: { en: 'Assess', ar: 'التقييم' },
+        body: {
+          en: 'We review the architectural intent, the site and the available soil information, and agree the design criteria and applicable codes.',
+          ar: 'نراجع الفكرة المعمارية والموقع ومعلومات التربة المتاحة، ونحدد معايير التصميم والأكواد المعمول بها.',
+        },
+      },
+      {
+        title: { en: 'Choose the system', ar: 'اختيار النظام' },
+        body: {
+          en: 'Structural options are compared early for spans, column positions, floor depths, cost and constructability.',
+          ar: 'نقارن البدائل الإنشائية مبكراً من حيث البحور ومواقع الأعمدة وسماكات البلاطات والتكلفة وقابلية التنفيذ.',
+        },
+      },
+      {
+        title: { en: 'Analyse and design', ar: 'التحليل والتصميم' },
+        body: {
+          en: 'The superstructure and foundations are analysed and designed, and coordinated with the architectural and MEP models.',
+          ar: 'نحلّل الهيكل العلوي والأساسات ونصمّمها، وننسّقها مع النماذج المعمارية والكهروميكانيكية.',
+        },
+      },
+      {
+        title: { en: 'Document and support', ar: 'التوثيق والدعم' },
+        body: {
+          en: 'Drawings, details and calculation reports are issued, with technical support during construction where it is part of the appointment.',
+          ar: 'نصدر المخططات والتفاصيل والمذكرات الحسابية، ونقدّم الدعم الفني أثناء التنفيذ متى شمله نطاق التكليف.',
+        },
+      },
+    ],
+    relatedTitle: { en: 'Projects with MSP engineering design.', ar: 'مشاريع صمّمتها MSP هندسياً.' },
+  },
+  {
+    slug: 'mep-engineering',
+    cmsSlug: 'mep',
+    discipline: 'engineering-design',
+    approved: true,
+    title: { en: 'MEP Engineering', ar: 'الهندسة الكهروميكانيكية' },
+    seoTitle: { en: 'MEP Engineering Design in Riyadh', ar: 'تصميم الأنظمة الكهروميكانيكية في الرياض' },
+    seoDescription: {
+      en: 'MEP engineering by MSP in Riyadh: cooling, ventilation, power, lighting, water and fire safety systems, coordinated with the structure and architecture.',
+      ar: 'الهندسة الكهروميكانيكية لدى MSP في الرياض: أنظمة التكييف والتهوية والكهرباء والإنارة والمياه والحماية من الحريق، بالتنسيق مع الهيكل الإنشائي والتصميم المعماري.',
+    },
+    intro: {
+      en: 'Mechanical, electrical and plumbing engineering that makes a building comfortable, safe and efficient to run — systems people rely on every day without seeing them.',
+      ar: 'هندسة ميكانيكية وكهربائية وصحية تجعل المبنى مريحاً وآمناً وكفؤاً في تشغيله، عبر أنظمة يعتمد عليها مستخدموه كل يوم دون أن يروها.',
+    },
+    method: [
+      {
+        title: { en: 'Define the loads', ar: 'تحديد الأحمال' },
+        body: {
+          en: 'We establish how the building will be used, the climate it must handle and the comfort and safety requirements that apply.',
+          ar: 'نحدد طريقة استخدام المبنى والظروف المناخية التي يجب أن يتعامل معها ومتطلبات الراحة والسلامة المعمول بها.',
+        },
+      },
+      {
+        title: { en: 'Select the systems', ar: 'اختيار الأنظمة' },
+        body: {
+          en: 'Cooling, ventilation, power, water and fire protection systems are selected for performance, running cost and maintenance.',
+          ar: 'نختار أنظمة التكييف والتهوية والكهرباء والمياه والحماية من الحريق من حيث الأداء وتكلفة التشغيل وسهولة الصيانة.',
+        },
+      },
+      {
+        title: { en: 'Coordinate', ar: 'التنسيق' },
+        body: {
+          en: 'Service routes are coordinated with the structure and architecture from the outset, so ceilings, shafts and plant rooms work as designed.',
+          ar: 'ننسّق مسارات الأنظمة مع الهيكل الإنشائي والتصميم المعماري منذ البداية، لتعمل الأسقف والفتحات وغرف المعدات كما صُمّمت.',
+        },
+      },
+      {
+        title: { en: 'Document and support', ar: 'التوثيق والدعم' },
+        body: {
+          en: 'Drawings, schedules and specifications are issued for tender, with technical support during construction where it is part of the appointment.',
+          ar: 'نصدر المخططات والجداول والمواصفات للطرح، ونقدّم الدعم الفني أثناء التنفيذ متى شمله نطاق التكليف.',
+        },
+      },
+    ],
+    relatedTitle: { en: 'Projects with MSP engineering design.', ar: 'مشاريع صمّمتها MSP هندسياً.' },
+  },
+  {
     slug: 'construction-supervision',
     cmsSlug: 'supervision',
     discipline: 'supervision',
-    approved: false,
+    approved: true,
     title: { en: 'Construction Supervision', ar: 'الإشراف الهندسي' },
     seoTitle: { en: 'Construction Supervision Consultancy in Riyadh', ar: 'استشارات الإشراف الهندسي على التنفيذ في الرياض' },
     seoDescription: {
