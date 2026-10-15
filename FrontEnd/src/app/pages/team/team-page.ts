@@ -1,3 +1,4 @@
+import { Cta } from '../home/sections/cta/cta';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,7 +18,7 @@ import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 @Component({
   selector: 'app-team-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Container, ScrollReveal, AssetPipe, SrcsetPipe],
+  imports: [Cta, Container, ScrollReveal, AssetPipe, SrcsetPipe],
   template: `
     <section class="border-b border-hairline bg-bg pt-16 pb-12 sm:pt-20">
       <app-container>
@@ -94,6 +95,8 @@ import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
         }
       </app-container>
     </section>
+
+    <app-cta />
   `,
 })
 export class TeamPage {

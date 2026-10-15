@@ -25,6 +25,7 @@ import { sectorsOf } from '../../core/data/project-filter';
 import { LocPipe } from '../../shared/pipes/loc.pipe';
 import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 import { JsonLd, ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
+import { SERVICE_PAGES } from '../../core/data/service-pages';
 
 type LoadState =
   | { status: 'loading'; project: null }
@@ -160,11 +161,20 @@ type LoadState =
                        the work MSP did, not a filter — the works page's two
                        filter rows are a separate pair of axes. -->
                   <ul class="mt-4 flex flex-wrap gap-2">
-                    @for (item of scope(p); track $index) {
-                      <li
-                        class="border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] text-ink"
-                      >
-                        {{ i18n.pick(item) }}
+                    @for (item of scopeItems(p); track $index) {
+                      <li>
+                        @if (item.page) {
+                          <a
+                            [routerLink]="['/services', item.page] | loc"
+                            class="block border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] text-ink transition-colors hover:border-ink hover:text-accent"
+                          >
+                            {{ i18n.pick(item.label) }}
+                          </a>
+                        } @else {
+                          <span class="block border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] text-ink">
+                            {{ i18n.pick(item.label) }}
+                          </span>
+                        }
                       </li>
                     }
                   </ul>
@@ -346,6 +356,16 @@ export class ProjectDetail {
     return disciplines.length
       ? disciplines.map((term) => label(DISCIPLINES, term))
       : project.services;
+  }
+
+  /** Scope labels, each linked to its service page when exactly one matches. */
+  protected scopeItems(project: Project): { label: L; page: string | null }[] {
+    const disciplines = project.disciplines ?? [];
+    if (!disciplines.length) return project.services.map((label) => ({ label, page: null }));
+    return disciplines.map((term) => {
+      const pages = SERVICE_PAGES.filter((sp) => sp.approved && sp.discipline === term.key);
+      return { label: label(DISCIPLINES, term), page: pages.length === 1 ? pages[0].slug : null };
+    });
   }
 
   /** Header meta names the sector, falling back to the legacy category. */

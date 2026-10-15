@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { PublicContentService } from '../../core/services/public-content.service';
@@ -10,9 +11,10 @@ describe('Public team page', () => {
     await TestBed.configureTestingModule({
       imports: [TeamPage],
       providers: [
+        provideRouter([]),
         {
           provide: TranslationService,
-          useValue: { pick: (value: { en: string }) => value.en },
+          useValue: { pick: (value: { en: string }) => value.en, path: (p: string) => p },
         },
         { provide: SeoService, useValue: { update: () => {} } },
         {

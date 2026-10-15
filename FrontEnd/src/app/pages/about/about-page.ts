@@ -513,8 +513,12 @@ export class AboutPage {
       ar: 'تكمن قوتنا في الذكاء الجماعي لفريقنا. فمن خلال الجمع بين وجهات النظر المتنوعة والخبرات متعددة التخصصات والتقنيات المتقدمة، طوّرنا نهجاً تعاونياً تقوده القيم المشتركة والتعلّم المستمر والالتزام بالجودة.',
     },
     {
-      en: 'As engineering consultants, we recognize that our responsibility extends beyond meeting expectations. The decisions we make today shape environments that may serve generations to come. This responsibility guides our professional judgment and our pursuit of meaningful, enduring solutions.',
-      ar: 'وبصفتنا مستشارين هندسيين، ندرك أن مسؤوليتنا تتجاوز تلبية التوقعات؛ فالقرارات التي نتخذها اليوم تُشكّل بيئات قد تخدم أجيالاً قادمة. وهذه المسؤولية هي ما يوجّه حكمنا المهني وسعينا إلى حلول هادفة ودائمة.',
+      en: 'As engineering consultants, we recognize that our responsibility extends beyond meeting expectations. The decisions we make today shape environments that may serve generations to come.',
+      ar: 'وبصفتنا مستشارين هندسيين، ندرك أن مسؤوليتنا تتجاوز تلبية التوقعات؛ فالقرارات التي نتخذها اليوم تُشكّل بيئات قد تخدم أجيالاً قادمة.',
+    },
+    {
+      en: 'This responsibility guides our professional judgment and our pursuit of meaningful, enduring solutions.',
+      ar: 'وهذه المسؤولية هي ما يوجّه حكمنا المهني وسعينا إلى حلول هادفة ودائمة.',
     },
     {
       en: 'Our ambition reaches beyond the projects we deliver. We aspire to build an institution that advances architectural and engineering knowledge, encourages research and innovation, and contributes to the future of our profession.',

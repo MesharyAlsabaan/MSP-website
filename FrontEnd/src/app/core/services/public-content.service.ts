@@ -1,10 +1,11 @@
 import { ApplicationRef, Injectable, PLATFORM_ID, TransferState, inject, makeStateKey } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
-import { EMPTY, Observable, concat, of } from 'rxjs';
+import { EMPTY, Observable, concat, of, throwError } from 'rxjs';
 import { catchError, map, tap, timeout } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
 import { Project } from '../data/projects';
+import { EXCLUDED_POST_SLUGS } from '../data/excluded-content';
 import {
   BlogPostItem,
   CompanyInfo,
@@ -113,10 +114,13 @@ export class PublicContentService {
   }
 
   posts(): Observable<BlogPostItem[]> {
-    return this.list<BlogPostItem>('blog', { pageSize: 100 });
+    return this.list<BlogPostItem>('blog', { pageSize: 100 }).pipe(
+      map((list) => list.filter((p) => !EXCLUDED_POST_SLUGS.includes(p.slug))),
+    );
   }
 
   postBySlug(slug: string): Observable<BlogPostItem> {
+    if (EXCLUDED_POST_SLUGS.includes(slug)) return throwError(() => new Error('Not found'));
     return this.one<BlogPostItem>(`blog/slug/${encodeURIComponent(slug)}`);
   }
 
