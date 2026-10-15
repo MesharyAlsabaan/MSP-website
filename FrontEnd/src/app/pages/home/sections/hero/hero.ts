@@ -31,13 +31,14 @@ import { LocPipe } from '../../../../shared/pipes/loc.pipe';
             <h1
               class="t-display font-display font-medium tracking-[-0.035em] text-ink"
             >
-              <span appScrollReveal revealOnLoad revealType="line" class="block">{{ i18n.pick(t.line1) }}</span>
-              <span appScrollReveal revealOnLoad revealType="line" [revealDelay]="100" class="block">
+              <span appScrollReveal revealOnLoad revealVisible revealType="line" class="block">{{ i18n.pick(t.line1) }}</span>
+              <span appScrollReveal revealOnLoad revealVisible revealType="line" [revealDelay]="100" class="block">
                 {{ i18n.pick(t.line2) }}
               </span>
               <span
                 appScrollReveal
                 revealOnLoad
+                revealVisible
                 revealType="line"
                 [revealDelay]="200"
                 class="block italic font-normal text-accent"
@@ -49,6 +50,7 @@ import { LocPipe } from '../../../../shared/pipes/loc.pipe';
             <p
               appScrollReveal
               revealOnLoad
+              revealVisible
               [revealDelay]="380"
               class="mt-8 max-w-xl text-lg leading-relaxed text-muted"
             >
@@ -112,24 +114,20 @@ export class Hero {
   ];
 
   protected readonly t = {
-    kicker: { en: 'Consultants', ar: 'للاستشارات الهندسية' },
+    kicker: { en: 'Architecture & Engineering', ar: 'استشارات معمارية وهندسية' },
     est: { en: 'Est. 2010 — Riyadh, KSA', ar: 'الرياض · منذ 2010' },
-    line1: { en: 'Architecture', ar: 'نُصمّم' },
-    line2: { en: '& engineering', ar: 'ونبني' },
-    line3: { en: 'for what endures.', ar: 'ما يدوم.' },
+    line1: { en: 'Architecture', ar: 'عمارةٌ' },
+    line2: { en: 'beyond', ar: 'تتجاوز' },
+    line3: { en: 'buildings.', ar: 'المباني.' },
     intro: {
-      en: 'We are a multidisciplinary consultancy shaping buildings, interiors, and cities — uniting architectural vision with structural precision, from first sketch to final inspection.',
-      ar: 'بيتُ خبرةٍ هندسيٌّ متعدّد التخصصات. نُصمّم المباني وفضاءاتها الداخلية والمدن، فنجمع جرأةَ الرؤية المعمارية إلى دقّة الهندسة — من الفكرة الأولى حتى التسليم.',
+      en: 'Creating meaningful human experiences through purposeful design, integrated engineering, and collective expertise. MSP is an architecture and engineering consultancy based in Riyadh.',
+      ar: 'نصنع تجارب إنسانية ذات معنى، بتصميم هادف وهندسة متكاملة وخبرة جماعية. MSP مكتب استشارات معمارية وهندسية، مقرّها الرياض.',
     },
     ctaPrimary: { en: 'Start a project', ar: 'ابدأ مشروعك' },
-    ctaSecondary: { en: 'Selected works', ar: 'تصفّح أعمالنا' },
+    ctaSecondary: { en: 'Selected works', ar: 'مختارات من أعمالنا' },
     location: { en: 'Location', ar: 'الموقع' },
     disciplines: { en: 'Disciplines', ar: 'التخصصات' },
-    disc1: { en: 'Architecture · Structure', ar: 'عمارة · إنشاءات' },
-    disc2: { en: 'MEP · Urban · PM', ar: 'كهروميكانيكا · تخطيط · إدارة' },
-    imageAlt: {
-      en: 'A contemporary building by MSP Consultants',
-      ar: 'مبنى معاصر من تصميم إم إس بي للاستشارات',
-    },
+    disc1: { en: 'Design · Engineering', ar: 'تصميم · هندسة' },
+    disc2: { en: 'Planning · PM · Supervision', ar: 'تخطيط · إدارة مشاريع · إشراف' },
   };
 }

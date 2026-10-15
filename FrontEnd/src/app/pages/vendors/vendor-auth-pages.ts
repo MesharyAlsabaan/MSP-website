@@ -69,7 +69,7 @@ export class VendorLoginPage {
     signIn: { en: 'Sign in', ar: 'دخول' }, forgot: { en: 'Forgot password?', ar: 'نسيت كلمة المرور؟' }, noAccount: { en: 'New supplier?', ar: 'مورد جديد؟' }, register: { en: 'Create an account', ar: 'أنشئ حساباً' },
   };
   constructor() {
-    this.seo.update({ title: 'Vendor sign in', description: 'MSP vendor portal.' });
+    this.seo.update({ title: 'Vendor sign in', description: 'MSP vendor portal.', noindex: true });
     if (this.session.isLoggedIn()) void this.router.navigateByUrl(this.i18n.path('/vendors/dashboard'));
   }
   protected submit(): void {
@@ -125,7 +125,7 @@ export class VendorRegisterPage {
     doneKicker: { en: 'Check your inbox', ar: 'تحقق من بريدك' }, doneBody: { en: 'We sent you a verification link. Open it to activate your account, then sign in and prepare your application.', ar: 'أرسلنا لك رابط تفعيل. افتحه لتفعيل حسابك، ثم سجّل الدخول وجهّز طلبك.' },
     noMail: { en: "Didn't get it?", ar: 'لم تصلك الرسالة؟' }, resend: { en: 'Send again', ar: 'إعادة الإرسال' },
   };
-  constructor() { this.seo.update({ title: 'Vendor registration', description: 'Create an MSP vendor account.' }); }
+  constructor() { this.seo.update({ title: 'Vendor registration', description: 'Create an MSP vendor account.', noindex: true }); }
   protected submit(): void {
     if (this.form.invalid) return;
     this.busy.set(true); this.error.set(null);

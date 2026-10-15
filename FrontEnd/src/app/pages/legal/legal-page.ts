@@ -90,7 +90,21 @@ export class LegalPage {
   }
 
   constructor() {
-    this.seo.update({ title: this.i18n.pick(this.doc().title) });
+    const privacy = this.doc() === PRIVACY;
+    this.seo.update({
+      title: this.i18n.pick(this.doc().title),
+      description: this.i18n.pick(
+        privacy
+          ? {
+              en: 'How MSP collects, uses and protects personal information submitted through www.msp.sa.',
+              ar: 'كيف تجمع MSP المعلومات الشخصية المرسلة عبر www.msp.sa وتستخدمها وتحميها.',
+            }
+          : {
+              en: 'The terms that govern use of the MSP website, www.msp.sa.',
+              ar: 'الشروط التي تنظّم استخدام موقع MSP الإلكتروني www.msp.sa.',
+            },
+      ),
+    });
   }
 }
 

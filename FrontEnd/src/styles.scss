@@ -206,6 +206,21 @@ body::before {
     animation-name: reveal-wipe;
     animation-duration: 1s;
   }
+
+  // Primary hero text: same timing and easing, but position only — it is
+  // painted (and counts for LCP) from the first frame.
+  &.reveal-load--visible {
+    animation-name: reveal-settle;
+  }
+}
+
+@keyframes reveal-settle {
+  from {
+    transform: translateY(24px);
+  }
+  to {
+    transform: none;
+  }
 }
 
 // Slow editorial marquee.

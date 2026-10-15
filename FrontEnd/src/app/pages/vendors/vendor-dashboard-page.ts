@@ -249,7 +249,7 @@ export class VendorDashboardPage {
   };
 
   constructor() {
-    this.seo.update({ title: 'Vendor dashboard', description: 'MSP vendor portal.' });
+    this.seo.update({ title: 'Vendor dashboard', description: 'MSP vendor portal.', noindex: true });
     if (!this.session.isLoggedIn()) { void this.router.navigateByUrl(this.i18n.path('/vendors')); return; }
     this.form.controls.primaryCategoryKey.valueChanges.subscribe((k) => { this.primaryKey.set(k); this.secondary.update((s) => { const n = new Set(s); n.delete(k); return n; }); });
     this.load();

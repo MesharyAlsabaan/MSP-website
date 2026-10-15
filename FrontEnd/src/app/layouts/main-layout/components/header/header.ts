@@ -47,13 +47,15 @@ interface NavLink {
           >
             <img
               src="/images/msp-logo-144.png"
-              alt="MSP Designs"
+              alt="MSP"
               width="48"
               height="48"
               class="h-12 w-12 shrink-0 object-contain dark:brightness-0 dark:invert"
             />
+            <!-- The caption steps aside on tablets (md), where the desktop nav
+                 first appears and would otherwise push the toggles off-screen. -->
             <span
-              class="hidden font-mono text-[0.65rem] uppercase leading-tight tracking-[0.18em] text-muted sm:block"
+              class="hidden font-mono text-[0.65rem] uppercase leading-tight tracking-[0.18em] text-muted sm:block md:hidden lg:block"
               [innerHTML]="i18n.pick(brandSub)"
             ></span>
           </a>
@@ -152,8 +154,8 @@ export class Header {
   };
 
   protected readonly brandLabel = {
-    en: 'MSP Engineering Consultancy',
-    ar: 'إم إس بي للاستشارات الهندسية',
+    en: 'MSP, architecture and engineering consultancy',
+    ar: 'MSP، استشارات معمارية وهندسية',
   };
 
   protected readonly menuOpenLabel = {

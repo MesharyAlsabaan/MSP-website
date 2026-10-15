@@ -67,34 +67,34 @@ export class About {
   protected readonly t = {
     eyebrow: { en: 'About', ar: 'عن المكتب' },
     statementPre: {
-      en: 'We believe great buildings begin where ',
-      ar: 'العمارةُ الاستثنائية تولد حين يلتقي ',
+      en: 'Architecture is not merely about the spaces we create, but about ',
+      ar: 'لا تقتصر العمارة على الفراغات التي نصمّمها، بل تمتد إلى ',
     },
-    statementEm: { en: 'design discipline', ar: 'انضباطُ التصميم' },
+    statementEm: { en: 'the experiences', ar: 'التجارب' },
     statementPost: {
-      en: ' meets engineering certainty — considered, measured, and built to outlast their makers.',
-      ar: ' بيقين الهندسة؛ عمارةٌ مدروسةٌ ومحسوبة، تبقى أطول من بُناتها.',
+      en: ' those spaces make possible.',
+      ar: ' التي تتيحها تلك الفراغات.',
     },
     para1: {
-      en: 'MSP Consultants is an integrated architecture and engineering studio. We bring architects, structural and MEP engineers, and urban planners under one roof — so ideas survive contact with gravity, budget, and time.',
-      ar: 'تجمع إم إس بي المعماريين ومهندسي الإنشاءات والميكانيكا والكهرباء ومخطّطي المدن في فريقٍ واحد؛ لتصمد الفكرة أمام الجاذبية والميزانية والزمن.',
+      en: 'MSP is a multidisciplinary architecture and engineering consultancy, established in Riyadh in 2010. Our practice brings together diverse expertise, creative thinking, and advanced technologies in a collaborative framework that places people, performance, and long-term impact at the heart of every project.',
+      ar: 'تأسّست MSP في الرياض عام 2010، وهي مكتب استشارات معمارية وهندسية متعدد التخصصات. تجمع ممارستنا خبرات متنوعة وفكراً إبداعياً وتقنيات متقدمة في إطار تعاوني يضع الإنسان والأداء والأثر بعيد المدى في صميم كل مشروع.',
     },
     para2: {
-      en: 'From a single villa to a city masterplan, every project is held to the same standard: clarity of thought, rigour of detail.',
-      ar: 'من فيلّا واحدة إلى مخطّطٍ لمدينةٍ كاملة، نُطبّق المعيار نفسه: فكرةٌ واضحة، وتفصيلٌ مُحكَم.',
+      en: 'We treat creativity and performance as one task. Every building type has its own user experience — the comfort and privacy of a home, the welcome of a hotel, the clarity of a workplace — and we design for it alongside function, environment, and lasting value.',
+      ar: 'نرى الإبداع والأداء مهمة واحدة. فلكل نوع من المباني تجربته الخاصة لدى مستخدميه: راحة المسكن وخصوصيته، وحفاوة الفندق، ووضوح بيئة العمل. ونحن نصمّم لهذه التجربة، إلى جانب الوظيفة والبيئة والقيمة الدائمة.',
     },
     facts: {
       en: [
         { label: 'Founded', value: 'Riyadh, 2010' },
-        { label: 'Disciplines', value: 'Five, in-house' },
-        { label: 'Sectors', value: 'Civic · Commercial · Residential' },
-        { label: 'Standards', value: 'SBC · ISO · LEED' },
+        { label: 'Offices', value: 'Riyadh · Cairo' },
+        { label: 'Disciplines', value: 'Architecture · Engineering · Planning' },
+        { label: 'Sectors', value: 'Residential · Hospitality · Commercial' },
       ],
       ar: [
         { label: 'التأسيس', value: 'الرياض، 2010' },
-        { label: 'التخصصات', value: 'خمسة، داخلياً' },
-        { label: 'القطاعات', value: 'مدني · تجاري · سكني' },
-        { label: 'المعايير', value: 'كود البناء · آيزو · ليد' },
+        { label: 'المكاتب', value: 'الرياض · القاهرة' },
+        { label: 'التخصصات', value: 'عمارة · هندسة · تخطيط' },
+        { label: 'القطاعات', value: 'سكني · ضيافة · تجاري' },
       ],
     },
   };

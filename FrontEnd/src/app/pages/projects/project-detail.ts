@@ -4,7 +4,6 @@ import {
   signal,
   computed,
   effect,
-  afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -25,6 +24,7 @@ import { DISCIPLINES, SECTORS, Term, label } from '../../core/data/taxonomy';
 import { sectorsOf } from '../../core/data/project-filter';
 import { LocPipe } from '../../shared/pipes/loc.pipe';
 import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
+import { JsonLd, ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
 
 type LoadState =
   | { status: 'loading'; project: null }
@@ -93,7 +93,7 @@ type LoadState =
                   [src]="p.cover | asset"
                   width="1600"
                   height="900"
-                  [alt]="i18n.pick(p.title)"
+                  [alt]="coverAlt(p)"
                   class="h-full w-full object-cover"
                   fetchpriority="high"
                 />
@@ -107,19 +107,39 @@ type LoadState =
           <app-container>
             <div class="grid gap-12 lg:grid-cols-12 lg:gap-8">
               <div class="lg:col-span-7">
-                @for (para of p.description; track $index) {
-                  <p
-                    appScrollReveal
-                    class="mb-6 text-lg leading-relaxed text-ink/90"
-                  >
-                    {{ i18n.pick(para) }}
-                  </p>
+                <!-- Case-study text from the CMS. A paragraph starting with
+                     "## " is a section heading (Design challenge, Our approach,
+                     …), so editors can structure a case study without a schema
+                     change; nothing is shown for sections that don't exist. -->
+                @for (block of body(p); track $index; let first = $first) {
+                  @if (block.heading) {
+                    <h2 class="mb-4 mt-10 font-display text-2xl font-medium tracking-[-0.02em] text-ink first:mt-0">
+                      {{ block.text }}
+                    </h2>
+                  } @else {
+                    @if (first) {
+                      <h2 class="mb-6 font-mono text-xs uppercase tracking-[0.15em] text-accent">
+                        {{ i18n.pick(t.overview) }}
+                      </h2>
+                    }
+                    <p appScrollReveal class="mb-6 text-lg leading-relaxed text-ink/90">
+                      {{ block.text }}
+                    </p>
+                  }
                 }
               </div>
 
               <aside class="lg:col-span-4 lg:col-start-9">
-                @if (p.specs.length) {
+                @if (p.specs.length || i18n.pick(p.location)) {
                   <dl class="border-t border-hairline">
+                    @if (i18n.pick(p.location)) {
+                      <div class="flex justify-between gap-6 border-b border-hairline py-4">
+                        <dt class="font-mono text-xs uppercase tracking-[0.12em] text-muted">
+                          {{ i18n.pick(t.location) }}
+                        </dt>
+                        <dd class="text-end text-sm text-ink">{{ i18n.pick(p.location) }}</dd>
+                      </div>
+                    }
                     @for (spec of p.specs; track $index) {
                       <div class="flex justify-between gap-6 border-b border-hairline py-4">
                         <dt class="font-mono text-xs uppercase tracking-[0.12em] text-muted">
@@ -148,6 +168,12 @@ type LoadState =
                       </li>
                     }
                   </ul>
+                  <a
+                    [routerLink]="'/services' | loc"
+                    class="mt-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink transition-colors hover:text-accent"
+                  >
+                    {{ i18n.pick(t.servicesLink) }} <span class="dir-flip">&rarr;</span>
+                  </a>
                 }
               </aside>
             </div>
@@ -180,7 +206,7 @@ type LoadState =
                       [src]="img | asset"
                       width="1200"
                       [attr.height]="i === 0 ? 675 : 900"
-                      [alt]="i18n.pick(p.title)"
+                      [alt]="galleryAlt(p, i)"
                       loading="lazy"
                       decoding="async"
                       draggable="false"
@@ -204,6 +230,21 @@ type LoadState =
             [(open)]="viewerOpen"
           />
         }
+
+        <!-- Contact -->
+        <section class="border-t border-hairline py-12 sm:py-14">
+          <app-container>
+            <div class="flex flex-wrap items-baseline justify-between gap-6">
+              <p class="max-w-xl text-lg leading-relaxed text-ink/90">{{ i18n.pick(t.discuss) }}</p>
+              <a
+                [routerLink]="'/contact' | loc"
+                class="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink transition-colors hover:text-accent"
+              >
+                {{ i18n.pick(t.contact) }} <span class="dir-flip">&rarr;</span>
+              </a>
+            </div>
+          </app-container>
+        </section>
 
         <!-- Next project -->
         @if (next(); as nx) {
@@ -272,7 +313,7 @@ export class ProjectDetail {
   protected readonly status = computed(() => this.state().status);
   protected readonly project = computed(() => this.state().project);
 
-  /** Full list (for the "next project" link), loaded once in the browser. */
+  /** Full list (for the "next project" link and unique page titles). */
   private readonly all = signal<Project[]>([]);
 
   protected readonly next = computed(() => {
@@ -319,26 +360,91 @@ export class ProjectDetail {
     services: { en: 'Scope & Disciplines', ar: 'نطاق العمل والتخصصات' },
     next: { en: 'Next project', ar: 'المشروع التالي' },
     notFound: { en: 'Project not found.', ar: 'المشروع غير موجود.' },
+    overview: { en: 'Project overview', ar: 'نظرة عامة على المشروع' },
+    location: { en: 'Location', ar: 'الموقع' },
+    servicesLink: { en: 'About these services', ar: 'تعرّف على هذه الخدمات' },
+    discuss: {
+      en: 'Planning a project with similar ambitions? We would welcome a conversation.',
+      ar: 'هل تخطط لمشروع بطموحات مماثلة؟ يسعدنا أن نتحدث معك.',
+    },
+    contact: { en: 'Contact MSP', ar: 'تواصل مع MSP' },
   };
 
+  /** Description paragraphs, with "## " paragraphs promoted to headings. */
+  protected body(project: Project): { heading: boolean; text: string }[] {
+    return project.description.map((para) => {
+      const text = this.i18n.pick(para).trim();
+      return text.startsWith('## ')
+        ? { heading: true, text: text.slice(3).trim() }
+        : { heading: false, text };
+    });
+  }
+
+  protected coverAlt(project: Project): string {
+    const title = this.i18n.pick(project.title);
+    const place = this.i18n.pick(project.location);
+    return place && !title.includes(place) ? `${title} — ${place}` : title;
+  }
+
+  /** Unique, accurate alt per image: the project, its place, and the image's position. */
+  protected galleryAlt(project: Project, index: number): string {
+    const n = project.gallery.length;
+    return this.i18n.pick({
+      en: `${this.coverAlt(project)}, image ${index + 1} of ${n}`,
+      ar: `${this.coverAlt(project)}، الصورة ${index + 1} من ${n}`,
+    });
+  }
+
+  /**
+   * Page title: the project name, plus its number when another published
+   * project shares the name (three villas are called "Private Residential
+   * Villa"), so every page title stays unique.
+   */
+  private pageTitle(project: Project): string {
+    const title = this.i18n.pick(project.title);
+    const twins = this.all().filter((p) => this.i18n.pick(p.title) === title).length;
+    return twins > 1 && project.no ? `${title} ${project.no}` : title;
+  }
+
+  private schema(project: Project): JsonLd[] {
+    const url = absoluteUrl(this.i18n.path(`/projects/${project.slug}`));
+    const images = [project.cover, ...project.gallery].filter(Boolean).slice(0, 6);
+    const work: JsonLd = {
+      '@type': 'CreativeWork',
+      '@id': `${url}#project`,
+      name: this.i18n.pick(project.title),
+      description: this.i18n.pick(project.summary),
+      url,
+      inLanguage: this.i18n.lang(),
+      creator: { '@id': ORG_ID },
+      mainEntityOfPage: { '@id': `${url}#webpage` },
+      image: images.map((img) => absoluteUrl(assetUrl(img))),
+    };
+    const place = this.i18n.pick(project.location);
+    if (place) work['locationCreated'] = { '@type': 'Place', name: place };
+    if (project.year) work['dateCreated'] = project.year;
+    const genre = this.metaLabel(project);
+    if (genre) work['genre'] = this.i18n.pick(genre);
+    return [work];
+  }
+
   constructor() {
-    afterNextRender(() => {
-      this.content.projects().subscribe({
-        next: (list) => this.all.set(list),
-        error: () => this.all.set([]),
-      });
+    this.content.projects().subscribe({
+      next: (list) => this.all.set(list),
+      error: () => this.all.set([]),
     });
 
     effect(() => {
       const p = this.project();
       if (p) {
         this.seo.update({
-          title: this.i18n.pick(p.title),
+          title: this.pageTitle(p),
           description: this.i18n.pick(p.summary),
           image: assetUrl(p.cover),
+          schema: this.schema(p),
         });
       } else if (this.status() === 'notfound') {
-        this.seo.update({ title: this.i18n.pick({ en: 'Works', ar: 'المشاريع' }) });
+        this.seo.update({ title: this.i18n.pick({ en: 'Project not found', ar: 'المشروع غير موجود' }), noindex: true });
       }
     });
   }

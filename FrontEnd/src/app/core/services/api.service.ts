@@ -13,7 +13,7 @@ type QueryParams = Record<string, string | number | boolean>;
  */
 function serverApiOrigin(): string {
   const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env;
-  return (env?.['PRERENDER_API_ORIGIN'] ?? 'https://msp.sa').replace(/\/+$/, '');
+  return (env?.['PRERENDER_API_ORIGIN'] ?? 'https://www.msp.sa').replace(/\/+$/, '');
 }
 
 /** Thin typed wrapper over HttpClient rooted at the configured API URL. */

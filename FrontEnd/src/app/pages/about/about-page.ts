@@ -1,4 +1,4 @@
-import { Component, inject, signal, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Container } from '../../shared/ui/container/container';
 import { Section } from '../../shared/ui/section/section';
 import { SectionHeading } from '../../shared/ui/section-heading/section-heading';
@@ -17,13 +17,17 @@ interface L {
   ar: string;
 }
 
-/** Practice / About page — studio story, numbers, values, leadership, timeline. */
+/**
+ * Practice / About page — positioning, philosophy, vision and mission, values,
+ * collective expertise, technology, leadership (CEO message + team) and
+ * long-term ambition.
+ */
 @Component({
   selector: 'app-about-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Container, Section, SectionHeading, ScrollReveal, CountUp, Cta, AssetPipe, SrcsetPipe],
   template: `
-    <!-- Header -->
+    <!-- Header: who we are -->
     <section class="border-b border-hairline bg-bg pt-16 pb-14 sm:pt-20">
       <app-container>
         <div class="flex items-center gap-5 font-mono text-xs uppercase tracking-[0.18em] text-muted">
@@ -44,30 +48,31 @@ interface L {
       </app-container>
     </section>
 
-    <!-- Story -->
+    <!-- Philosophy -->
     <app-section>
       <app-container>
-        <div class="grid gap-12 lg:grid-cols-12 lg:gap-8">
+        <app-section-heading index="01" [eyebrow]="i18n.pick(t.philEyebrow)" [title]="i18n.pick(t.philTitle)" />
+        <div class="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-8">
           <div class="lg:col-span-7">
             <p
               appScrollReveal
               revealType="line"
               class="font-display text-3xl font-medium leading-[1.2] tracking-[-0.02em] text-ink sm:text-4xl"
             >
-              {{ i18n.pick(t.storyLead) }}
+              {{ i18n.pick(t.philLead) }}
             </p>
           </div>
           <div class="lg:col-span-4 lg:col-start-9">
-            <p appScrollReveal class="leading-relaxed text-muted">{{ i18n.pick(t.story1) }}</p>
+            <p appScrollReveal class="leading-relaxed text-muted">{{ i18n.pick(t.phil1) }}</p>
             <p appScrollReveal [revealDelay]="100" class="mt-4 leading-relaxed text-muted">
-              {{ i18n.pick(t.story2) }}
+              {{ i18n.pick(t.phil2) }}
             </p>
           </div>
         </div>
       </app-container>
     </app-section>
 
-    <!-- Numbers -->
+    <!-- Numbers (verified facts only) -->
     <section class="bg-band dark:border-y dark:border-hairline py-20 text-on-band sm:py-24">
       <app-container>
         <dl class="grid grid-cols-2 gap-x-8 gap-y-12">
@@ -88,15 +93,32 @@ interface L {
       </app-container>
     </section>
 
+    <!-- Vision & Mission -->
+    <app-section>
+      <app-container>
+        <app-section-heading index="02" [eyebrow]="i18n.pick(t.vmEyebrow)" [title]="i18n.pick(t.vmTitle)" />
+        <div class="mt-14 grid gap-px overflow-hidden border border-hairline bg-hairline md:grid-cols-2">
+          @for (item of visionMission; track item.title.en; let i = $index) {
+            <div appScrollReveal [revealDelay]="i * 70" class="bg-bg p-7 lg:p-10">
+              <h3 class="font-mono text-xs uppercase tracking-[0.18em] text-accent">{{ i18n.pick(item.title) }}</h3>
+              <p class="mt-5 font-display text-xl font-medium leading-snug text-ink sm:text-2xl">
+                {{ i18n.pick(item.body) }}
+              </p>
+            </div>
+          }
+        </div>
+      </app-container>
+    </app-section>
+
     <!-- Values -->
     <app-section tone="surface">
       <app-container>
         <app-section-heading
-          index="01"
+          index="03"
           [eyebrow]="i18n.pick(t.valuesEyebrow)"
           [title]="i18n.pick(t.valuesTitle)"
         />
-        <div class="mt-14 grid gap-px overflow-hidden border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mt-14 grid gap-px overflow-hidden border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
           @for (v of values; track v.no; let i = $index) {
             <div appScrollReveal [revealDelay]="i * 70" class="bg-bg p-7 lg:p-8">
               <span class="font-mono text-xs text-accent">{{ v.no }}</span>
@@ -108,17 +130,92 @@ interface L {
       </app-container>
     </app-section>
 
-    <!-- Leadership -->
+    <!-- Collective expertise -->
+    <app-section>
+      <app-container>
+        <app-section-heading index="04" [eyebrow]="i18n.pick(t.ceEyebrow)" [title]="i18n.pick(t.ceTitle)" />
+        <div class="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-8">
+          <div class="lg:col-span-7">
+            <p
+              appScrollReveal
+              revealType="line"
+              class="font-display text-3xl font-medium leading-[1.2] tracking-[-0.02em] text-ink sm:text-4xl"
+            >
+              {{ i18n.pick(t.ceLead) }}
+            </p>
+          </div>
+          <div class="lg:col-span-4 lg:col-start-9">
+            <p appScrollReveal class="leading-relaxed text-muted">{{ i18n.pick(t.ce1) }}</p>
+            <p appScrollReveal [revealDelay]="100" class="mt-4 leading-relaxed text-muted">
+              {{ i18n.pick(t.ce2) }}
+            </p>
+          </div>
+        </div>
+      </app-container>
+    </app-section>
+
+    <!-- Technology & innovation -->
+    <app-section tone="surface">
+      <app-container>
+        <app-section-heading
+          index="05"
+          [eyebrow]="i18n.pick(t.techEyebrow)"
+          [title]="i18n.pick(t.techTitle)"
+          [intro]="i18n.pick(t.techIntro)"
+        />
+        <div class="mt-14 grid gap-px overflow-hidden border border-hairline bg-hairline md:grid-cols-2">
+          @for (item of technology; track item.title.en; let i = $index) {
+            <div appScrollReveal [revealDelay]="i * 70" class="bg-bg p-7 lg:p-8">
+              <span class="font-mono text-xs uppercase tracking-[0.12em] text-accent">{{ i18n.pick(item.tag) }}</span>
+              <h3 class="mt-4 font-display text-xl font-medium text-ink">{{ i18n.pick(item.title) }}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{{ i18n.pick(item.body) }}</p>
+            </div>
+          }
+        </div>
+      </app-container>
+    </app-section>
+
+    <!-- Leadership: CEO message + team -->
     <app-section>
       <app-container>
         <app-section-heading
-          index="02"
+          index="06"
           [eyebrow]="i18n.pick(t.leadEyebrow)"
           [title]="i18n.pick(t.leadTitle)"
           [intro]="i18n.pick(t.leadIntro)"
         />
+
+        <figure class="mt-14 grid gap-12 border-t border-hairline pt-12 lg:grid-cols-12 lg:gap-8">
+          <div class="lg:col-span-4">
+            <p class="font-mono text-xs uppercase tracking-[0.18em] text-accent">{{ i18n.pick(t.ceoEyebrow) }}</p>
+            <h3 appScrollReveal class="mt-4 font-display text-xl font-medium text-ink sm:text-2xl">
+              {{ i18n.pick(t.ceoTitle) }}
+            </h3>
+            <figcaption class="mt-8 border-t border-hairline pt-4">
+              <span class="block font-display text-lg font-medium text-ink">{{ i18n.pick(t.ceoName) }}</span>
+              <span class="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-muted">
+                {{ i18n.pick(t.ceoRole) }}
+              </span>
+            </figcaption>
+          </div>
+          <blockquote class="lg:col-span-7 lg:col-start-6">
+            <p
+              appScrollReveal
+              revealType="line"
+              class="font-display text-3xl font-medium leading-[1.2] tracking-[-0.02em] text-ink sm:text-4xl"
+            >
+              {{ i18n.pick(ceoMessage[0]) }}
+            </p>
+            @for (para of ceoBody; track para.en; let i = $index) {
+              <p appScrollReveal [revealDelay]="i * 60" class="mt-5 leading-relaxed text-muted">
+                {{ i18n.pick(para) }}
+              </p>
+            }
+          </blockquote>
+        </figure>
+
         @if (loading()) {
-          <div class="mt-14 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="mt-20 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
             @for (i of skeletons; track i) {
               <div class="animate-pulse">
                 <div class="aspect-[4/5] bg-hairline/60"></div>
@@ -129,7 +226,7 @@ interface L {
             }
           </div>
         } @else {
-          <div class="mt-14 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="mt-20 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
             @for (member of team(); track member.id; let i = $index) {
               <article appScrollReveal [revealDelay]="i * 70" class="group">
                 <div appScrollReveal revealType="line" class="aspect-[4/5] overflow-hidden bg-hairline/40">
@@ -164,24 +261,27 @@ interface L {
       </app-container>
     </app-section>
 
-    <!-- Timeline -->
+    <!-- Long-term institutional ambition -->
     <app-section tone="surface">
       <app-container>
-        <app-section-heading index="03" [eyebrow]="i18n.pick(t.timelineEyebrow)" [title]="i18n.pick(t.timelineTitle)" />
-        <ol class="mt-14 border-t border-hairline">
-          @for (e of timeline; track e.year) {
-            <li
+        <app-section-heading index="07" [eyebrow]="i18n.pick(t.ambEyebrow)" [title]="i18n.pick(t.ambTitle)" />
+        <div class="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-8">
+          <div class="lg:col-span-7">
+            <p
               appScrollReveal
-              class="grid grid-cols-12 items-baseline gap-4 border-b border-hairline py-7"
+              revealType="line"
+              class="font-display text-3xl font-medium leading-[1.2] tracking-[-0.02em] text-ink sm:text-4xl"
             >
-              <span class="col-span-3 font-mono text-sm text-accent sm:col-span-2" dir="ltr">{{ e.year }}</span>
-              <h3 class="col-span-9 font-display text-xl font-medium text-ink sm:col-span-4 sm:text-2xl">
-                {{ i18n.pick(e.title) }}
-              </h3>
-              <p class="col-span-12 text-muted sm:col-span-6">{{ i18n.pick(e.body) }}</p>
-            </li>
-          }
-        </ol>
+              {{ i18n.pick(t.ambLead) }}
+            </p>
+          </div>
+          <div class="lg:col-span-4 lg:col-start-9">
+            <p appScrollReveal class="leading-relaxed text-muted">{{ i18n.pick(t.amb1) }}</p>
+            <p appScrollReveal [revealDelay]="100" class="mt-4 leading-relaxed text-muted">
+              {{ i18n.pick(t.amb2) }}
+            </p>
+          </div>
+        </div>
       </app-container>
     </app-section>
 
@@ -209,120 +309,244 @@ export class AboutPage {
   }
 
   protected readonly t = {
-    eyebrow: { en: 'The Practice', ar: 'المكتب' },
-    title: { en: 'An integrated practice.', ar: 'ممارسةٌ متكاملة.' },
+    // Who we are
+    eyebrow: { en: 'Who We Are', ar: 'من نحن' },
+    title: {
+      en: 'A multidisciplinary architecture and engineering consultancy.',
+      ar: 'مكتب استشارات معمارية وهندسية متعدد التخصصات.',
+    },
     intro: {
-      en: 'MSP Consultants unites architecture and engineering under one roof — a single team accountable for how a building looks, stands, and performs.',
-      ar: 'تجمع إم إس بي للاستشارات العمارة والهندسة تحت سقفٍ واحد — فريقٌ واحد مسؤولٌ عن شكل المبنى وثباته وأدائه.',
+      en: 'MSP creates environments that enrich human experiences and deliver lasting value. Founded in Riyadh in 2010, we bring together diverse expertise, creative thinking and advanced technologies in a collaborative practice that places people, performance and long-term impact at the heart of every project.',
+      ar: 'تصمّم MSP بيئات تُثري التجربة الإنسانية وتحقق قيمة تدوم. تأسّست في الرياض عام 2010، وتجمع خبرات متنوعة وتفكيراً إبداعياً وتقنيات متقدمة ضمن ممارسة تعاونية تضع الإنسان والأداء والأثر بعيد المدى في صميم كل مشروع.',
     },
-    storyLead: {
-      en: 'We started in 2010 with a simple conviction: design and engineering should never be two conversations.',
-      ar: 'بدأنا عام 2010 بقناعةٍ بسيطة: ألا يكون التصميم والهندسة حديثين منفصلين.',
+
+    // Philosophy
+    philEyebrow: { en: 'Our Philosophy', ar: 'فلسفتنا' },
+    philTitle: { en: 'Architecture Beyond Buildings.', ar: 'عمارةٌ تتجاوز المباني.' },
+    philLead: {
+      en: 'Architecture is not merely about the spaces we create, but about the experiences those spaces make possible.',
+      ar: 'لا تقتصر العمارة على الفراغات التي نصمّمها، بل تمتد إلى التجارب التي تتيحها تلك الفراغات.',
     },
-    story1: {
-      en: 'From a small Riyadh studio, MSP grew into a multidisciplinary practice trusted with civic landmarks, towers, and masterplans across the Kingdom.',
-      ar: 'من استوديو صغير في الرياض، نمت إم إس بي لتصبح مكتباً متعدّد التخصصات يُؤتمَن على المعالم العامة والأبراج والمخطّطات الشاملة في أنحاء المملكة.',
+    phil1: {
+      en: 'Every building type has its own experience. A museum moves people through spatial drama; a residence through comfort, privacy and daylight; a commercial destination through clear circulation and a lively public realm. We integrate architectural creativity with functional performance, well-being and long-term value.',
+      ar: 'لكل نوع من المباني تجربته الخاصة؛ فالمتحف يأخذ زوّاره في تجربة فراغية مؤثرة، والمسكن يمنح الراحة والخصوصية والإضاءة الطبيعية، والوجهة التجارية تقوم على وضوح الحركة وحيوية الفراغات العامة. ونحن ندمج الإبداع المعماري مع الأداء الوظيفي ورفاه الإنسان والقيمة بعيدة المدى.',
     },
-    story2: {
-      en: 'Every commission is still led by a principal, and still held to the standard we began with: clarity of thought, rigour of detail.',
-      ar: 'لا يزال كل تكليفٍ يقوده أحد الشركاء، وفق المعيار الذي بدأنا به: وضوحُ الفكرة ودقّةُ التفصيل.',
+    phil2: {
+      en: 'We measure success in two ways. The first is professional: the agreed quality, schedule, budget and standards, met with reliable engineering advice. The second comes later — the life a project takes on once it is occupied, used and valued.',
+      ar: 'نقيس النجاح ببُعدين: الأول مهني، ويتمثّل في تحقيق الجودة والجداول الزمنية والميزانيات والمعايير المتفق عليها، مع تقديم مشورة هندسية موثوقة. والثاني يأتي لاحقاً، وهو الحياة التي يحياها المشروع بعد إشغاله واستخدامه وتقدير الناس له.',
     },
-    valuesEyebrow: { en: 'Values', ar: 'قِيَمنا' },
+
+    // Vision & mission
+    vmEyebrow: { en: 'Vision & Mission', ar: 'الرؤية والرسالة' },
+    vmTitle: { en: 'What we work towards.', ar: 'ما نسعى إليه.' },
+
+    // Values
+    valuesEyebrow: { en: 'Values', ar: 'قيمنا' },
     valuesTitle: { en: 'What we hold to.', ar: 'ما نلتزم به.' },
-    leadEyebrow: { en: 'Leadership', ar: 'القيادة' },
-    leadTitle: { en: 'The principals.', ar: 'الشركاء.' },
-    leadIntro: {
-      en: 'A senior team that stays close to every project, from first sketch to final inspection.',
-      ar: 'فريقٌ خبيرٌ يبقى قريباً من كل مشروع، من أول رسمٍ حتى التفتيش النهائي.',
+
+    // Collective expertise
+    ceEyebrow: { en: 'Collective Expertise', ar: 'الخبرة الجماعية' },
+    ceTitle: { en: 'Many disciplines, one practice.', ar: 'تخصصات متعددة، وممارسة واحدة.' },
+    ceLead: {
+      en: 'Excellence is not the achievement of an individual, but the outcome of collective knowledge and shared purpose.',
+      ar: 'التميّز ليس إنجاز فرد واحد، بل ثمرة معرفة جماعية وغاية مشتركة.',
     },
-    timelineEyebrow: { en: 'Trajectory', ar: 'المسيرة' },
-    timelineTitle: { en: 'A measured climb.', ar: 'مسيرةٌ ثابتة.' },
+    ce1: {
+      en: 'MSP brings together architects, engineers and specialists of different nationalities, academic backgrounds and experience. Architectural design, interior design, structural and MEP engineering, urban planning, project management and construction supervision work as one team, united by shared values and a common professional philosophy.',
+      ar: 'تجمع MSP معماريين ومهندسين ومتخصصين من جنسيات وخلفيات أكاديمية وخبرات متنوعة. وتعمل تخصصات التصميم المعماري والتصميم الداخلي والهندسة الإنشائية والهندسة الكهروميكانيكية (MEP) والتخطيط العمراني وإدارة المشاريع والإشراف الهندسي فريقاً واحداً، تجمعه قيم مشتركة وفلسفة مهنية واحدة.',
+    },
+    ce2: {
+      en: 'Diversity of thought strengthens our solutions. We are building a working methodology that stays consistent as our teams grow and change, so the quality of our advice never rests on one person alone.',
+      ar: 'يُثري تنوّع الأفكار حلولنا. ونعمل على ترسيخ منهجية عمل تحافظ على اتساقها مع نموّ فرقنا وتغيّرها، كي لا ترتبط جودة مشورتنا بشخص بعينه.',
+    },
+
+    // Technology & innovation
+    techEyebrow: { en: 'Technology & Innovation', ar: 'التقنية والابتكار' },
+    techTitle: { en: 'Technology-enabled. Expertise-led.', ar: 'تمكّننا التقنية، وتقودنا الخبرة.' },
+    techIntro: {
+      en: 'Digital tools help us coordinate, test and decide with greater confidence. They do not replace engineering expertise; professional judgement stays at the centre of every decision.',
+      ar: 'تساعدنا الأدوات الرقمية على التنسيق والتحقق واتخاذ القرار بثقة أكبر، لكنها لا تحلّ محل الخبرة الهندسية؛ فالحكم المهني يبقى في صميم كل قرار.',
+    },
+
+    // Leadership
+    leadEyebrow: { en: 'Leadership', ar: 'القيادة' },
+    leadTitle: { en: 'Guided by shared values.', ar: 'قيادة تحكمها قيم مشتركة.' },
+    leadIntro: {
+      en: 'The people who guide the practice and hold it to its professional standards.',
+      ar: 'الأشخاص الذين يوجّهون ممارستنا ويحرصون على التزامها بمعاييرها المهنية.',
+    },
+    ceoEyebrow: { en: 'A message from the CEO', ar: 'كلمة الرئيس التنفيذي' },
+    ceoTitle: {
+      en: 'Designing Experiences. Creating Lasting Impact.',
+      ar: 'نصمّم التجارب، ونصنع أثراً يدوم.',
+    },
+    ceoName: { en: 'Mansour Al-Sabaan', ar: 'منصور السبعان' },
+    ceoRole: { en: 'Chief Executive Officer, MSP', ar: 'الرئيس التنفيذي' },
+
+    // Long-term ambition (aspirational)
+    ambEyebrow: { en: 'Long-Term Ambition', ar: 'طموحنا بعيد المدى' },
+    ambTitle: { en: 'An institution, not only a practice.', ar: 'مؤسسة، لا مجرد مكتب.' },
+    ambLead: {
+      en: 'We design for the people of today, with a responsibility to the generations of tomorrow.',
+      ar: 'نصمّم لإنسان اليوم، ونحمل مسؤوليتنا تجاه أجيال الغد.',
+    },
+    amb1: {
+      en: 'Over the long term, MSP aspires to become an institution whose contribution reaches beyond its own people and projects — to architectural and engineering knowledge, building materials and construction technologies, design methodology and professional education.',
+      ar: 'على المدى البعيد، تطمح MSP إلى أن تصبح مؤسسة يتجاوز إسهامها أفرادها ومشاريعها، ليشمل المعرفة المعمارية والهندسية، ومواد البناء وتقنياته، ومنهجيات التصميم، والتعليم المهني.',
+    },
+    amb2: {
+      en: 'It is an ambition we intend to pursue step by step: by sharing what we learn, developing our people, and holding each project to a standard worth passing on.',
+      ar: 'وهو طموح نعتزم تحقيقه خطوة بخطوة: بمشاركة ما نتعلّمه، وتطوير كوادرنا، والالتزام في كل مشروع بمعيار يستحق أن يُورَث.',
+    },
   };
 
-  // Only figures we can stand behind, rounded and shown as "500+" / "16+".
-  // Built area is unknown, and awards are too few to feature yet.
+  // Verified facts only: years since founding in 2010, and the two offices.
   protected readonly stats = [
-    { value: 500, suffix: '+', label: { en: 'Projects delivered', ar: 'مشروع مُنجَز' } },
-    { value: 16, suffix: '+', label: { en: 'Years in practice', ar: 'عاماً من الخبرة' } },
+    {
+      value: new Date().getFullYear() - 2010,
+      suffix: '+',
+      label: { en: 'Years in practice, since 2010', ar: 'عاماً من الممارسة منذ 2010' },
+    },
+    { value: 2, suffix: '', label: { en: 'Offices — Riyadh and Cairo', ar: 'مكتبان في الرياض والقاهرة' } },
+  ];
+
+  protected readonly visionMission: readonly { title: L; body: L }[] = [
+    {
+      title: { en: 'Vision', ar: 'رؤيتنا' },
+      body: {
+        en: 'To become a globally respected institution in architecture and engineering, trusted for our expertise, recognized for advancing knowledge, and valued for creating meaningful human experiences and a lasting legacy for future generations.',
+        ar: 'أن نصبح مؤسسة تحظى باحترام عالمي في العمارة والهندسة، موثوقة بخبرتها، ومعروفة بإسهامها في تطوير المعرفة، ومقدَّرة لما تصنعه من تجارب إنسانية ذات معنى وإرث باقٍ للأجيال القادمة.',
+      },
+    },
+    {
+      title: { en: 'Mission', ar: 'رسالتنا' },
+      body: {
+        en: 'To create exceptional built environments through purposeful design, integrated engineering expertise, and continuous innovation — enhancing human experiences, delivering lasting value, and contributing to the advancement of architectural and engineering knowledge.',
+        ar: 'أن نصنع بيئات عمرانية استثنائية من خلال التصميم الهادف والخبرة الهندسية المتكاملة والابتكار المستمر، بما يُثري التجربة الإنسانية، ويحقق قيمة تدوم، ويسهم في تطوير المعرفة المعمارية والهندسية.',
+      },
+    },
   ];
 
   protected readonly values: readonly { no: string; title: L; body: L }[] = [
     {
       no: '01',
-      title: { en: 'Integrated', ar: 'التكامل' },
+      title: { en: 'Human Experience', ar: 'التجربة الإنسانية' },
       body: {
-        en: 'Architects and engineers share one table, so design and structure arrive as a single decision.',
-        ar: 'يجلس المعماريون والمهندسون إلى طاولةٍ واحدة، فيصل التصميم والإنشاء كقرارٍ واحد.',
+        en: 'We design around the people who will use a place — their comfort, well-being and sense of belonging.',
+        ar: 'نصمّم انطلاقاً من الإنسان الذي سيستخدم المكان: راحته ورفاهه وإحساسه بالانتماء.',
       },
     },
     {
       no: '02',
-      title: { en: 'Evidence-led', ar: 'الدليل أولاً' },
+      title: { en: 'Purposeful Creativity', ar: 'الإبداع الهادف' },
       body: {
-        en: 'Site, climate, code, and cost decide. The brief leads; the drawing follows.',
-        ar: 'الموقع والمناخ والكود والتكلفة هي الفيصل. المتطلّبات تقود، والرسم يتبع.',
+        en: 'Creativity and function work together. Every design idea earns its place by serving the project and the people it is for.',
+        ar: 'يتكامل الإبداع مع الوظيفة؛ فكل فكرة تصميمية تستحق مكانها بقدر ما تخدم المشروع ومستخدميه.',
       },
     },
     {
       no: '03',
-      title: { en: 'Detailed', ar: 'الإتقان' },
+      title: { en: 'Collective Intelligence', ar: 'الذكاء الجماعي' },
       body: {
-        en: 'A building is its junctions. We resolve the hard parts before the site does.',
-        ar: 'قيمةُ المبنى في وصلاته. نحسم الأجزاء الصعبة قبل أن يصل إليها الموقع.',
+        en: 'Strong solutions come from many disciplines and perspectives thinking together, not from any single voice.',
+        ar: 'الحلول المتميزة ثمرة تفكير مشترك بين تخصصات ووجهات نظر متعددة، لا نتاج صوت واحد.',
       },
     },
     {
       no: '04',
-      title: { en: 'Durable', ar: 'الديمومة' },
+      title: { en: 'Professional Integrity', ar: 'النزاهة المهنية' },
       body: {
-        en: 'We design for the long life of a place — efficient, generous, and built to last.',
-        ar: 'نصمّم لعمرٍ طويلٍ للمكان — فعّالٌ وكريمٌ ومبنيٌّ ليدوم.',
+        en: 'We give independent, honest advice, and constructively challenge proposals that would not serve a client’s long-term interests.',
+        ar: 'نقدّم مشورة مهنية مستقلة وصادقة، ونناقش بموضوعية المقترحات التي لا تخدم مصالح العميل على المدى البعيد.',
+      },
+    },
+    {
+      no: '05',
+      title: { en: 'Continuous Evolution', ar: 'التطوّر المستمر' },
+      body: {
+        en: 'We keep learning and refining our methods, adopting new tools where they genuinely improve the work.',
+        ar: 'نواصل التعلّم وتطوير أساليبنا، ونتبنّى الأدوات الجديدة حين تُحسّن العمل فعلاً.',
+      },
+    },
+    {
+      no: '06',
+      title: { en: 'Enduring Value', ar: 'القيمة الدائمة' },
+      body: {
+        en: 'Buildings are not short-lived products. We weigh the cultural, social, environmental and economic consequences of every decision.',
+        ar: 'المباني ليست منتجات قصيرة العمر؛ لذا نزن الأثر الثقافي والاجتماعي والبيئي والاقتصادي لكل قرار نتخذه.',
       },
     },
   ];
 
-  protected readonly timeline: readonly { year: string; title: L; body: L }[] = [
+  // Current practice vs. areas still being developed — kept explicitly separate.
+  protected readonly technology: readonly { tag: L; title: L; body: L }[] = [
     {
-      year: '2010',
-      title: { en: 'Founded in Riyadh', ar: 'التأسيس في الرياض' },
-      body: { en: 'A three-person studio opens on King Fahd Road.', ar: 'افتتاح استوديو من ثلاثة أشخاص على طريق الملك فهد.' },
+      tag: { en: 'Current', ar: 'حالياً' },
+      title: { en: 'In our practice today', ar: 'في ممارستنا اليوم' },
+      body: {
+        en: 'Building Information Modelling (BIM), digital coordination between disciplines, model validation, digital project management and structured quality assurance across design and supervision.',
+        ar: 'نمذجة معلومات البناء (BIM)، والتنسيق الرقمي بين التخصصات، والتحقق من النماذج، والإدارة الرقمية للمشاريع، وضمان الجودة وفق منهجية واضحة في مراحل التصميم والإشراف.',
+      },
     },
     {
-      year: '2016',
-      title: { en: 'Engineering in-house', ar: 'الهندسة داخلياً' },
-      body: { en: 'Structural and MEP teams join, completing the integrated model.', ar: 'انضمام فريقي الإنشاءات والكهروميكانيكا، فيكتمل النموذج المتكامل.' },
-    },
-    {
-      year: '2020',
-      title: { en: 'First civic landmark', ar: 'أول معلمٍ عام' },
-      body: { en: 'A cultural commission marks a shift to public-scale work.', ar: 'تكليفٌ ثقافي يؤذن بالانتقال إلى المشاريع العامة الكبرى.' },
-    },
-    {
-      year: '2024',
-      title: { en: 'Vision 2030 projects', ar: 'مشاريع رؤية 2030' },
-      // Client names stay out of public copy until the office approves them.
-      body: { en: 'Commissions widen across residential, commercial and hospitality work.', ar: 'اتساع التكليفات لتشمل السكني والتجاري والضيافة.' },
+      tag: { en: 'Evolving', ar: 'قيد التطوير' },
+      title: { en: 'What we are developing', ar: 'ما نعمل على تطويره' },
+      body: {
+        en: 'AI-assisted workflows, engineering automation and data-informed decision support. We are introducing these step by step, and only where they prove their value under expert review.',
+        ar: 'أساليب العمل المدعومة بالذكاء الاصطناعي، وأتمتة المهام الهندسية، ودعم القرار المبني على البيانات. ونُدخلها تدريجياً، ولا نعتمدها إلا حيث تثبت جدواها بمراجعة المختصين.',
+      },
     },
   ];
 
+  /** CEO message (approved text). The first paragraph is set as the pull-quote. */
+  protected readonly ceoMessage: readonly L[] = [
+    {
+      en: 'At MSP, we believe architecture is more than the creation of buildings. It is about shaping experiences, enriching lives, and creating spaces that leave a meaningful impact on people and places.',
+      ar: 'نؤمن في MSP بأن العمارة أكثر من مجرد إقامة المباني؛ إنها صياغة للتجارب، وإثراء للحياة، وصناعة لفراغات تترك أثراً عميقاً في الناس والأماكن.',
+    },
+    {
+      en: 'To us, great architecture is where creativity, purpose, and human experience come together. Its true success is measured not only by how a project looks or performs, but by how people interact with it, the experiences it inspires, and the value it continues to create long after completion.',
+      ar: 'فالعمارة المتميزة في نظرنا هي التي يلتقي فيها الإبداع بالغاية والتجربة الإنسانية. ولا يُقاس نجاحها الحقيقي بمظهر المشروع أو أدائه فحسب، بل بطريقة تفاعل الناس معه، والتجارب التي يُلهمها، والقيمة التي يواصل تقديمها بعد اكتماله بزمن طويل.',
+    },
+    {
+      en: 'Our strength lies in the collective intelligence of our people. By bringing together diverse perspectives, multidisciplinary expertise, and advanced technologies, we have developed a collaborative approach driven by shared values, continuous learning, and a commitment to quality.',
+      ar: 'تكمن قوتنا في الذكاء الجماعي لفريقنا. فمن خلال الجمع بين وجهات النظر المتنوعة والخبرات متعددة التخصصات والتقنيات المتقدمة، طوّرنا نهجاً تعاونياً تقوده القيم المشتركة والتعلّم المستمر والالتزام بالجودة.',
+    },
+    {
+      en: 'As engineering consultants, we recognize that our responsibility extends beyond meeting expectations. The decisions we make today shape environments that may serve generations to come. This responsibility guides our professional judgment and our pursuit of meaningful, enduring solutions.',
+      ar: 'وبصفتنا مستشارين هندسيين، ندرك أن مسؤوليتنا تتجاوز تلبية التوقعات؛ فالقرارات التي نتخذها اليوم تُشكّل بيئات قد تخدم أجيالاً قادمة. وهذه المسؤولية هي ما يوجّه حكمنا المهني وسعينا إلى حلول هادفة ودائمة.',
+    },
+    {
+      en: 'Our ambition reaches beyond the projects we deliver. We aspire to build an institution that advances architectural and engineering knowledge, encourages research and innovation, and contributes to the future of our profession.',
+      ar: 'ويمتد طموحنا إلى ما هو أبعد من المشاريع التي نقدّمها؛ إذ نتطلّع إلى بناء مؤسسة تُسهم في تطوير المعرفة المعمارية والهندسية، وتشجّع البحث والابتكار، وتشارك في صياغة مستقبل مهنتنا.',
+    },
+    {
+      en: 'Our greatest legacy will not simply be the buildings we leave behind, but the lives we enrich, the knowledge we advance, and the possibilities we create for generations to come.',
+      ar: 'ولن يكون إرثنا الأعظم مجرد المباني التي نتركها خلفنا، بل الحياة التي نُثريها، والمعرفة التي نطوّرها، والإمكانات التي نصنعها للأجيال القادمة.',
+    },
+  ];
+
+  protected readonly ceoBody = this.ceoMessage.slice(1);
+
   constructor() {
     this.seo.update({
-      title: this.i18n.pick({ en: 'Practice', ar: 'عن المكتب' }),
-      description: this.i18n.pick({
-        en: 'MSP Consultants — an integrated architecture & engineering practice in Riyadh. Our story, values, leadership, and trajectory.',
-        ar: 'MSP للاستشارات — مكتب متكامل للعمارة والهندسة في الرياض. قصتنا وقيمنا وقيادتنا ومسيرتنا.',
+      title: this.i18n.pick({
+        en: 'About MSP: Architecture & Engineering Consultants',
+        ar: 'من نحن: مكتب استشارات هندسية ومعمارية',
       }),
+      description: this.i18n.pick({
+        en: 'Who MSP is: a multidisciplinary architecture and engineering consultancy founded in Riyadh in 2010. Our philosophy, vision, mission, values and leadership.',
+        ar: 'تأسست MSP في الرياض عام 2010 مكتباً للاستشارات المعمارية والهندسية متعدد التخصصات. تعرّف على فلسفتنا ورؤيتنا ورسالتنا وقيمنا وقيادتنا.',
+      }),
+      type: 'AboutPage',
     });
 
-    // Browser-only fetch: keeps the route prerenderable (static skeleton shell).
-    afterNextRender(() => {
-      this.content.team().subscribe({
-        next: (list) => {
-          this.team.set(list);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.content.team().subscribe({
+      next: (list) => {
+        this.team.set(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 }

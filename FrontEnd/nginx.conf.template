@@ -10,6 +10,13 @@ server {
   # TLS. Relative redirects keep the scheme, host and port the visitor came in on.
   absolute_redirect off;
 
+  # One canonical host: the apex redirects to www (canonicals, hreflang and
+  # the sitemap all use https://www.msp.sa). Exact match, so Railway's
+  # internal hostnames and health checks are unaffected.
+  if ($host = msp.sa) {
+    return 301 https://www.msp.sa$request_uri;
+  }
+
   client_max_body_size 10M;
   gzip on;
   gzip_comp_level 6;
@@ -49,6 +56,19 @@ server {
     proxy_set_header   X-Forwarded-Proto $scheme;
   }
 
+  # One URL form, without a trailing slash, matching the canonical links:
+  # /about/ → /about. (A regex, so it runs before the prefix locations below;
+  # /api/ is exempt because `^~` prefixes beat regexes.)
+  location ~ ^(.+)/$ {
+    return 301 $1$is_args$args;
+  }
+
+  # Old project URL → the project's current slug. A real 301, not the meta
+  # refresh Angular writes for a router redirect.
+  location ~ ^/(ar/)?projects/sbc-commercial-office$ {
+    return 301 /$1projects/SBC;
+  }
+
   # Static Angular site. Prerendered routes resolve to their own index.html;
   # client-rendered routes (/admin, /auth) fall back to the app shell.
   #
@@ -58,18 +78,22 @@ server {
   #
   # Only the client-rendered routes get the shell. They're dynamic (slugs,
   # tokens, auth), so the server can't know whether they exist — the app shows
-  # its own not-found view. Prerendered files under these prefixes (e.g. a
-  # static project page) still win via $uri/.
+  # its own not-found view. Prerendered pages under these prefixes (every
+  # project and insight published at build time) still win via
+  # $uri/index.html; only slugs published since the last deploy get the shell.
+  #
+  # Pages are looked up as $uri/index.html rather than $uri/ so nginx serves
+  # /about directly instead of redirecting to /about/.
   location ~ ^/(ar/)?(admin|auth|vendors|projects/[^/]+|blog/[^/]+)(/|$) {
     add_header Cache-Control "no-cache";
-    try_files $uri $uri/ /index.csr.html;
+    try_files $uri $uri/index.html /index.csr.html;
   }
 
   # Arabic edition: unknown /ar/... paths get the Arabic 404 page.
   location /ar/ {
     add_header Cache-Control "no-cache";
     error_page 404 /ar/404/index.html;
-    try_files $uri $uri/ =404;
+    try_files $uri $uri/index.html =404;
   }
 
   # Everything else is a prerendered page or a static file. Anything not on
@@ -80,6 +104,6 @@ server {
     # the hashed assets it points to are cached hard above.
     add_header Cache-Control "no-cache";
     error_page 404 /404/index.html;
-    try_files $uri $uri/ =404;
+    try_files $uri $uri/index.html =404;
   }
 }

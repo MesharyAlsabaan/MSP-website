@@ -68,24 +68,24 @@ export class WhyUs {
 
   protected readonly t = {
     eyebrow: { en: 'Approach', ar: 'منهجنا' },
-    headingPre: { en: 'How we ', ar: 'كيف ' },
-    headingEm: { en: 'work.', ar: 'نعمل.' },
+    headingPre: { en: 'What we ', ar: 'ما ' },
+    headingEm: { en: 'believe.', ar: 'نؤمن به.' },
     sub: {
-      en: 'Four convictions that hold whether we are detailing a stair or planning a district.',
-      ar: 'أربعُ قناعاتٍ ترافقنا في كل مشروع، من تفصيل دَرَجٍ إلى تخطيط حيٍّ كامل.',
+      en: 'Four convictions that guide every commission, from a single residence to a residential community.',
+      ar: 'أربع قناعات توجّه عملنا في كل مشروع، من المسكن الواحد إلى المجتمع السكني المتكامل.',
     },
     principles: {
       en: [
-        { no: '01', title: 'Integrated by default', description: 'Architects and engineers sit together from day one, so design and structure are never an argument — they are one decision.' },
-        { no: '02', title: 'Evidence over ego', description: 'Every move is tested against site, climate, code, and cost. The brief leads; the drawing follows.' },
-        { no: '03', title: 'Detail is the design', description: 'A building is only as good as its junctions. We resolve the hard parts before they reach the site.' },
-        { no: '04', title: 'Built to endure', description: 'We design for the long life of a place — durable, efficient, and quietly generous to the people who use it.' },
+        { no: '01', title: 'Human experience first', description: 'A building is measured by the experiences it makes possible: comfort, daylight, circulation, character, and well-being. Creativity and performance are designed together, never traded.' },
+        { no: '02', title: 'Collective intelligence', description: 'Excellence comes from shared knowledge, not one individual. Architects and engineers of different backgrounds work as one team, guided by a common method.' },
+        { no: '03', title: 'Technology-enabled, expertise-led', description: 'BIM, digital coordination, and model validation support our work, and we are developing AI-assisted workflows. Professional judgement remains decisive.' },
+        { no: '04', title: 'Responsibility beyond handover', description: 'We give independent professional advice, protect our clients\' long-term interests, and consider the people who will use a building for generations.' },
       ],
       ar: [
-        { no: '01', title: 'التكامل منذ البداية', description: 'يعمل المعماري والمهندس جنباً إلى جنب منذ اليوم الأول، فيغدو التصميم والإنشاء قراراً واحداً لا خياراً متعارضاً.' },
-        { no: '02', title: 'الدليل قبل الرأي', description: 'نختبر كلَّ قرارٍ بالموقع والمناخ والكود والتكلفة؛ المتطلّبات تقود، والرسم يتبع.' },
-        { no: '03', title: 'التفصيل هو التصميم', description: 'قيمةُ المبنى في تفاصيله. نحسم المسائل الصعبة قبل أن تصل إلى الموقع.' },
-        { no: '04', title: 'نبني ليدوم', description: 'نُصمّم لعمرٍ طويلٍ للمكان: متانةٌ وكفاءةٌ وكرمٌ هادئٌ تجاه من يستخدمه.' },
+        { no: '01', title: 'التجربة الإنسانية أولاً', description: 'تُقاس قيمة المبنى بالتجارب التي يُتيحها: الراحة، وضوء النهار، وسلاسة الحركة، والطابع المعماري، وجودة الحياة. نصمّم الإبداع والأداء معاً، ولا نُقايض أحدهما بالآخر.' },
+        { no: '02', title: 'الذكاء الجماعي', description: 'التميّز ثمرة معرفة مشتركة، لا جهد فرد واحد. يعمل معماريون ومهندسون من خلفيات متنوّعة فريقاً واحداً، تجمعهم منهجية عمل مشتركة.' },
+        { no: '03', title: 'تمكّننا التقنية، وتقودنا الخبرة', description: 'نعتمد نمذجة معلومات البناء (BIM) والتنسيق الرقمي والتحقق من النماذج، ونعمل على تطوير أساليب عمل مدعومة بالذكاء الاصطناعي. ويبقى الحكم المهني هو الفيصل.' },
+        { no: '04', title: 'مسؤولية تتجاوز التسليم', description: 'نقدّم مشورة مهنية مستقلة، ونحرص على مصالح عملائنا على المدى البعيد، ونراعي من سيستخدمون المبنى لأجيال قادمة.' },
       ],
     },
   };

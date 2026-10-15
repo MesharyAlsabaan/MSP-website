@@ -3,7 +3,6 @@ import {
   inject,
   signal,
   computed,
-  afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -114,14 +113,12 @@ export class FeaturedProjects {
   });
 
   constructor() {
-    afterNextRender(() => {
-      this.content.projects().subscribe({
-        next: (list) => {
-          this.fetched.set(list);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.content.projects().subscribe({
+      next: (list) => {
+        this.fetched.set(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
