@@ -10,6 +10,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { canPreviewContent } from '../../common/auth/content-preview';
+import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -25,20 +27,20 @@ export class ProjectsController {
 
   @Public()
   @Get()
-  findAll(@Query() query: QueryProjectDto) {
-    return this.projects.findAll(query);
+  findAll(@Query() query: QueryProjectDto, @CurrentUser() user?: AuthUser) {
+    return this.projects.findAll(query, canPreviewContent(user));
   }
 
   @Public()
   @Get('slug/:slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.projects.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: AuthUser) {
+    return this.projects.findBySlug(slug, canPreviewContent(user));
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.projects.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user?: AuthUser) {
+    return this.projects.findOne(id, canPreviewContent(user));
   }
 
   @ApiBearerAuth()

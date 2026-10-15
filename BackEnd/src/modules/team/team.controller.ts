@@ -10,6 +10,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { canPreviewContent } from '../../common/auth/content-preview';
+import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -25,14 +27,14 @@ export class TeamController {
 
   @Public()
   @Get()
-  findAll(@Query() query: QueryTeamMemberDto) {
-    return this.team.findAll(query);
+  findAll(@Query() query: QueryTeamMemberDto, @CurrentUser() user?: AuthUser) {
+    return this.team.findAll(query, canPreviewContent(user));
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.team.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user?: AuthUser) {
+    return this.team.findOne(id, canPreviewContent(user));
   }
 
   @ApiBearerAuth()

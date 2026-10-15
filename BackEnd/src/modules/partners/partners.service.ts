@@ -13,11 +13,11 @@ export class PartnersService {
     @InjectRepository(Partner) private readonly repo: Repository<Partner>,
   ) {}
 
-  async findAll(query: QueryPartnerDto): Promise<Paginated<Partner>> {
+  async findAll(query: QueryPartnerDto, preview = false): Promise<Paginated<Partner>> {
     const { page, pageSize, includeInactive, search } = query;
     const qb = this.repo.createQueryBuilder('p');
 
-    if (includeInactive !== 'true') {
+    if (!(preview && includeInactive === 'true')) {
       qb.andWhere('p.active = true');
     }
     if (search) {
@@ -31,8 +31,10 @@ export class PartnersService {
     return paginate(data, total, page, pageSize);
   }
 
-  async findOne(id: string): Promise<Partner> {
-    const partner = await this.repo.findOne({ where: { id } });
+  async findOne(id: string, preview = false): Promise<Partner> {
+    const partner = await this.repo.findOne({
+      where: preview ? { id } : { id, active: true },
+    });
     if (!partner) throw new NotFoundException('Partner not found');
     return partner;
   }
@@ -42,7 +44,7 @@ export class PartnersService {
   }
 
   async update(id: string, dto: UpdatePartnerDto): Promise<Partner> {
-    const partner = await this.findOne(id);
+    const partner = await this.findOne(id, true);
     Object.assign(partner, dto);
     return this.repo.save(partner);
   }

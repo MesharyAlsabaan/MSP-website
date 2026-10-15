@@ -10,6 +10,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { canPreviewContent } from '../../common/auth/content-preview';
+import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -25,20 +27,20 @@ export class BlogController {
 
   @Public()
   @Get()
-  findAll(@Query() query: QueryBlogPostDto) {
-    return this.blog.findAll(query);
+  findAll(@Query() query: QueryBlogPostDto, @CurrentUser() user?: AuthUser) {
+    return this.blog.findAll(query, canPreviewContent(user));
   }
 
   @Public()
   @Get('slug/:slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.blog.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: AuthUser) {
+    return this.blog.findBySlug(slug, canPreviewContent(user));
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.blog.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user?: AuthUser) {
+    return this.blog.findOne(id, canPreviewContent(user));
   }
 
   @ApiBearerAuth()

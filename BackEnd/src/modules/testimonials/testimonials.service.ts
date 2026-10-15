@@ -13,11 +13,11 @@ export class TestimonialsService {
     @InjectRepository(Testimonial) private readonly repo: Repository<Testimonial>,
   ) {}
 
-  async findAll(query: QueryTestimonialDto): Promise<Paginated<Testimonial>> {
+  async findAll(query: QueryTestimonialDto, preview = false): Promise<Paginated<Testimonial>> {
     const { page, pageSize, includeDrafts, search } = query;
     const qb = this.repo.createQueryBuilder('t');
 
-    if (includeDrafts !== 'true') {
+    if (!(preview && includeDrafts === 'true')) {
       qb.andWhere('t.published = true');
     }
     if (search) {
@@ -34,8 +34,10 @@ export class TestimonialsService {
     return paginate(data, total, page, pageSize);
   }
 
-  async findOne(id: string): Promise<Testimonial> {
-    const testimonial = await this.repo.findOne({ where: { id } });
+  async findOne(id: string, preview = false): Promise<Testimonial> {
+    const testimonial = await this.repo.findOne({
+      where: preview ? { id } : { id, published: true },
+    });
     if (!testimonial) throw new NotFoundException('Testimonial not found');
     return testimonial;
   }
@@ -45,7 +47,7 @@ export class TestimonialsService {
   }
 
   async update(id: string, dto: UpdateTestimonialDto): Promise<Testimonial> {
-    const testimonial = await this.findOne(id);
+    const testimonial = await this.findOne(id, true);
     Object.assign(testimonial, dto);
     return this.repo.save(testimonial);
   }

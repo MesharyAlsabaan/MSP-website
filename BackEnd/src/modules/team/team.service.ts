@@ -13,11 +13,11 @@ export class TeamService {
     @InjectRepository(TeamMember) private readonly repo: Repository<TeamMember>,
   ) {}
 
-  async findAll(query: QueryTeamMemberDto): Promise<Paginated<TeamMember>> {
+  async findAll(query: QueryTeamMemberDto, preview = false): Promise<Paginated<TeamMember>> {
     const { page, pageSize, includeInactive, search } = query;
     const qb = this.repo.createQueryBuilder('t');
 
-    if (includeInactive !== 'true') {
+    if (!(preview && includeInactive === 'true')) {
       qb.andWhere('t.active = true');
     }
     if (search) {
@@ -34,8 +34,10 @@ export class TeamService {
     return paginate(data, total, page, pageSize);
   }
 
-  async findOne(id: string): Promise<TeamMember> {
-    const member = await this.repo.findOne({ where: { id } });
+  async findOne(id: string, preview = false): Promise<TeamMember> {
+    const member = await this.repo.findOne({
+      where: preview ? { id } : { id, active: true },
+    });
     if (!member) throw new NotFoundException('Team member not found');
     return member;
   }
@@ -45,7 +47,7 @@ export class TeamService {
   }
 
   async update(id: string, dto: UpdateTeamMemberDto): Promise<TeamMember> {
-    const member = await this.findOne(id);
+    const member = await this.findOne(id, true);
     Object.assign(member, dto);
     return this.repo.save(member);
   }
