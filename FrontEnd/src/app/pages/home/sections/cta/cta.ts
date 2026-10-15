@@ -2,12 +2,14 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Container } from '../../../../shared/ui/container/container';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal.directive';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { RouterLink } from '@angular/router';
+import { LocPipe } from '../../../../shared/pipes/loc.pipe';
 
 /** Section 10 — CTA: a full-bleed clay invitation to begin a project. */
 @Component({
   selector: 'app-cta',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Container, ScrollReveal],
+  imports: [Container, ScrollReveal, RouterLink, LocPipe],
   template: `
     <section class="bg-accent py-24 text-accent-ink sm:py-32">
       <app-container>
@@ -27,11 +29,11 @@ import { TranslationService } from '../../../../core/services/translation.servic
 
           <div class="lg:col-span-3 lg:pb-4">
             <a
-              href="/contact"
+              [routerLink]="'/contact' | loc"
               class="group inline-flex items-center gap-3 border-b border-accent-ink/40 pb-2 font-mono text-sm uppercase tracking-[0.12em] transition-colors hover:border-accent-ink"
             >
               {{ i18n.pick(t.cta) }}
-              <span class="dir-flip transition-transform duration-300 group-hover:translate-x-1.5">&rarr;</span>
+              <span class="dir-flip transition-transform duration-300 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5">&rarr;</span>
             </a>
             <p class="mt-6 max-w-xs text-sm leading-relaxed text-accent-ink/80">
               {{ i18n.pick(t.note) }}
@@ -46,7 +48,7 @@ export class Cta {
   protected readonly i18n = inject(TranslationService);
 
   protected readonly t = {
-    kicker: { en: '(10) — Commissions open for 2026', ar: '(١٠) — أبوابنا مفتوحة لتكليفات ٢٠٢٦' },
+    kicker: { en: '(10) — Commissions open for 2026', ar: '(10) — أبوابنا مفتوحة لتكليفات 2026' },
     headingPre: { en: "Let's build something ", ar: 'لنبنِ معاً شيئاً ' },
     headingEm: { en: 'that lasts.', ar: 'يدوم.' },
     cta: { en: 'Start a project', ar: 'ابدأ مشروعك' },

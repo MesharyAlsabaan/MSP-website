@@ -13,6 +13,8 @@ import { BlogPostItem } from '../../core/models/content.model';
 import { Project } from '../../core/data/projects';
 import { assetUrl } from '../../core/utils/asset-url';
 import { parseArticleBody } from './article-body';
+import { LocPipe } from '../../shared/pipes/loc.pipe';
+import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 
 type LoadState =
   | { status: 'loading'; post: null }
@@ -22,7 +24,7 @@ type LoadState =
 @Component({
   selector: 'app-blog-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Container, ScrollReveal, AssetPipe, Lightbox],
+  imports: [RouterLink, Container, ScrollReveal, AssetPipe, Lightbox, LocPipe, SrcsetPipe],
   template: `
     @if (status() === 'loading') {
       <section class="py-20">
@@ -38,7 +40,7 @@ type LoadState =
       <article>
         <header class="border-b border-hairline bg-bg pb-12 pt-14 sm:pb-16 sm:pt-20">
           <app-container>
-            <a routerLink="/blog" class="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-muted transition-colors hover:text-accent">
+            <a [routerLink]="'/blog' | loc" class="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-muted transition-colors hover:text-accent">
               <span class="dir-flip">&larr;</span> {{ i18n.pick(t.back) }}
             </a>
             <div class="mt-10 flex flex-wrap items-center gap-4 font-mono text-xs uppercase tracking-[0.16em] text-muted">
@@ -63,7 +65,7 @@ type LoadState =
         @if (article.cover) {
           <div class="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-16">
             <div appScrollReveal revealType="line" class="aspect-[16/9] overflow-hidden bg-hairline/30">
-              <img [src]="article.cover | asset" [alt]="i18n.pick(article.title)" fetchpriority="high" class="h-full w-full object-cover" />
+              <img sizes="(min-width: 1280px) 1216px, 94vw" [attr.srcset]="article.cover | srcset" [src]="article.cover | asset" width="1600" height="900" [alt]="i18n.pick(article.title)" fetchpriority="high" class="h-full w-full object-cover" />
             </div>
           </div>
         }
@@ -95,7 +97,7 @@ type LoadState =
                   <button type="button" (click)="openViewer(index)" (contextmenu)="blockSave($event)"
                     [attr.aria-label]="i18n.pick(t.enlarge) + ': ' + i18n.pick(article.title)"
                     class="group block aspect-[3/2] w-full cursor-zoom-in overflow-hidden bg-hairline/30">
-                    <img [src]="image | asset" [alt]="i18n.pick(article.title) + ' — ' + (index + 1)" loading="lazy" decoding="async" draggable="false"
+                    <img sizes="(min-width: 768px) 372px, 46vw" [attr.srcset]="image | srcset" [src]="image | asset" width="1200" height="800" [alt]="i18n.pick(article.title) + ' — ' + (index + 1)" loading="lazy" decoding="async" draggable="false"
                       (dragstart)="blockSave($event)" class="pointer-events-none h-full w-full select-none object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                   </button>
                 }
@@ -112,11 +114,11 @@ type LoadState =
             <app-container>
               <div class="mx-auto max-w-3xl">
                 <a
-                  [routerLink]="['/projects', project.slug]"
+                  [routerLink]="['/projects', project.slug] | loc"
                   class="group inline-flex items-center gap-3 border border-ink px-6 py-4 font-mono text-xs uppercase tracking-[0.14em] text-ink transition-colors hover:bg-ink hover:text-bg"
                 >
                   {{ ctaLabel(project) }}
-                  <span class="dir-flip transition-transform group-hover:translate-x-1">&rarr;</span>
+                  <span class="dir-flip transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">&rarr;</span>
                 </a>
               </div>
             </app-container>
@@ -128,7 +130,7 @@ type LoadState =
         <app-container>
           <p class="font-mono text-xs uppercase tracking-[0.18em] text-accent">404</p>
           <h1 class="mt-4 font-display text-4xl font-medium text-ink sm:text-5xl">{{ i18n.pick(t.notFound) }}</h1>
-          <a routerLink="/blog" class="mt-8 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent">
+          <a [routerLink]="'/blog' | loc" class="mt-8 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent">
             <span class="dir-flip">&larr;</span> {{ i18n.pick(t.back) }}
           </a>
         </app-container>
@@ -211,7 +213,7 @@ export class BlogDetail {
   }
 
   protected publishedDate(value: string): string {
-    return new Intl.DateTimeFormat(this.i18n.lang() === 'ar' ? 'ar-SA' : 'en-GB', {
+    return new Intl.DateTimeFormat(this.i18n.lang() === 'ar' ? 'ar-SA-u-nu-latn-ca-gregory' : 'en-GB', {
       year: 'numeric', month: 'long', day: 'numeric',
     }).format(new Date(value));
   }

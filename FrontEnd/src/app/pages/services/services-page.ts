@@ -187,9 +187,11 @@ export class ServicesPage {
 
   constructor() {
     this.seo.update({
-      title: 'Disciplines',
-      description:
-        'Architecture, structural and MEP engineering, urban planning, and project management — the five in-house disciplines of MSP Consultants.',
+      title: this.i18n.pick({ en: 'Disciplines', ar: 'التخصصات' }),
+      description: this.i18n.pick({
+        en: 'Architecture, structural and MEP engineering, urban planning, and project management — the five in-house disciplines of MSP Consultants.',
+        ar: 'العمارة، والهندسة الإنشائية والكهروميكانيكية، والتخطيط العمراني، وإدارة المشاريع — التخصصات الخمسة لدى MSP للاستشارات من داخل المكتب.',
+      }),
     });
 
     // Browser-only fetch: keeps the route prerenderable (static skeleton shell).

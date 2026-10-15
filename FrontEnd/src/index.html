@@ -5,9 +5,10 @@
   <title>MSP — Architecture + Engineering</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0e0d0b" media="(prefers-color-scheme: dark)">
-  <link rel="icon" type="image/png" href="/images/msp-logo.png">
+  <meta name="theme-color" content="#f6f4ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14110d" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,13 +25,11 @@
         var dark = stored ? stored === 'dark' : prefersDark;
         if (dark) document.documentElement.classList.add('dark');
       } catch (e) {}
-      try {
-        var lang = localStorage.getItem('msp-lang');
-        if (lang === 'ar' || lang === 'en') {
-          document.documentElement.setAttribute('lang', lang);
-          document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-        }
-      } catch (e) {}
+      // Language comes from the URL (/ar/... = Arabic). Prerendered pages
+      // already carry it; this covers the client-rendered app shell.
+      var ar = /^\/ar(\/|$)/.test(location.pathname);
+      document.documentElement.setAttribute('lang', ar ? 'ar' : 'en');
+      document.documentElement.setAttribute('dir', ar ? 'rtl' : 'ltr');
     })();
   </script>
 </head>

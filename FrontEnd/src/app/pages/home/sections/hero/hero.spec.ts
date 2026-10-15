@@ -17,7 +17,7 @@ describe('Home hero calls to action', () => {
         provideRouter([]),
         {
           provide: TranslationService,
-          useValue: { pick: (value: { en: string }) => value.en },
+          useValue: { pick: (value: { en: string }) => value.en, path: (p: string) => p },
         },
         {
           provide: PublicContentService,

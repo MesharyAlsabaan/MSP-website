@@ -23,4 +23,8 @@
   --color-hairline: var(--hairline);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-scrim: var(--scrim);
+  --color-on-scrim: var(--on-scrim);
+  --color-band: var(--band);
+  --color-on-band: var(--on-band);
 }

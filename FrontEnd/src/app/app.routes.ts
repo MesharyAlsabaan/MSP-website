@@ -5,6 +5,87 @@ import { AdminLayout } from './layouts/admin-layout/admin-layout';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { Role } from './core/enums/role.enum';
+import { langGuard } from './core/services/translation.service';
+
+/** Public site pages, mounted once per language edition (English at `/`, Arabic at `/ar`). */
+const publicPages: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./pages/home/home').then((m) => m.Home),
+  },
+  {
+    path: 'about',
+    loadComponent: () =>
+      import('./pages/about/about-page').then((m) => m.AboutPage),
+  },
+  {
+    path: 'services',
+    loadComponent: () =>
+      import('./pages/services/services-page').then((m) => m.ServicesPage),
+  },
+  {
+    path: 'projects',
+    loadComponent: () =>
+      import('./pages/projects/projects').then((m) => m.Projects),
+  },
+  {
+    path: 'projects/sbc-commercial-office',
+    pathMatch: 'full',
+    redirectTo: 'projects/al-ateeq-real-estate-commercial-office',
+  },
+  {
+    path: 'projects/:slug',
+    loadComponent: () =>
+      import('./pages/projects/project-detail').then((m) => m.ProjectDetail),
+  },
+  {
+    path: 'blog',
+    loadComponent: () => import('./pages/blog/blog-page').then((m) => m.BlogPage),
+  },
+  {
+    path: 'blog/:slug',
+    loadComponent: () => import('./pages/blog/blog-detail').then((m) => m.BlogDetail),
+  },
+  {
+    path: 'team',
+    loadComponent: () => import('./pages/team/team-page').then((m) => m.TeamPage),
+  },
+  {
+    path: 'careers',
+    loadComponent: () =>
+      import('./pages/careers/careers-page').then((m) => m.CareersPage),
+  },
+  {
+    path: 'faq',
+    loadComponent: () => import('./pages/faq/faq-page').then((m) => m.FaqPage),
+  },
+  {
+    path: 'contact',
+    loadComponent: () =>
+      import('./pages/contact/contact-page').then((m) => m.ContactPage),
+  },
+  {
+    path: 'privacy',
+    data: { doc: 'privacy' },
+    loadComponent: () => import('./pages/legal/legal-page').then((m) => m.LegalPage),
+  },
+  {
+    path: 'terms',
+    data: { doc: 'terms' },
+    loadComponent: () => import('./pages/legal/legal-page').then((m) => m.LegalPage),
+  },
+  {
+    // Real 404 target: prerendered so the web server can serve it with a 404 status.
+    path: '404',
+    loadComponent: () =>
+      import('./pages/not-found/not-found').then((m) => m.NotFound),
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./pages/not-found/not-found').then((m) => m.NotFound),
+  },
+];
 
 export const routes: Routes = [
   {
@@ -79,79 +160,15 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'ar',
+    component: MainLayout,
+    canActivate: [langGuard('ar')],
+    children: publicPages,
+  },
+  {
     path: '',
     component: MainLayout,
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./pages/home/home').then((m) => m.Home),
-      },
-      {
-        path: 'about',
-        loadComponent: () =>
-          import('./pages/about/about-page').then((m) => m.AboutPage),
-      },
-      {
-        path: 'services',
-        loadComponent: () =>
-          import('./pages/services/services-page').then((m) => m.ServicesPage),
-      },
-      {
-        path: 'projects',
-        loadComponent: () =>
-          import('./pages/projects/projects').then((m) => m.Projects),
-      },
-      {
-        path: 'projects/sbc-commercial-office',
-        pathMatch: 'full',
-        redirectTo: 'projects/al-ateeq-real-estate-commercial-office',
-      },
-      {
-        path: 'projects/:slug',
-        loadComponent: () =>
-          import('./pages/projects/project-detail').then((m) => m.ProjectDetail),
-      },
-      {
-        path: 'blog',
-        loadComponent: () => import('./pages/blog/blog-page').then((m) => m.BlogPage),
-      },
-      {
-        path: 'blog/:slug',
-        loadComponent: () => import('./pages/blog/blog-detail').then((m) => m.BlogDetail),
-      },
-      {
-        path: 'team',
-        loadComponent: () => import('./pages/team/team-page').then((m) => m.TeamPage),
-      },
-      {
-        path: 'careers',
-        loadComponent: () =>
-          import('./pages/careers/careers-page').then((m) => m.CareersPage),
-      },
-      {
-        path: 'faq',
-        loadComponent: () => import('./pages/faq/faq-page').then((m) => m.FaqPage),
-      },
-      {
-        path: 'contact',
-        loadComponent: () =>
-          import('./pages/contact/contact-page').then((m) => m.ContactPage),
-      },
-      {
-        path: 'privacy',
-        data: { doc: 'privacy' },
-        loadComponent: () => import('./pages/legal/legal-page').then((m) => m.LegalPage),
-      },
-      {
-        path: 'terms',
-        data: { doc: 'terms' },
-        loadComponent: () => import('./pages/legal/legal-page').then((m) => m.LegalPage),
-      },
-      {
-        path: '**',
-        loadComponent: () =>
-          import('./pages/not-found/not-found').then((m) => m.NotFound),
-      },
-    ],
+    canActivate: [langGuard('en')],
+    children: publicPages,
   },
 ];
