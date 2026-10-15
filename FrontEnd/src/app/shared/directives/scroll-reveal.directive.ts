@@ -26,12 +26,18 @@ import { isPlatformBrowser } from '@angular/common';
  * runs as a CSS animation from the first paint of the server HTML, instead of
  * hiding the already-painted content at hydration and fading it back in. That
  * keeps the motion while the text counts as painted right away (LCP).
+ *
+ * `revealVisible` (with `revealOnLoad`) keeps the element visible for the
+ * whole entrance: it only settles into place, with no fade or clip. Use it for
+ * the primary hero text, so the largest text on the page paints at once
+ * instead of waiting for an opacity animation.
  */
 @Directive({
   selector: '[appScrollReveal]',
   host: {
     '[class.reveal-load]': 'revealOnLoad()',
     '[class.reveal-load--line]': "revealOnLoad() && revealType() === 'line'",
+    '[class.reveal-load--visible]': 'revealOnLoad() && revealVisible()',
     '[style.--reveal-delay]': "revealOnLoad() ? revealDelay() + 'ms' : null",
   },
 })
@@ -44,6 +50,9 @@ export class ScrollReveal implements OnDestroy {
 
   /** Play the entrance on page load with CSS (above the fold) instead of on scroll. */
   readonly revealOnLoad = input(false, { transform: booleanAttribute });
+
+  /** On-load entrance that moves but never hides the element (primary hero text). */
+  readonly revealVisible = input(false, { transform: booleanAttribute });
 
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));

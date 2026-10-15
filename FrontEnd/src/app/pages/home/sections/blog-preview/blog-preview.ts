@@ -3,7 +3,6 @@ import {
   inject,
   signal,
   computed,
-  afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Section } from '../../../../shared/ui/section/section';
@@ -20,7 +19,7 @@ interface L {
   ar: string;
 }
 
-/** Unified row shape used for both the API data and the static fallback. */
+/** Row shape rendered for each published post. */
 interface Post {
   readonly key: string;
   readonly title: L;
@@ -35,6 +34,7 @@ interface Post {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Section, Container, ScrollReveal, RouterLink, LocPipe],
   template: `
+    @if (posts().length) {
     <app-section>
       <app-container>
         <div
@@ -80,25 +80,22 @@ interface Post {
         </ul>
       </app-container>
     </app-section>
+    }
   `,
 })
 export class BlogPreview {
   protected readonly i18n = inject(TranslationService);
   private readonly content = inject(PublicContentService);
 
-  /** API posts; null until a response arrives (or if the request failed). */
-  private readonly fetched = signal<Post[] | null>(null);
+  /** Published API posts only; the section stays hidden until there is at least one. */
+  private readonly fetched = signal<Post[]>([]);
 
-  protected readonly posts = computed<Post[]>(
-    () => this.fetched()?.slice(0, 3) ?? this.fallbackPosts,
-  );
+  protected readonly posts = computed<Post[]>(() => this.fetched().slice(0, 3));
 
   constructor() {
-    afterNextRender(() => {
-      this.content.posts().subscribe({
-        next: (list) => this.fetched.set(list.map(toPost)),
-        error: () => {},
-      });
+    this.content.posts().subscribe({
+      next: (list) => this.fetched.set(list.map(toPost)),
+      error: () => {},
     });
   }
 
@@ -106,39 +103,6 @@ export class BlogPreview {
     eyebrow: { en: 'Insights', ar: 'الرؤى' },
     all: { en: 'All writing', ar: 'كل المقالات' },
   };
-
-  private readonly fallbackPosts: Post[] = [
-    {
-      key: 'passive-cooling',
-      title: {
-        en: 'Designing for 50°C: passive cooling in the Gulf',
-        ar: 'التصميم عند الخمسين: التبريد السلبي في الخليج',
-      },
-      category: 'Sustainability',
-      date: { en: 'May 2026', ar: 'مايو 2026' },
-      readingTime: { en: '6 min', ar: '6 دقائق' },
-    },
-    {
-      key: 'structure-as-architecture',
-      title: {
-        en: 'When structure becomes the architecture',
-        ar: 'حين يصبح الإنشاء عمارة',
-      },
-      category: 'Engineering',
-      date: { en: 'Apr 2026', ar: 'أبريل 2026' },
-      readingTime: { en: '8 min', ar: '8 دقائق' },
-    },
-    {
-      key: 'city-after-oil',
-      title: {
-        en: 'Masterplanning for the city after oil',
-        ar: 'تخطيط المدن في عصر ما بعد النفط',
-      },
-      category: 'Urbanism',
-      date: { en: 'Mar 2026', ar: 'مارس 2026' },
-      readingTime: { en: '5 min', ar: '5 دقائق' },
-    },
-  ];
 }
 
 /** Arabic minute count, with the dual/plural forms Arabic actually uses. */

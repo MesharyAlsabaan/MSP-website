@@ -24,6 +24,13 @@ const publicPages: Routes = [
       import('./pages/services/services-page').then((m) => m.ServicesPage),
   },
   {
+    // Dedicated service pages; only those approved in core/data/service-pages
+    // render (others show not-found and are never prerendered).
+    path: 'services/:slug',
+    loadComponent: () =>
+      import('./pages/services/service-detail').then((m) => m.ServiceDetail),
+  },
+  {
     path: 'projects',
     loadComponent: () =>
       import('./pages/projects/projects').then((m) => m.Projects),
@@ -31,7 +38,7 @@ const publicPages: Routes = [
   {
     path: 'projects/sbc-commercial-office',
     pathMatch: 'full',
-    redirectTo: 'projects/al-ateeq-real-estate-commercial-office',
+    redirectTo: 'projects/SBC',
   },
   {
     path: 'projects/:slug',

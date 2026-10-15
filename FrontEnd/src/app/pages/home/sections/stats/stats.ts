@@ -53,15 +53,15 @@ export class Stats {
   private readonly experienceYears = new Date().getFullYear() - this.foundingYear;
 
   protected readonly t = {
-    eyebrow: { en: 'By the Numbers', ar: 'بالأرقام' },
+    eyebrow: { en: 'At a Glance', ar: 'لمحة' },
     stats: {
       en: [
-        { value: 500, suffix: '+', label: 'Projects delivered' },
-        { value: this.experienceYears, suffix: '+', label: 'Years in practice' },
+        { value: this.experienceYears, suffix: '+', label: 'Years in practice, since 2010' },
+        { value: 2, suffix: '', label: 'Offices — Riyadh · Cairo' },
       ],
       ar: [
-        { value: 500, suffix: '+', label: 'مشروع مُنجَز' },
-        { value: this.experienceYears, suffix: '+', label: 'عاماً من الخبرة' },
+        { value: this.experienceYears, suffix: '+', label: 'عاماً من الممارسة منذ 2010' },
+        { value: 2, suffix: '', label: 'مكتبان — الرياض · القاهرة' },
       ],
     },
   };

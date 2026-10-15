@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Container } from '../../../../shared/ui/container/container';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -139,28 +139,26 @@ export class Footer {
   });
 
   constructor() {
-    afterNextRender(() => {
-      this.content.settings().subscribe({
-        next: (c) => this.cfg.set(c ?? {}),
-        error: () => {},
-      });
+    this.content.settings().subscribe({
+      next: (c) => this.cfg.set(c ?? {}),
+      error: () => {},
     });
   }
 
   protected readonly tagline = {
-    en: 'An architecture & engineering consultancy designing buildings, interiors, and cities that endure.',
-    ar: 'بيتُ خبرةٍ في العمارة والهندسة، نُصمّم مبانيَ وفضاءاتٍ داخليةً ومدناً تدوم.',
+    en: 'A multidisciplinary architecture and engineering consultancy creating environments that enrich human experience and deliver lasting value.',
+    ar: 'مكتب استشارات معمارية وهندسية متعدّد التخصصات، يصنع بيئات تُثري التجربة الإنسانية وتحقّق قيمة دائمة.',
   };
   protected readonly city = { en: 'Riyadh · Saudi Arabia', ar: 'الرياض · المملكة العربية السعودية' };
-  protected readonly established = { en: 'Established 2010', ar: 'تأسس عام 2010' };
+  protected readonly established = { en: 'Established 2010', ar: 'تأسست عام 2010' };
   protected readonly navHeading = { en: 'Navigate', ar: 'تصفّح' };
   protected readonly contactHeading = { en: 'Contact', ar: 'تواصل معنا' };
   protected readonly address = { en: 'Irqah, Riyadh', ar: 'حي عرقة، الرياض' };
   protected readonly cairoAddress = { en: 'Rayhana Plaza, Maadi, Cairo', ar: 'ريحانة بلازا، المعادي، القاهرة' };
-  protected readonly legal = { en: 'MSP Consultants', ar: 'إم إس بي للاستشارات' };
+  protected readonly legal = { en: 'MSP', ar: 'MSP' };
   protected readonly strap = {
-    en: 'Architecture · Structure · Interior Design',
-    ar: 'عمارة · إنشاءات · التصميم الداخلي',
+    en: 'Architecture Beyond Buildings',
+    ar: 'عمارةٌ تتجاوز المباني',
   };
 
   protected readonly links: readonly NavLink[] = [

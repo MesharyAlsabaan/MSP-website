@@ -3,7 +3,6 @@ import {
   inject,
   signal,
   computed,
-  afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Section } from '../../../../shared/ui/section/section';
@@ -103,71 +102,78 @@ export class Services {
   );
 
   constructor() {
-    afterNextRender(() => {
-      this.content.services().subscribe({
-        next: (list) => this.fetched.set(list.map(toDiscipline)),
-        error: () => {},
-      });
+    this.content.services().subscribe({
+      next: (list) => this.fetched.set(list.map(toDiscipline)),
+      error: () => {},
     });
   }
 
   protected readonly t = {
     eyebrow: { en: 'Services', ar: 'الخدمات' },
     title: {
-      en: 'Five practices, one integrated team.',
-      ar: 'خمسةُ تخصّصات، وفريقٌ واحد.',
+      en: 'Design, engineering, and supervision — integrated.',
+      ar: 'تصميم وهندسة وإشراف، في منظومة متكاملة.',
     },
     intro: {
-      en: 'Every capability you need to take a project from brief to handover — coordinated under a single roof.',
-      ar: 'نأخذ مشروعك من الفكرة إلى التسليم، بخبرةٍ متكاملةٍ تحت إدارةٍ واحدة.',
+      en: 'One consultancy coordinates architecture, interiors, engineering, planning, and project oversight, so creative intent and technical performance develop together from brief to completion.',
+      ar: 'ينسّق مكتب استشاري واحد التصميم المعماري والداخلي والهندسة والتخطيط وإدارة المشاريع والإشراف، لتتطور الفكرة الإبداعية والأداء الفني معاً من المتطلبات الأولى حتى الإنجاز.',
     },
   };
 
   private readonly fallbackDisciplines: Discipline[] = [
     {
       no: '01',
-      title: { en: 'Architecture', ar: 'العمارة' },
+      title: { en: 'Architectural Design', ar: 'التصميم المعماري' },
       description: {
-        en: 'Concept, schematic, and detailed design for buildings of every scale.',
-        ar: 'تصميمٌ معماريٌّ متكامل، من الفكرة الأولى إلى مخطّطات التنفيذ.',
+        en: 'Concept, schematic, and detailed design shaped around the people who will use each building.',
+        ar: 'تصميم مفاهيمي وابتدائي وتفصيلي، يُبنى حول احتياجات مستخدمي كل مبنى.',
       },
-      scope: { en: 'Concept → Construction docs', ar: 'الفكرة ← مخطّطات التنفيذ' },
+      scope: { en: 'Concept → Construction documents', ar: 'الفكرة ← المخططات التنفيذية' },
     },
     {
       no: '02',
-      title: { en: 'Structural Engineering', ar: 'الهندسة الإنشائية' },
+      title: { en: 'Interior Design', ar: 'التصميم الداخلي' },
       description: {
-        en: 'Efficient, resilient structures — concrete, steel, and hybrid systems.',
-        ar: 'منشآتٌ متينةٌ واقتصادية بأنظمةٍ خرسانية وفولاذية وهجينة.',
+        en: 'Interior spaces, finishes, and lighting developed together with the architecture.',
+        ar: 'فراغات داخلية وتشطيبات وإضاءة، تُصمَّم بالتكامل مع العمارة.',
       },
-      scope: { en: 'Analysis · Detailing · Review', ar: 'تحليل · تفصيل · مراجعة' },
+      scope: { en: 'Space planning · Finishes · Lighting', ar: 'تخطيط الفراغات · التشطيبات · الإضاءة' },
     },
     {
       no: '03',
+      title: { en: 'Structural Engineering', ar: 'الهندسة الإنشائية' },
+      description: {
+        en: 'Structural design in concrete, steel, and hybrid systems, coordinated with the architectural intent.',
+        ar: 'تصميم إنشائي بأنظمة خرسانية وفولاذية وهجينة، منسَّق مع الفكرة المعمارية.',
+      },
+      scope: { en: 'Analysis · Design · Detailing', ar: 'تحليل · تصميم · تفصيل' },
+    },
+    {
+      no: '04',
       title: { en: 'MEP Engineering', ar: 'الهندسة الكهروميكانيكية' },
       description: {
-        en: 'Mechanical, electrical, and plumbing design built for performance.',
-        ar: 'حلولٌ ميكانيكية وكهربائية وصحّية مصمّمة للأداء والكفاءة.',
+        en: 'Mechanical, electrical, and plumbing systems designed for comfort, efficiency, and operation.',
+        ar: 'أنظمة ميكانيكية وكهربائية وصحّية، تُصمَّم للراحة والكفاءة وسهولة التشغيل.',
       },
       scope: { en: 'Systems · Energy · Coordination', ar: 'أنظمة · طاقة · تنسيق' },
     },
     {
-      no: '04',
+      no: '05',
       title: { en: 'Urban Planning', ar: 'التخطيط العمراني' },
       description: {
-        en: 'Masterplans and mixed-use frameworks that shape how places live.',
-        ar: 'مخطّطاتٌ عمرانيةٌ شاملة تصوغ ملامح المكان وحياته.',
+        en: 'Site and community planning that organises movement, open space, and land use.',
+        ar: 'تخطيط للمواقع والمجتمعات، يُنظّم الحركة والمساحات المفتوحة واستعمالات الأراضي.',
       },
-      scope: { en: 'Masterplan · Feasibility', ar: 'مخطّط شامل · دراسة جدوى' },
+      scope: { en: 'Masterplanning · Land use', ar: 'المخطط العام · استعمالات الأراضي' },
     },
     {
-      no: '05',
-      title: { en: 'Project Management', ar: 'إدارة المشاريع' },
+      no: '06',
+      title: { en: 'Project Management & Supervision', ar: 'إدارة المشاريع والإشراف الهندسي' },
       description: {
-        en: 'Cost, programme, and site supervision from groundbreaking to handover.',
-        ar: 'إدارةُ التكلفة والزمن والإشراف الموقعي حتى التسليم.',
+        en: 'Consultancy oversight of programme, coordination, and quality on site, through to handover.',
+        ar: 'إشراف استشاري على الجدول الزمني والتنسيق والجودة في الموقع، حتى التسليم.',
       },
-      scope: { en: 'PM · Cost · Supervision', ar: 'إدارة · تكلفة · إشراف' },
+      scope: { en: 'Programme · Coordination · Site supervision', ar: 'الجدول الزمني · التنسيق · الإشراف الموقعي' },
     },
   ];
 }

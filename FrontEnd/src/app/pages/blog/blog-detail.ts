@@ -15,6 +15,7 @@ import { assetUrl } from '../../core/utils/asset-url';
 import { parseArticleBody } from './article-body';
 import { LocPipe } from '../../shared/pipes/loc.pipe';
 import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
+import { JsonLd, ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
 
 type LoadState =
   | { status: 'loading'; post: null }
@@ -205,11 +206,32 @@ export class BlogDetail {
           title: this.i18n.pick(post.seoTitle ?? post.title),
           description: this.i18n.pick(post.seoDescription ?? post.excerpt),
           image: assetUrl(post.cover),
+          ogType: 'article',
+          schema: this.schema(post),
         });
       } else if (this.status() === 'notfound') {
-        this.seo.update({ title: this.i18n.pick({ en: 'Insights', ar: 'الرؤى' }) });
+        this.seo.update({ title: this.i18n.pick({ en: 'Article not found', ar: 'المقال غير موجود' }), noindex: true });
       }
     });
+  }
+
+  private schema(post: BlogPostItem): JsonLd[] {
+    const url = absoluteUrl(this.i18n.path(`/blog/${post.slug}`));
+    const article: JsonLd = {
+      '@type': 'Article',
+      '@id': `${url}#article`,
+      headline: this.i18n.pick(post.seoTitle ?? post.title),
+      description: this.i18n.pick(post.seoDescription ?? post.excerpt),
+      url,
+      inLanguage: this.i18n.lang(),
+      author: { '@id': ORG_ID },
+      publisher: { '@id': ORG_ID },
+      mainEntityOfPage: { '@id': `${url}#webpage` },
+    };
+    const images = [post.cover, ...post.gallery].map((i) => assetUrl(i)).filter(Boolean);
+    if (images.length) article['image'] = images.slice(0, 6).map(absoluteUrl);
+    if (post.publishedAt) article['datePublished'] = post.publishedAt;
+    return [article];
   }
 
   protected publishedDate(value: string): string {

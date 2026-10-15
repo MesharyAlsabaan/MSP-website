@@ -2,7 +2,17 @@ import { Injectable, inject, DOCUMENT } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
-import { isArabicUrl, localizeUrl, TranslationService } from './translation.service';
+import { isArabicUrl, localizeUrl, stripLangPrefix, TranslationService } from './translation.service';
+import {
+  Crumb,
+  JsonLd,
+  ORIGIN,
+  PageType,
+  organization,
+  serializeGraph,
+  webPage,
+  website,
+} from '../seo/structured-data';
 
 export interface SeoData {
   title?: string;
@@ -11,10 +21,29 @@ export interface SeoData {
   url?: string;
   /** Keep the page out of search results (404s, utility pages). */
   noindex?: boolean;
+  /** schema.org page type for the JSON-LD graph (default WebPage). */
+  type?: PageType;
+  /** Extra properties for the page node itself (e.g. an FAQPage's questions). */
+  pageProps?: JsonLd;
+  /** Extra JSON-LD nodes for this page (a project, an article, services…). */
+  schema?: JsonLd[];
+  /** Open Graph type; articles use `article`. */
+  ogType?: 'website' | 'article';
 }
 
-/** Public origin used for canonical and Open Graph URLs (prerendered at build time). */
-const ORIGIN = 'https://msp.sa';
+/** Breadcrumb labels for the first path segment of each section. */
+const SECTION_NAMES: Record<string, { en: string; ar: string }> = {
+  about: { en: 'About', ar: 'عن المكتب' },
+  services: { en: 'Services', ar: 'الخدمات' },
+  projects: { en: 'Projects', ar: 'المشاريع' },
+  blog: { en: 'Insights', ar: 'الرؤى' },
+  team: { en: 'Team', ar: 'الفريق' },
+  careers: { en: 'Careers', ar: 'الوظائف' },
+  faq: { en: 'FAQ', ar: 'الأسئلة الشائعة' },
+  contact: { en: 'Contact', ar: 'تواصل معنا' },
+  privacy: { en: 'Privacy Policy', ar: 'سياسة الخصوصية' },
+  terms: { en: 'Terms & Conditions', ar: 'الشروط والأحكام' },
+};
 /** 1200×630 share card — a real MSP project, not stock. */
 const DEFAULT_IMAGE = `${ORIGIN}/images/og-msp.jpg`;
 
@@ -26,7 +55,7 @@ export class SeoService {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
-  private readonly siteName = { en: 'MSP — Architecture + Engineering', ar: 'MSP — عمارة وهندسة' };
+  private readonly siteName = 'MSP';
 
   constructor() {
     // Canonical + og:url follow the route, so pages never have to pass them.
@@ -36,16 +65,12 @@ export class SeoService {
   }
 
   update(data: SeoData): void {
-    const siteName = this.i18n.pick(this.siteName);
-    const title = data.title ? `${data.title} — ${siteName}` : siteName;
+    const title = data.title ? `${data.title} | ${this.siteName}` : this.siteName;
     this.titleService.setTitle(title);
     this.meta.updateTag({ property: 'og:title', content: title });
     this.meta.updateTag({ name: 'twitter:title', content: title });
-    this.meta.updateTag({ property: 'og:type', content: 'website' });
-    this.meta.updateTag({
-      property: 'og:site_name',
-      content: this.i18n.pick({ en: 'MSP Consultants', ar: 'MSP للاستشارات' }),
-    });
+    this.meta.updateTag({ property: 'og:type', content: data.ogType ?? 'website' });
+    this.meta.updateTag({ property: 'og:site_name', content: this.siteName });
 
     if (data.description) {
       this.meta.updateTag({ name: 'description', content: data.description });
@@ -66,7 +91,49 @@ export class SeoService {
 
     // Pages call update() while their route activates — before NavigationEnd,
     // which prerendering may never wait for — so set the URL here too.
-    this.setUrl(this.absolute(data.url ?? this.router.url));
+    const url = this.absolute(data.url ?? this.router.url);
+    this.setUrl(url);
+    this.setJsonLd(url, data.title ?? this.siteName, data);
+  }
+
+  /**
+   * One JSON-LD graph per page: the organization and website, the page itself
+   * with its breadcrumb trail, and any page-specific nodes. Noindexed pages
+   * carry none.
+   */
+  private setJsonLd(url: string, name: string, data: SeoData): void {
+    const existing = this.document.head.querySelector('script#ld-json');
+    if (data.noindex) {
+      existing?.remove();
+      return;
+    }
+    const lang = this.i18n.lang();
+    const [page, ...trail] = webPage(data.type ?? 'WebPage', url, name, data.description, lang, this.crumbs(url, name));
+    const nodes = [organization(), website(), { ...page, ...data.pageProps }, ...trail, ...(data.schema ?? [])];
+    const el = existing ?? this.document.createElement('script');
+    el.setAttribute('type', 'application/ld+json');
+    el.setAttribute('id', 'ld-json');
+    el.textContent = serializeGraph(nodes);
+    if (!existing) this.document.head.appendChild(el);
+  }
+
+  /** Home › Section › Page, in the page's language. */
+  private crumbs(url: string, name: string): Crumb[] {
+    const lang = this.i18n.lang();
+    const path = stripLangPrefix(url.slice(ORIGIN.length) || '/');
+    const segments = path.split('/').filter(Boolean);
+    const home: Crumb = {
+      name: lang === 'ar' ? 'الرئيسية' : 'Home',
+      url: this.absolute(localizeUrl('/', lang)),
+    };
+    if (segments.length === 0) return [home];
+    const section = SECTION_NAMES[segments[0]];
+    const sectionCrumb: Crumb = {
+      name: section ? section[lang] : name,
+      url: this.absolute(localizeUrl(`/${segments[0]}`, lang)),
+    };
+    if (segments.length === 1) return [home, { ...sectionCrumb, name }];
+    return [home, sectionCrumb, { name, url }];
   }
 
   /**

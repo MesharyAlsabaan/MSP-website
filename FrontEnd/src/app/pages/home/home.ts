@@ -57,9 +57,13 @@ export class Home {
 
   constructor() {
     this.seo.update({
+      title: this.i18n.pick({
+        en: 'Architecture & Engineering Consultancy in Riyadh',
+        ar: 'مكتب استشارات هندسية ومعمارية في الرياض',
+      }),
       description: this.i18n.pick({
-        en: 'MSP Consultants — an architecture & engineering consultancy in Riyadh. Architecture, structural and MEP engineering, urban planning, and project management.',
-        ar: 'MSP للاستشارات — مكتب استشارات معمارية وهندسية في الرياض. العمارة، والهندسة الإنشائية والكهروميكانيكية، والتخطيط العمراني، وإدارة المشاريع.',
+        en: 'MSP is an architecture and engineering consultancy in Riyadh, established in 2010: architectural and interior design, structural and MEP engineering, supervision and project management.',
+        ar: 'استشارات هندسية ومعمارية في الرياض منذ 2010: تقدّم MSP التصميم المعماري والداخلي، والهندسة الإنشائية والكهروميكانيكية، والإشراف الهندسي وإدارة المشاريع.',
       }),
     });
   }
