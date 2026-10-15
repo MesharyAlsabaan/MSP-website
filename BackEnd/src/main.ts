@@ -3,12 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { VARIANT_DIR, variantFallback } from './modules/uploads/image-variants';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -34,11 +36,25 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
 
+  const uploadDir = join(process.cwd(), config.get<string>('upload.dir', 'uploads'));
+
+  // Responsive web copies at /<prefix>/uploads/_w/<name>.<width>.webp. A copy
+  // is immutable (its name is derived from an original that is never
+  // overwritten), so it is cached for a year. When a width has no copy (the
+  // original is too narrow, or not processed yet) the original is sent with a
+  // short cache, so a later backfill takes effect.
+  app.use(`/${prefix}/uploads/${VARIANT_DIR}`, (req: Request, res: Response, next: NextFunction) => {
+    const hit = variantFallback(uploadDir, req.path.replace(/^\//, ''));
+    if (!hit) return next();
+    res.sendFile(hit.path, {
+      headers: {
+        'Cache-Control': hit.isCopy ? 'public, max-age=31536000, immutable' : 'public, max-age=86400',
+      },
+    });
+  });
+
   // Serve uploaded files at /<prefix>/uploads/<file>
-  app.useStaticAssets(
-    join(process.cwd(), config.get<string>('upload.dir', 'uploads')),
-    { prefix: `/${prefix}/uploads/` },
-  );
+  app.useStaticAssets(uploadDir, { prefix: `/${prefix}/uploads/` });
 
   // Swagger at /<prefix>/docs
   const swaggerConfig = new DocumentBuilder()

@@ -156,7 +156,7 @@ async function run() {
       icon: 'compass', featured: true, sortOrder: 1 },
     { slug: 'structural', title: L('Structural Engineering', 'الهندسة الإنشائية'),
       shortDescription: L('Safe, efficient structures.', 'منشآت آمنة وفعّالة.'),
-      fullDescription: L('Structural analysis and design for buildings and infrastructure.', 'تحليل وتصميم إنشائي للمباني والبنية التحتية.'),
+      fullDescription: L('Structural analysis and design for buildings.', 'تحليل وتصميم إنشائي للمباني.'),
       icon: 'frame', featured: true, sortOrder: 2 },
     { slug: 'mep', title: L('MEP Engineering', 'الهندسة الكهروميكانيكية'),
       shortDescription: L('Mechanical, electrical, plumbing.', 'الميكانيكا والكهرباء والسباكة.'),
