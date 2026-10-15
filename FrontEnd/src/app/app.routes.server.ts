@@ -1,25 +1,35 @@
-import { RenderMode, ServerRoute } from '@angular/ssr';
+import { PrerenderFallback, RenderMode, ServerRoute } from '@angular/ssr';
+import { publishedSlugs } from './core/seo/prerender-slugs';
+import { APPROVED_SERVICE_SLUGS } from './core/data/service-pages';
+
+function slugRoute(path: string, resource: 'projects' | 'blog'): ServerRoute {
+  return {
+    path,
+    renderMode: RenderMode.Prerender,
+    fallback: PrerenderFallback.Client,
+    getPrerenderParams: async () => (await publishedSlugs(resource)).map((slug) => ({ slug })),
+  };
+}
 
 export const serverRoutes: ServerRoute[] = [
-  {
-    // Project detail loads from the API by slug — slugs aren't known at build
-    // time, so render on the client (it fetches in the browser).
-    path: 'projects/:slug',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'ar/projects/:slug',
-    renderMode: RenderMode.Client,
-  },
-  {
-    // Insight detail follows the same API-backed slug pattern as projects.
-    path: 'blog/:slug',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'ar/blog/:slug',
-    renderMode: RenderMode.Client,
-  },
+  // Project and insight pages are prerendered for every slug the API lists at
+  // build time, so crawlers get real titles, text and images. Anything
+  // published after the build falls back to the client shell (nginx serves
+  // index.csr.html for unknown slugs) until the next deploy.
+  slugRoute('projects/:slug', 'projects'),
+  slugRoute('ar/projects/:slug', 'projects'),
+  slugRoute('blog/:slug', 'blog'),
+  slugRoute('ar/blog/:slug', 'blog'),
+  // Service pages: only the ones management has approved are generated; any
+  // other /services/<slug> has no file, so nginx answers with a real 404.
+  ...['services/:slug', 'ar/services/:slug'].map(
+    (path): ServerRoute => ({
+      path,
+      renderMode: RenderMode.Prerender,
+      fallback: PrerenderFallback.None,
+      getPrerenderParams: async () => APPROVED_SERVICE_SLUGS.map((slug) => ({ slug })),
+    }),
+  ),
   {
     // Admin CMS + auth: dynamic, auth-gated — client-rendered, never prerendered.
     path: 'admin',

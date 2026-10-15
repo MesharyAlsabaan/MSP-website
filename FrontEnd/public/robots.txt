@@ -3,5 +3,6 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /vendors
+Disallow: /ar/vendors
 
-Sitemap: https://msp.sa/sitemap.xml
+Sitemap: https://www.msp.sa/sitemap.xml

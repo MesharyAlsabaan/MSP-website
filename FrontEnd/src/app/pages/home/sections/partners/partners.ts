@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 
@@ -44,8 +44,8 @@ export class Partners {
   private readonly content = inject(PublicContentService);
 
   protected readonly label = {
-    en: 'Trusted across the Kingdom',
-    ar: 'جهاتٌ رائدة تثق بنا',
+    en: 'Clients and partners',
+    ar: 'عملاء وشركاء',
   };
 
   /** Only names returned by the public (published) API are shown. */
@@ -58,11 +58,9 @@ export class Partners {
   });
 
   constructor() {
-    afterNextRender(() => {
-      this.content.partners().subscribe({
-        next: (ps) => this.fetched.set(ps.map((p) => p.name).filter(Boolean)),
-        error: () => this.fetched.set([]),
-      });
+    this.content.partners().subscribe({
+      next: (ps) => this.fetched.set(ps.map((p) => p.name).filter(Boolean)),
+      error: () => this.fetched.set([]),
     });
   }
 }

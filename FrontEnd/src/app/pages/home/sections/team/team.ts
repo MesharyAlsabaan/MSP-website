@@ -3,7 +3,6 @@ import {
   inject,
   signal,
   computed,
-  afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -133,23 +132,21 @@ export class Team {
   );
 
   constructor() {
-    afterNextRender(() => {
-      this.content.team().subscribe({
-        next: (list) => {
-          this.fetched.set(list.map(toMember));
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.content.team().subscribe({
+      next: (list) => {
+        this.fetched.set(list.map(toMember));
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
   protected readonly t = {
     eyebrow: { en: 'Team', ar: 'الفريق' },
-    title: { en: 'A senior team, by design.', ar: 'نخبةٌ من الخبراء، باختيارٍ دقيق.' },
+    title: { en: 'Collective expertise.', ar: 'خبرة جماعية.' },
     intro: {
-      en: 'Principals lead every commission — supported by a tight group of architects and engineers.',
-      ar: 'يقود الشركاءُ كلَّ مشروعٍ بأنفسهم، تسندهم نخبةٌ من المعماريين والمهندسين.',
+      en: 'Architects and engineers of different nationalities, backgrounds, and disciplines, working to a shared method and common values.',
+      ar: 'معماريون ومهندسون من جنسيات وخلفيات وتخصصات متعددة، تجمعهم منهجية عمل واحدة وقيم مشتركة.',
     },
     all: { en: 'Meet the full team', ar: 'تعرّف على الفريق كاملاً' },
     placeholder: { en: 'Portrait placeholder', ar: 'صورة افتراضية' },

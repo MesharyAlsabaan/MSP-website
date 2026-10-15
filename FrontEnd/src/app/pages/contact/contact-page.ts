@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Container } from '../../shared/ui/container/container';
 import { Button } from '../../shared/ui/button/button';
@@ -214,22 +214,25 @@ export class ContactPage {
     eyebrow: { en: 'Contact', ar: 'تواصل معنا' },
     title: { en: 'Let’s talk.', ar: 'لنتحدّث.' },
     intro: {
-      en: 'Tell us about your site and ambition. We reply within one business day.',
-      ar: 'أخبرنا عن موقعك وطموحك، ونعود إليك خلال يوم عملٍ واحد.',
+      en: 'Tell us about your site, your project and what you hope to achieve. We will respond to arrange an initial conversation.',
+      ar: 'حدّثنا عن موقعك ومشروعك وما تطمح إلى تحقيقه، وسنتواصل معك لترتيب لقاء أولي.',
     },
-    sentKicker: { en: 'Message received', ar: 'تمّ استلام رسالتك' },
-    sentBody: { en: 'Thank you — we’ll be in touch within one business day.', ar: 'شكراً لك، سنتواصل معك خلال يوم عملٍ واحد.' },
+    sentKicker: { en: 'Message received', ar: 'استلمنا رسالتك' },
+    sentBody: {
+      en: 'Thank you. We will respond to arrange an initial conversation.',
+      ar: 'شكراً لك. سنتواصل معك لترتيب لقاء أولي.',
+    },
     sending: { en: 'Sending…', ar: 'جارٍ الإرسال…' },
     sendFailed: { en: 'Could not send — please try again or email us.', ar: 'تعذّر الإرسال — حاول مجدداً أو راسلنا عبر البريد.' },
     name: { en: 'Name', ar: 'الاسم' },
     namePh: { en: 'Your name', ar: 'اسمك الكريم' },
     email: { en: 'Email', ar: 'البريد الإلكتروني' },
     message: { en: 'About your project', ar: 'نبذة عن مشروعك' },
-    messagePh: { en: 'Site, scale, ambition…', ar: 'الموقع، والنطاق، والطموح…' },
+    messagePh: { en: 'Site, project type, scale, aims…', ar: 'الموقع، ونوع المشروع، وحجمه، وأهدافه…' },
     send: { en: 'Send enquiry →', ar: 'أرسل طلبك ←' },
     errName: { en: 'Please enter your name.', ar: 'الرجاء إدخال اسمك.' },
-    errEmail: { en: 'Please enter a valid email.', ar: 'الرجاء إدخال بريدٍ إلكترونيٍّ صحيح.' },
-    errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيدٍ من التفاصيل.' },
+    errEmail: { en: 'Please enter a valid email.', ar: 'الرجاء إدخال بريد إلكتروني صحيح.' },
+    errMessage: { en: 'Please add a little more detail.', ar: 'الرجاء إضافة مزيد من التفاصيل.' },
     waChat: { en: 'Chat on WhatsApp', ar: 'محادثة عبر واتساب' },
   };
 
@@ -256,7 +259,7 @@ export class ContactPage {
   protected readonly details = computed<ContactDetail[]>(() => {
     const c = this.cfg();
     const mobile = c.whatsapp || '+966570327777';
-    const hours = c.workingHours ?? { en: 'Sun–Thu · 9:00–17:00', ar: 'الأحد–الخميس · 9:00–17:00' };
+    const hours = c.workingHours ?? { en: 'Sun–Thu · 9:00–17:00', ar: 'الأحد – الخميس · من 9:00 إلى 17:00' };
     const result: ContactDetail[] = [
       { label: { en: 'Established', ar: 'سنة التأسيس' }, value: lv('2010'), ltr: true },
       { label: { en: 'Email', ar: 'البريد الإلكتروني' }, value: lv(c.email || 'info@msp.sa'), ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
@@ -270,7 +273,7 @@ export class ContactPage {
         whatsapp: `https://wa.me/${mobile.replace(/\D/g, '')}`,
       },
       {
-        label: { en: 'Riyadh office', ar: 'فرع الرياض' },
+        label: { en: 'Riyadh office', ar: 'مكتب الرياض' },
         value: {
           en: c.addressEn || 'Irqah, Riyadh, Saudi Arabia',
           ar: c.addressAr || 'حي عرقة، الرياض، المملكة العربية السعودية',
@@ -332,18 +335,20 @@ export class ContactPage {
 
   constructor() {
     this.seo.update({
-      title: this.i18n.pick({ en: 'Contact', ar: 'تواصل معنا' }),
-      description: this.i18n.pick({
-        en: 'Get in touch with MSP Consultants — architecture & engineering in Riyadh.',
-        ar: 'تواصل مع MSP للاستشارات — العمارة والهندسة في الرياض.',
+      title: this.i18n.pick({
+        en: 'Contact Our Riyadh & Cairo Offices',
+        ar: 'تواصل معنا: مكتبا الرياض والقاهرة',
       }),
+      description: this.i18n.pick({
+        en: 'Contact MSP, an architecture and engineering consultancy with offices in Riyadh (Irqah) and Cairo. Tell us about your site and your project.',
+        ar: 'تواصل مع MSP، مكتب الاستشارات المعمارية والهندسية في الرياض (حي عرقة) والقاهرة. حدّثنا عن موقعك ومشروعك.',
+      }),
+      type: 'ContactPage',
     });
 
-    afterNextRender(() => {
-      this.content.settings().subscribe({
-        next: (c) => this.cfg.set(c ?? {}),
-        error: () => {},
-      });
+    this.content.settings().subscribe({
+      next: (c) => this.cfg.set(c ?? {}),
+      error: () => {},
     });
   }
 }

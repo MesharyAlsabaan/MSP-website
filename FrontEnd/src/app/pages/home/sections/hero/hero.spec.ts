@@ -39,4 +39,15 @@ describe('Home hero calls to action', () => {
     expect(links.find((a) => a.textContent?.includes('Selected works'))?.getAttribute('href'))
       .toBe('/projects');
   });
+
+  it('keeps the headline and intro painted from the first frame (no fade or clip, for LCP)', () => {
+    const fixture = TestBed.createComponent(Hero);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const primary = [...el.querySelectorAll('h1 > span'), el.querySelector('h1 + p')];
+    expect(primary).toHaveLength(4);
+    for (const node of primary) {
+      expect(node?.classList).toContain('reveal-load--visible');
+    }
+  });
 });
