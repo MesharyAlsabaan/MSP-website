@@ -47,7 +47,7 @@ If any of these organisations *is* a genuine MSP client, don't delete that recor
 
 ## 3. Hide unverified job vacancies — done in code
 
-The four roles on `/careers` (Senior Architect, Structural Engineer, MEP Engineer, Architectural Intern) are written in the code, not stored in the CMS. On this branch they are **hidden**. The page now invites general applications to `careers@msp.sa`.
+The four roles on `/careers` (Senior Architect, Structural Engineer, MEP Engineer, Architectural Intern) are written in the code, not stored in the CMS. On this branch they are **hidden**. The page now invites general applications to `job@msp.sa`.
 
 To publish roles again:
 
@@ -56,7 +56,7 @@ To publish roles again:
 3. The developer sets `rolesConfirmed = true` in the same file.
 4. Redeploy.
 
-**Confirm:** does the `careers@msp.sa` mailbox exist and receive mail? If not, change the address in the same file before deploying.
+**Confirm:** does the `job@msp.sa` mailbox exist and receive mail? If not, change the address in the same file before deploying.
 
 ## 4. Remove placeholder social links — P2
 

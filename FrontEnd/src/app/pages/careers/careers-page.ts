@@ -45,7 +45,7 @@ interface L {
           @for (role of roles; track role.title.en) {
             <li appScrollReveal class="group border-b border-hairline">
               <a
-                href="mailto:careers@msp.sa"
+                href="mailto:job@msp.sa"
                 class="grid grid-cols-12 items-center gap-4 py-7 transition-[padding] duration-500 hover:ps-3"
               >
                 <h2 class="col-span-12 font-display text-xl font-medium text-ink transition-colors group-hover:text-accent sm:col-span-6 sm:text-2xl">
@@ -66,7 +66,7 @@ interface L {
 
         <p appScrollReveal class="max-w-xl leading-relaxed text-muted" [class.mt-10]="rolesConfirmed">
           {{ i18n.pick(rolesConfirmed ? t.openNote : t.generalNote) }}
-          <a href="mailto:careers@msp.sa" class="text-accent hover:underline" dir="ltr">careers&#64;msp.sa</a>
+          <a href="mailto:job@msp.sa" class="text-accent hover:underline" dir="ltr">job&#64;msp.sa</a>
         </p>
       </app-container>
     </app-section>

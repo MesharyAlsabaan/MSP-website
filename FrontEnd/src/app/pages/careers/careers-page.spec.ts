@@ -17,6 +17,6 @@ describe('CareersPage', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Senior Architect');
     expect(text).not.toContain('Open roles');
-    expect(text).toContain('careers@msp.sa');
+    expect(text).toContain('job@msp.sa');
   });
 });

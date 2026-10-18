@@ -160,7 +160,7 @@ The release-blocking security issue (public API draft exposure) is **resolved in
 | P1-3 | Privacy policy and terms: placeholder text naming "MSP Consultants", already live. Counsel to finalise them with the registered entity name. |
 | P1-4 | Guard `seed.ts` so it refuses to run against production. It recreates fabricated testimonials and partners. |
 | P1-5 | CMS settings: replace the tagline, complete the Riyadh address (Irqah), replace the promise-style service one-liners (admin actions §5–7). |
-| P1-6 | Confirm the `careers@msp.sa` mailbox exists. |
+| P1-6 | Confirm the `job@msp.sa` mailbox exists. |
 | P1-7 | Design-round deployment dependency: deploy the backend image-variant route and run the image backfill, or project images on the new pages fall back to originals. |
 | P1-8 | After deployment: Search Console (Domain property, submit the sitemap), Rich Results Test on a project, an article and FAQ URLs, and a re-run of Lighthouse on the live site. |
 
