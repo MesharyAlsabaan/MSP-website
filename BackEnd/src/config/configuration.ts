@@ -48,6 +48,20 @@ export default () => ({
     // must supply its own, and it should be rotated in the app after seeding.
     adminPassword: secret('SEED_ADMIN_PASSWORD', 'dev-only-change-me'),
   },
+  // New-enquiry email alerts. All optional: notifications stay off unless
+  // every value is set. Credentials live only in the deployment environment.
+  mail: {
+    host: process.env.SMTP_HOST ?? '',
+    port: parseInt(process.env.SMTP_PORT ?? '465', 10),
+    secure: (process.env.SMTP_SECURE ?? 'true') === 'true',
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+    from: process.env.MAIL_FROM ?? '',
+    inquiryTo: (process.env.INQUIRY_NOTIFY_TO ?? '')
+      .split(',')
+      .map((a) => a.trim())
+      .filter(Boolean),
+  },
   upload: {
     dir: process.env.UPLOAD_DIR ?? 'uploads',
     maxMb: parseInt(process.env.MAX_UPLOAD_MB ?? '5', 10),

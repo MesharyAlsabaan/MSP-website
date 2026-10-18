@@ -7,6 +7,7 @@ import { CreateContactDto } from './dto/create-contact.dto';
 import { SubscribeDto } from './dto/subscribe.dto';
 import { ContactMessage } from './entities/contact-message.entity';
 import { Subscriber } from './entities/subscriber.entity';
+import { InquiryNotifier } from './inquiry-notifier.service';
 
 @Injectable()
 export class ContactService {
@@ -15,10 +16,14 @@ export class ContactService {
     private readonly messages: Repository<ContactMessage>,
     @InjectRepository(Subscriber)
     private readonly subscribers: Repository<Subscriber>,
+    private readonly notifier: InquiryNotifier,
   ) {}
 
-  submit(dto: CreateContactDto): Promise<ContactMessage> {
-    return this.messages.save(this.messages.create(dto));
+  /** Saves the enquiry, then alerts the office by email (if configured) without waiting on it. */
+  async submit(dto: CreateContactDto): Promise<ContactMessage> {
+    const saved = await this.messages.save(this.messages.create(dto));
+    void this.notifier.notify(saved);
+    return saved;
   }
 
   async subscribe(dto: SubscribeDto): Promise<Subscriber> {
