@@ -1,10 +1,12 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, afterNextRender } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Container } from '../../../../shared/ui/container/container';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { PublicContentService } from '../../../../core/services/public-content.service';
 import { CompanyInfo } from '../../../../core/models/content.model';
 import { LocPipe } from '../../../../shared/pipes/loc.pipe';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { ConsentService } from '../../../../core/services/consent.service';
 
 interface NavLink {
   readonly path: string;
@@ -96,7 +98,14 @@ interface NavLink {
         <div
           class="flex flex-col gap-3 border-t border-hairline py-6 font-mono text-xs uppercase tracking-[0.12em] text-muted sm:flex-row sm:items-center sm:justify-between"
         >
-          <p>© {{ year }} {{ i18n.pick(legal) }}</p>
+          <p>
+            © {{ year }} {{ i18n.pick(legal) }}
+            @if (showAnalyticsChoice()) {
+              <button type="button" (click)="consent.reset()" class="ms-4 uppercase underline underline-offset-4 hover:text-ink">
+                {{ i18n.pick(analyticsChoice) }}
+              </button>
+            }
+          </p>
           <p>{{ i18n.pick(strap) }}</p>
         </div>
       </app-container>
@@ -106,6 +115,11 @@ interface NavLink {
 export class Footer {
   protected readonly i18n = inject(TranslationService);
   private readonly content = inject(PublicContentService);
+  private readonly analytics = inject(AnalyticsService);
+  protected readonly consent = inject(ConsentService);
+  /** Set after hydration (analytics configuration is browser-only). */
+  protected readonly showAnalyticsChoice = signal(false);
+  protected readonly analyticsChoice = { en: 'Analytics choice', ar: 'خيار التحليلات' };
   protected readonly year = 2026;
 
   /** Company/contact info from the API; falls back to the static defaults below. */
@@ -139,6 +153,7 @@ export class Footer {
   });
 
   constructor() {
+    afterNextRender(() => this.showAnalyticsChoice.set(this.analytics.configured));
     this.content.settings().subscribe({
       next: (c) => this.cfg.set(c ?? {}),
       error: () => {},

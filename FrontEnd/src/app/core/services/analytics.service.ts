@@ -1,6 +1,13 @@
-import { DOCUMENT, Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { DOCUMENT, Injectable, InjectionToken, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment';
+import { ConsentService } from './consent.service';
+
+/** GA4 measurement ID (a token so tests can supply one). */
+export const GA4_MEASUREMENT_ID = new InjectionToken<string>('GA4_MEASUREMENT_ID', {
+  providedIn: 'root',
+  factory: () => environment.ga4MeasurementId,
+});
 
 type Gtag = (...args: unknown[]) => void;
 
@@ -8,8 +15,9 @@ type Gtag = (...args: unknown[]) => void;
 export type ConversionEvent = 'generate_lead' | 'phone_click' | 'email_click' | 'whatsapp_click';
 
 /**
- * Privacy-first GA4 wrapper. With no measurement ID configured it does
- * nothing at all — no script, no cookies, no requests. When enabled it loads
+ * Privacy-first GA4 wrapper. It does nothing at all — no script, no cookies,
+ * no requests — unless a measurement ID is configured AND the visitor has
+ * accepted analytics (ConsentService). Once both hold it loads
  * gtag with Google signals and ad personalisation off, and sends only event
  * names plus non-personal context (page path, form, service). Never names,
  * emails, phone numbers or message text.
@@ -18,14 +26,21 @@ export type ConversionEvent = 'generate_lead' | 'phone_click' | 'email_click' | 
 export class AnalyticsService {
   private readonly document = inject(DOCUMENT);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly id = environment.ga4MeasurementId;
+  private readonly id = inject(GA4_MEASUREMENT_ID);
+  private readonly consent = inject(ConsentService);
   private gtag?: Gtag;
 
-  get enabled(): boolean {
+  /** A GA4 property is configured, so visitors must be asked. */
+  get configured(): boolean {
     return this.browser && /^G-[A-Z0-9]+$/.test(this.id);
   }
 
-  /** Loads gtag once and starts listening for contact-link clicks. */
+  /** Configured and accepted by the visitor. */
+  get enabled(): boolean {
+    return this.configured && this.consent.state() === 'granted';
+  }
+
+  /** Loads gtag once (only with consent) and starts listening for contact-link clicks. */
   init(): void {
     if (!this.enabled || this.gtag) return;
     const w = this.document.defaultView as unknown as { dataLayer: unknown[]; gtag: Gtag };
@@ -45,6 +60,8 @@ export class AnalyticsService {
   }
 
   track(event: ConversionEvent, params: Record<string, string> = {}): void {
+    // Re-checked on every event, so withdrawing consent stops tracking at once.
+    if (!this.enabled) return;
     this.gtag?.('event', event, { page_path: this.document.location?.pathname ?? '', ...params });
   }
 
