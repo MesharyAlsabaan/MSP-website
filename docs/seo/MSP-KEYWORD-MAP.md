@@ -6,6 +6,8 @@ Date: 2026-10-15 · Market: Saudi Arabia (Riyadh first), English and Arabic · S
 
 **Rule.** One primary keyword per page and language, so pages don't compete with each other for the same query. Supporting terms may repeat across pages; primary keywords may not.
 
+**Update 2026-10-19:** five service pages are live, and sector pages are on branch `seo-growth`. Clusters and intent mapping: `MSP-SEO-GROWTH-PLAN.md` §2–3.
+
 ## Primary assignments
 
 | # | Target keyword | Lang | Intent | Target page | Supporting terms | Internal links in | Priority | Verification |
@@ -18,14 +20,14 @@ Date: 2026-10-15 · Market: Saudi Arabia (Riyadh first), English and Arabic · S
 | 6 | مكتب تصميم معماري | AR | Commercial | `/ar/services` | تصميم معماري، تصميم داخلي، الهندسة الإنشائية، الهندسة الكهروميكانيكية | Home, project pages | P1 | Verified |
 | 7 | Architecture projects Saudi Arabia | EN | Research / evaluation | `/projects` | residential, hospitality and commercial architecture portfolio | Home showcase and featured projects, nav | P2 | Portfolio verified (CMS) |
 | 8 | مشاريع معمارية في السعودية | AR | Research | `/ar/projects` | أعمال MSP، مشاريع سكنية وضيافة وتجارية | Home, nav | P2 | Verified |
-| 9 | Villa design Riyadh | EN | Commercial | `/projects` (residential filter) **→ proposed `/services/architectural-design` or residential landing page** | private villa design, residential compound design | Project pages of the three villas and private residence | P2 | 3 villas + private residence + villa compound in CMS |
-| 10 | تصميم فلل بالرياض | AR | Commercial | `/ar/projects` → proposed page as above | تصميم فيلا خاصة، تصميم مجمعات سكنية | Same | P2 | Same |
+| 9 | Villa design Riyadh | EN | Commercial | `/projects/sector/residential` (2026-10-19, branch `seo-growth`) | private villa design, residential compound design | Project pages of the three villas and private residence | P2 | 3 villas + private residence + villa compound in CMS |
+| 10 | تصميم فلل بالرياض | AR | Commercial | `/ar/projects/sector/residential` | تصميم فيلا خاصة، تصميم مجمعات سكنية | Same | P2 | Same |
 | 11 | Hotel design consultancy | EN | Commercial | `/projects/madinah-hotel` | hospitality design Saudi Arabia, hotel interior design | Insight "Madinah Hotel: Hospitality Design Rooted in Place" | P2 | Madinah Hotel + serviced apartments in CMS |
 | 12 | تصميم فنادق | AR | Commercial | `/ar/projects/madinah-hotel` | تصميم الضيافة، تصميم داخلي للفنادق | Arabic insight | P2 | Same |
-| 13 | Commercial architecture Saudi Arabia | EN | Commercial | `/projects` → proposed commercial landing page | office building design, commercial-residential development | SBC, Al Ateeq project pages | P3 | 3 commercial / commercial-residential projects |
-| 14 | تصميم مشاريع تجارية | AR | Commercial | `/ar/projects` → as above | تصميم مبانٍ مكتبية، مشاريع تجارية سكنية | Same | P3 | Same |
-| 15 | Construction supervision Riyadh | EN | Commercial | `/services` (supervision block) **→ proposed `/services/construction-supervision`** | engineering supervision, consultant site supervision | Residential villas compound project (supervision discipline) | P2 | Discipline on project record; service not yet a CMS item |
-| 16 | إشراف هندسي | AR | Commercial | `/ar/services` → proposed subpage | إشراف هندسي على التنفيذ، استشاري إشراف | Same | P2 | Same |
+| 13 | Commercial architecture Saudi Arabia | EN | Commercial | `/projects/sector/commercial`: published automatically once 2 projects carry the Commercial/Work sector (1 today) | office building design, commercial-residential development | SBC, Al Ateeq project pages | P3 | 3 commercial / commercial-residential projects |
+| 14 | تصميم مشاريع تجارية | AR | Commercial | `/ar/projects/sector/commercial` (same condition) | تصميم مبانٍ مكتبية، مشاريع تجارية سكنية | Same | P3 | Same |
+| 15 | Construction supervision Riyadh | EN | Commercial | `/services/construction-supervision` (live) | engineering supervision, consultant site supervision | Residential villas compound project (supervision discipline) | P2 | Discipline on project record; service not yet a CMS item |
+| 16 | إشراف هندسي | AR | Commercial | `/ar/services/construction-supervision` (live) | إشراف هندسي على التنفيذ، استشاري إشراف | Same | P2 | Same |
 | 17 | Engineering project management | EN | Commercial | `/services` (project management block) → proposed `/services/project-management` | project management consultancy, design management | Al Munsiyah (integrated delivery) | P3 | CMS service "Project Management" |
 | 18 | إدارة مشاريع هندسية | AR | Commercial | `/ar/services` → proposed subpage | إدارة المشاريع، إدارة التصميم | Same | P3 | Same |
 | 19 | MSP architecture / MSP Riyadh | EN | Navigational (brand) | `/` | MSP architecture engineering | All | P1 | Verified brand |

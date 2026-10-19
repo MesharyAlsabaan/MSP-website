@@ -35,12 +35,23 @@ Purpose: let work continue across sessions. Update this file with every commit o
 
 ## Commits on `seo-growth`
 
-(Appended as work lands.)
+| Commit | What | Tests |
+|---|---|---|
+| 39163f2 | Service pages: FAQ answers (FAQPage schema) and project image cards | pass |
+| 7e9ca36 | Structured data: offices as ProfessionalService, CEO as Person; guard test against fabricated fields | pass |
+| 7788edd | Sector landing pages (residential, hospitality), related projects, sector links; nginx 404 for unpublished sectors | 106 pass; build prerenders 64 routes; sitemap 60 URLs |
+| 22f620c | Sitemap `lastmod` for projects and insights from the CMS | sitemap verified with API up and down |
+| 876b68d | CMS search checklist in the project editor | 109 pass |
+| (docs) | `MSP-SEO-GROWTH-PLAN.md` (deliverables 1–14), keyword map update, this log | — |
+
+Validated in `dist` (2026-10-19): `/projects/sector/residential`, `/projects/sector/hospitality` and their `/ar` twins are prerendered with H1, self-canonical, CollectionPage + ItemList, and listed in the sitemap; the projects index and 5 project pages link to them. `commercial` is not built (1 tagged project).
+
+**Environment note:** system Node is no longer on PATH on this Mac. Use the arm64 build in the session scratchpad (`node-v22.20.0-darwin-arm64/bin`) and run `npm ci` with it.
 
 ## Open items needing MSP
 
 1. Search Console verification (TXT record): instructions in `docs/analytics/MSP-MEASUREMENT-SETUP.md` §1.
 2. GA4 ID after legal and privacy approval: same file §2 and §4.
-3. CMS: set **Sectors** on the 5 projects without one (3 private villas, 2 mixed-use). This automatically fills the sector pages.
+3. CMS: set **Sectors and Disciplines** on the 5 projects without them (3 private villas, 2 mixed-use). This automatically fills the sector pages; tagging the 2 mixed-use projects Commercial publishes `/projects/sector/commercial`. Then years and descriptions (plan §5).
 4. Google Business Profile access: plan §7.
 5. Approval to deploy this branch.
