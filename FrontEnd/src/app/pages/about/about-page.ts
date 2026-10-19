@@ -1,3 +1,4 @@
+import { ceo } from '../../core/seo/structured-data';
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Container } from '../../shared/ui/container/container';
 import { Section } from '../../shared/ui/section/section';
@@ -543,6 +544,7 @@ export class AboutPage {
         ar: 'تأسست MSP في الرياض عام 2010 مكتباً للاستشارات المعمارية والهندسية متعدد التخصصات. تعرّف على فلسفتنا ورؤيتنا ورسالتنا وقيمنا وقيادتنا.',
       }),
       type: 'AboutPage',
+      schema: [ceo()],
     });
 
     this.content.team().subscribe({

@@ -1,3 +1,4 @@
+import { offices } from '../../core/seo/structured-data';
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Container } from '../../shared/ui/container/container';
@@ -393,6 +394,7 @@ export class ContactPage {
         ar: 'تواصل مع MSP، مكتب الاستشارات المعمارية والهندسية في الرياض (حي عرقة) والقاهرة. حدّثنا عن موقعك ومشروعك.',
       }),
       type: 'ContactPage',
+      schema: offices(),
     });
 
     this.content.settings().subscribe({

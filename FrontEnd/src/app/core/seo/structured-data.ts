@@ -52,6 +52,64 @@ export function organization(): JsonLd {
   };
 }
 
+/**
+ * MSP's offices as local businesses — only the facts the site itself
+ * publishes (district, city, phone, map). No opening hours: the CMS and the
+ * page fallback disagree, so they wait for MSP to confirm.
+ */
+export function offices(): JsonLd[] {
+  const common = {
+    '@type': 'ProfessionalService',
+    name: 'MSP',
+    parentOrganization: { '@id': ORG_ID },
+    url: `${ORIGIN}/`,
+    image: `${ORIGIN}/images/og-msp.jpg`,
+    email: 'info@msp.sa',
+  };
+  return [
+    {
+      ...common,
+      '@id': `${ORIGIN}/#riyadh-office`,
+      description: 'MSP head office in Riyadh: architecture and engineering consultancy.',
+      telephone: '+966112000087',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Irqah',
+        addressLocality: 'Riyadh',
+        addressCountry: 'SA',
+      },
+      hasMap: 'https://www.google.com/maps?cid=14819986877967963984',
+      areaServed: { '@type': 'Country', name: 'Saudi Arabia' },
+    },
+    {
+      ...common,
+      '@id': `${ORIGIN}/#cairo-office`,
+      description: 'MSP office in Cairo.',
+      telephone: '+201068017313',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Rayhana Plaza, Zahraa El Maadi',
+        addressLocality: 'Cairo',
+        addressCountry: 'EG',
+      },
+      hasMap: 'https://www.google.com/maps?cid=7951323106422195141',
+    },
+  ];
+}
+
+/** MSP's CEO, as named on the About page; LinkedIn from the CMS team record. */
+export function ceo(): JsonLd {
+  return {
+    '@type': 'Person',
+    '@id': `${ORIGIN}/about#ceo`,
+    name: 'Mansour Al-Sabaan',
+    alternateName: 'منصور السبعان',
+    jobTitle: 'Chief Executive Officer',
+    worksFor: { '@id': ORG_ID },
+    sameAs: ['https://www.linkedin.com/in/mansour-alsabaan-6b03884b/'],
+  };
+}
+
 export function website(): JsonLd {
   return {
     '@type': 'WebSite',

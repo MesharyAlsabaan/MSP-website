@@ -1,3 +1,4 @@
+import { offices } from '../../core/seo/structured-data';
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { SeoService } from '../../core/services/seo.service';
 import { TranslationService } from '../../core/services/translation.service';
@@ -65,6 +66,7 @@ export class Home {
         en: 'MSP is an architecture and engineering consultancy in Riyadh, established in 2010: architectural and interior design, structural and MEP engineering, supervision and project management.',
         ar: 'استشارات هندسية ومعمارية في الرياض منذ 2010: تقدّم MSP التصميم المعماري والداخلي، والهندسة الإنشائية والكهروميكانيكية، والإشراف الهندسي وإدارة المشاريع.',
       }),
+      schema: offices(),
     });
   }
 }
