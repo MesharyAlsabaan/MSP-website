@@ -4,6 +4,7 @@ import { AdminApi } from '../../../core/services/admin-api.service';
 import { Button } from '../../../shared/ui/button/button';
 import { ImageUploadField } from '../../../shared/ui/image-upload/image-upload';
 import { DESIGN_CATEGORIES, DISCIPLINES, SECTORS, Term } from '../../../core/data/taxonomy';
+import { projectSeoChecks } from './project-seo-checks';
 
 interface L { en: string; ar: string; }
 interface Spec { label: L; value: L; }
@@ -262,6 +263,26 @@ function blank(): Project {
             </div>
           </div>
 
+          <!-- Search checklist: advice only, never blocks saving. -->
+          @let checks = seoChecks();
+          <section class="mt-8 border border-hairline bg-bg p-5" aria-labelledby="seo-checklist">
+            <h3 id="seo-checklist" class="lbl">
+              Search checklist · {{ passed(checks) }}/{{ checks.length }}
+            </h3>
+            <ul class="mt-3 space-y-2">
+              @for (c of checks; track c.label) {
+                <li class="flex gap-2 text-sm">
+                  <span [class]="c.ok ? 'text-green-600' : 'text-amber-600'" aria-hidden="true">{{ c.ok ? '✓' : '!' }}</span>
+                  <span>
+                    <span class="text-ink">{{ c.label }}</span>
+                    <span class="sr-only">{{ c.ok ? ': done' : ': to do' }}</span>
+                    @if (!c.ok) { <span class="block text-xs text-muted">{{ c.hint }}</span> }
+                  </span>
+                </li>
+              }
+            </ul>
+          </section>
+
           <div class="mt-8 flex gap-3">
             <app-button type="button" (click)="save()" [disabled]="saving()">
               {{ saving() ? 'Saving…' : 'Save' }}
@@ -367,6 +388,9 @@ export class AdminProjects implements OnInit {
     this.error.set(null);
     this.editing.set(true);
   }
+  // A method, not a computed: the form edits the model object in place.
+  protected seoChecks() { return projectSeoChecks(this.model()); }
+  protected passed(checks: { ok: boolean }[]): number { return checks.filter((c) => c.ok).length; }
   protected cancel(): void { this.editing.set(false); }
 
   // Repeating-row editors. New array references so the @for re-renders.
