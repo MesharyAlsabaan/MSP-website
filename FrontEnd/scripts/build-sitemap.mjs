@@ -5,9 +5,10 @@
 // copied from the same HTML. So the sitemap can't drift from what nginx serves
 // (projects and insights included, since they are prerendered from the API).
 //
-// Project and insight URLs get <lastmod> from the CMS updatedAt (same API as
-// the prerender, PRERENDER_API_ORIGIN). Other pages get none: a guessed date
-// is worse than no date. An unreachable API just means no lastmod.
+// Project and insight URLs get <lastmod> from the CMS updatedAt: first from
+// the record the page itself was prerendered with (its TransferState), else
+// from the API (PRERENDER_API_ORIGIN). Other pages get none: a guessed date
+// is worse than no date.
 //
 // Usage: node scripts/build-sitemap.mjs [browserDir]
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -40,9 +41,22 @@ async function updatedAt(resource) {
 }
 
 const [projectDates, blogDates] = await Promise.all([updatedAt('projects'), updatedAt('blog')]);
-function lastmodFor(dir) {
+/** updatedAt of the record this page was prerendered from, if any. */
+function embeddedDate(html, resource, slug) {
+  const state = html.match(/<script id="ng-state" type="application\/json">([\s\S]*?)<\/script>/)?.[1];
+  if (!state) return undefined;
+  try {
+    const date = JSON.parse(state)[`content:${resource}/slug/${slug}`]?.updatedAt;
+    return typeof date === 'string' ? date.slice(0, 10) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function lastmodFor(dir, html) {
   const m = dir.match(/^(?:ar\/)?(projects|blog)\/([^/]+)$/);
-  return m ? (m[1] === 'projects' ? projectDates : blogDates).get(m[2]) : undefined;
+  if (!m) return undefined;
+  return embeddedDate(html, m[1], m[2]) ?? (m[1] === 'projects' ? projectDates : blogDates).get(m[2]);
 }
 
 const entries = [];
@@ -57,7 +71,7 @@ for (const file of pages(root)) {
     lang: attr(m[0], 'hreflang'),
     href: attr(m[0], 'href'),
   }));
-  entries.push({ url, alternates, lastmod: lastmodFor(dir) });
+  entries.push({ url, alternates, lastmod: lastmodFor(dir, html) });
 }
 
 entries.sort((a, b) => a.url.localeCompare(b.url));
