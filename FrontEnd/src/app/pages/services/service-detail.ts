@@ -7,6 +7,8 @@ import { Section } from '../../shared/ui/section/section';
 import { SectionHeading } from '../../shared/ui/section-heading/section-heading';
 import { ScrollReveal } from '../../shared/directives/scroll-reveal.directive';
 import { LocPipe } from '../../shared/pipes/loc.pipe';
+import { AssetPipe } from '../../shared/pipes/asset.pipe';
+import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 import { Cta } from '../home/sections/cta/cta';
 import { TranslationService } from '../../core/services/translation.service';
 import { SeoService } from '../../core/services/seo.service';
@@ -23,7 +25,7 @@ import { ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
 @Component({
   selector: 'app-service-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Container, Section, SectionHeading, ScrollReveal, LocPipe, Cta],
+  imports: [RouterLink, Container, Section, SectionHeading, ScrollReveal, LocPipe, Cta, AssetPipe, SrcsetPipe],
   template: `
     @if (page(); as p) {
       <section class="border-b border-hairline bg-bg pt-16 pb-14 sm:pt-20">
@@ -84,23 +86,49 @@ import { ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
         <app-section>
           <app-container>
             <app-section-heading index="—" [eyebrow]="i18n.pick(t.projectsEyebrow)" [title]="i18n.pick(p.relatedTitle ?? t.projectsTitle)" />
-            <ul class="mt-12 border-t border-hairline">
+            <ul class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               @for (project of related(); track project.slug) {
-                <li class="border-b border-hairline">
-                  <a
-                    [routerLink]="['/projects', project.slug] | loc"
-                    class="group flex flex-wrap items-baseline justify-between gap-4 py-5"
-                  >
-                    <span class="font-display text-xl font-medium text-ink transition-colors group-hover:text-accent">
+                <li>
+                  <a [routerLink]="['/projects', project.slug] | loc" class="group block">
+                    @if (project.cover | asset; as cover) {
+                      <div class="aspect-[4/3] overflow-hidden bg-hairline/40">
+                        <img
+                          [src]="cover"
+                          [attr.srcset]="project.cover | srcset"
+                          sizes="(min-width: 1024px) 360px, (min-width: 640px) 46vw, 92vw"
+                          [alt]="i18n.pick(project.title) + ' — ' + i18n.pick(project.location)"
+                          width="800"
+                          height="600"
+                          loading="lazy"
+                          decoding="async"
+                          class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                        />
+                      </div>
+                    }
+                    <h3 class="mt-4 font-display text-lg font-medium text-ink transition-colors group-hover:text-accent">
                       {{ i18n.pick(project.title) }}
-                    </span>
-                    <span class="font-mono text-xs uppercase tracking-[0.12em] text-muted">
-                      {{ i18n.pick(project.location) }}
-                    </span>
+                    </h3>
+                    <p class="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-muted">{{ i18n.pick(project.location) }}</p>
                   </a>
                 </li>
               }
             </ul>
+          </app-container>
+        </app-section>
+      }
+
+      @if (p.faq.length) {
+        <app-section tone="surface">
+          <app-container>
+            <app-section-heading index="—" [eyebrow]="i18n.pick(t.faqEyebrow)" [title]="i18n.pick(t.faqTitle)" />
+            <div class="mt-12 max-w-3xl border-t border-hairline">
+              @for (item of p.faq; track item.q.en) {
+                <div class="border-b border-hairline py-6">
+                  <h3 class="font-display text-lg font-medium text-ink">{{ i18n.pick(item.q) }}</h3>
+                  <p class="mt-3 leading-relaxed text-muted">{{ i18n.pick(item.a) }}</p>
+                </div>
+              }
+            </div>
           </app-container>
         </app-section>
       }
@@ -181,6 +209,8 @@ export class ServiceDetail {
       ar: 'حدّثنا عن موقعك ومتطلبات مشروعك، وسنتواصل معك لترتيب استشارة أولية.',
     },
     consultCta: { en: 'Request a consultation', ar: 'اطلب استشارة' },
+    faqEyebrow: { en: 'Questions', ar: 'أسئلة' },
+    faqTitle: { en: 'Frequently asked.', ar: 'أسئلة شائعة.' },
   };
 
   constructor() {
@@ -207,6 +237,20 @@ export class ServiceDetail {
             areaServed: { '@type': 'Country', name: 'Saudi Arabia' },
             url,
           },
+          ...(page.faq.length
+            ? [
+                {
+                  '@type': 'FAQPage',
+                  '@id': `${url}#faq`,
+                  isPartOf: { '@id': `${url}#webpage` },
+                  mainEntity: page.faq.map((f) => ({
+                    '@type': 'Question',
+                    name: this.i18n.pick(f.q),
+                    acceptedAnswer: { '@type': 'Answer', text: this.i18n.pick(f.a) },
+                  })),
+                },
+              ]
+            : []),
         ],
       });
     });

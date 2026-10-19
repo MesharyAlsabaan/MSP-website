@@ -97,4 +97,19 @@ describe('Service pages', () => {
     const links = [...el.querySelectorAll('a[href^="/projects/"]')].map((a) => a.getAttribute('href'));
     expect(links).toEqual(['/projects/residential-villas-compound-riyadh']);
   });
+
+  it('answers each page\'s FAQ on the page and in FAQPage schema', () => {
+    const { el, updates } = render('construction-supervision', true);
+    const page = SERVICE_PAGES.find((p) => p.slug === 'construction-supervision')!;
+    expect(page.faq.length).toBeGreaterThanOrEqual(3);
+    for (const f of page.faq) expect(el.textContent).toContain(f.q.en);
+    const faq = updates.at(-1)!.schema!.find((n) => n['@type'] === 'FAQPage')!;
+    expect((faq['mainEntity'] as unknown[]).length).toBe(page.faq.length);
+  });
+
+  it('every page has bilingual FAQ entries', () => {
+    for (const page of SERVICE_PAGES) {
+      for (const f of page.faq) expect(f.q.ar && f.a.ar && f.q.en && f.a.en, page.slug).toBeTruthy();
+    }
+  });
 });

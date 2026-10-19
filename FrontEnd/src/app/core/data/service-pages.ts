@@ -195,6 +195,8 @@ export interface ServicePage {
   method: readonly { title: L; body: L }[];
   /** Heading for the related-projects list, when the generic one would overstate. */
   relatedTitle?: L;
+  /** Questions clients ask, answered only from approved scope and verified portfolio facts. */
+  faq: readonly { q: L; a: L }[];
 }
 
 export const SERVICE_PAGES: readonly ServicePage[] = [
@@ -213,6 +215,36 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
       en: 'Architectural design that begins with the people who will use a building — shaping plan, massing, daylight and movement so that creative expression and everyday performance are resolved together.',
       ar: 'تصميم معماري ينطلق من الأشخاص الذين سيستخدمون المبنى، فيصوغ المساقط والكتل والإضاءة الطبيعية والحركة، ليجتمع التعبير الإبداعي والأداء اليومي في حلٍّ واحد.',
     },
+    faq: [
+      {
+        q: { en: 'What does architectural design at MSP cover?', ar: 'ماذا يشمل التصميم المعماري لدى MSP؟' },
+        a: {
+          en: 'It runs from site analysis and concept design through design development to construction documents and specifications, coordinated with the structural and MEP engineering at each stage, including the coordination of authority submissions.',
+          ar: 'يمتد من تحليل الموقع والتصميم المفاهيمي، مروراً بتطوير التصميم، وصولاً إلى المخططات التنفيذية والمواصفات، بالتنسيق مع التصميم الإنشائي والكهروميكانيكي في كل مرحلة، بما في ذلك تنسيق التقديم إلى الجهات المختصة.',
+        },
+      },
+      {
+        q: { en: 'Do you design villas and residential compounds in Riyadh?', ar: 'هل تصممون الفلل والمجمعات السكنية في الرياض؟' },
+        a: {
+          en: 'Yes. MSP’s portfolio includes private villas, residential villa compounds and an integrated residential community in Riyadh.',
+          ar: 'نعم. تضم أعمال MSP فللاً خاصة ومجمعات فلل سكنية ومجتمعاً سكنياً متكاملاً في الرياض.',
+        },
+      },
+      {
+        q: { en: 'Can MSP also supervise the construction of the design?', ar: 'هل يمكن أن تشرف MSP على تنفيذ التصميم؟' },
+        a: {
+          en: 'Yes, where supervision is part of the appointment. MSP acts as the client’s consultant; construction itself is carried out by contractors.',
+          ar: 'نعم، متى شمل التكليف الإشراف. تعمل MSP بصفتها استشاري العميل، ويتولى المقاولون أعمال التنفيذ.',
+        },
+      },
+      {
+        q: { en: 'How do we start?', ar: 'كيف نبدأ؟' },
+        a: {
+          en: 'Send us the site location, plot details and a short brief through the contact form. We will respond to arrange an initial consultation.',
+          ar: 'أرسل إلينا موقع الأرض وبيانات القطعة ونبذة مختصرة عن المشروع عبر نموذج التواصل، وسنتواصل معك لترتيب استشارة أولية.',
+        },
+      },
+    ],
     method: [
       {
         title: { en: 'Understand', ar: 'الفهم' },
@@ -259,6 +291,29 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
       en: 'Interior design that carries the architectural idea into the rooms people use every day — planned for comfort, durability and maintenance, and coordinated with the building’s services.',
       ar: 'تصميم داخلي يحمل الفكرة المعمارية إلى الفراغات التي يستخدمها الناس كل يوم، ويُخطَّط للراحة والمتانة وسهولة الصيانة، بالتنسيق مع أنظمة المبنى.',
     },
+    faq: [
+      {
+        q: { en: 'Which kinds of interiors does MSP design?', ar: 'ما أنواع الفراغات الداخلية التي تصممها MSP؟' },
+        a: {
+          en: 'Residential, hospitality and workplace interiors. The portfolio includes the interiors of a hotel in Madinah, serviced apartments in Riyadh and an integrated residential community.',
+          ar: 'المساكن ومنشآت الضيافة وبيئات العمل. وتشمل الأعمال التصميم الداخلي لفندق في المدينة المنورة وشقق مخدومة في الرياض ومجتمع سكني متكامل.',
+        },
+      },
+      {
+        q: { en: 'Is the interior design coordinated with lighting and building services?', ar: 'هل يُنسَّق التصميم الداخلي مع الإضاءة وأنظمة المبنى؟' },
+        a: {
+          en: 'Yes. Layouts, lighting, ceilings and joinery are designed together and coordinated with the MEP design, so the interiors work as drawn.',
+          ar: 'نعم. نصمم التوزيع والإضاءة والأسقف والأعمال الخشبية معاً، وننسقها مع التصميم الكهروميكانيكي، لتعمل الفراغات كما صُممت.',
+        },
+      },
+      {
+        q: { en: 'Does MSP supply or install furniture and finishes?', ar: 'هل تورّد MSP الأثاث والتشطيبات أو تركّبها؟' },
+        a: {
+          en: 'No. MSP designs and specifies; supply and installation are carried out by suppliers and contractors, with MSP following up where this is part of the appointment.',
+          ar: 'لا. تتولى MSP التصميم وإعداد المواصفات، ويتولى الموردون والمقاولون التوريد والتركيب، مع متابعة MSP متى شمل التكليف ذلك.',
+        },
+      },
+    ],
     method: [
       {
         title: { en: 'Understand use', ar: 'فهم الاستخدام' },
@@ -305,6 +360,29 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
       en: 'Structural engineering that gives the architecture a safe, efficient and buildable frame — developed with the design from the start, so that the structure supports the spaces rather than constraining them.',
       ar: 'هندسة إنشائية تمنح التصميم المعماري هيكلاً آمناً وكفؤاً وقابلاً للتنفيذ، تتطور مع التصميم منذ البداية ليخدم المنشأ الفراغات بدلاً من أن يقيّدها.',
     },
+    faq: [
+      {
+        q: { en: 'Which codes does MSP design structures to?', ar: 'وفق أي أكواد تصمم MSP المنشآت؟' },
+        a: {
+          en: 'To the applicable Saudi codes, including the Saudi Building Code (SBC), and the requirements of the relevant authorities.',
+          ar: 'وفق الأكواد السعودية المعمول بها، ومنها كود البناء السعودي، ومتطلبات الجهات المختصة.',
+        },
+      },
+      {
+        q: { en: 'Is structural design coordinated with the architecture?', ar: 'هل يُنسَّق التصميم الإنشائي مع التصميم المعماري؟' },
+        a: {
+          en: 'Yes. Structural options are compared early, alongside the architectural design, and the structure is coordinated with the architectural and MEP models before documents are issued.',
+          ar: 'نعم. نقارن البدائل الإنشائية مبكراً بالتوازي مع التصميم المعماري، وننسق المنشأ مع النماذج المعمارية والكهروميكانيكية قبل إصدار المخططات.',
+        },
+      },
+      {
+        q: { en: 'What does the structural deliverable include?', ar: 'ماذا تشمل مخرجات التصميم الإنشائي؟' },
+        a: {
+          en: 'Structural drawings and details, and calculation reports for the superstructure and foundations.',
+          ar: 'المخططات والتفاصيل الإنشائية، والمذكرات الحسابية للهيكل العلوي والأساسات.',
+        },
+      },
+    ],
     method: [
       {
         title: { en: 'Assess', ar: 'التقييم' },
@@ -352,6 +430,29 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
       en: 'Mechanical, electrical and plumbing engineering that makes a building comfortable, safe and efficient to run — systems people rely on every day without seeing them.',
       ar: 'هندسة ميكانيكية وكهربائية وصحية تجعل المبنى مريحاً وآمناً وكفؤاً في تشغيله، عبر أنظمة يعتمد عليها مستخدموه كل يوم دون أن يروها.',
     },
+    faq: [
+      {
+        q: { en: 'Which systems does MEP engineering cover?', ar: 'ما الأنظمة التي تشملها الهندسة الكهروميكانيكية؟' },
+        a: {
+          en: 'Cooling and ventilation, electrical power, lighting and low-current systems, water supply, plumbing and drainage, and fire protection.',
+          ar: 'التكييف والتهوية، والقوى الكهربائية والإنارة وأنظمة التيار الخفيف، والتغذية بالمياه والتمديدات الصحية والصرف، والحماية من الحريق.',
+        },
+      },
+      {
+        q: { en: 'How is the MEP design coordinated with the building?', ar: 'كيف يُنسَّق التصميم الكهروميكانيكي مع المبنى؟' },
+        a: {
+          en: 'Service routes are coordinated with the structure and architecture from the outset, so ceilings, shafts and plant rooms work as designed.',
+          ar: 'ننسق مسارات الأنظمة مع الهيكل الإنشائي والتصميم المعماري منذ البداية، لتعمل الأسقف والفتحات وغرف المعدات كما صُممت.',
+        },
+      },
+      {
+        q: { en: 'What do you consider when selecting systems?', ar: 'ما الذي تراعونه عند اختيار الأنظمة؟' },
+        a: {
+          en: 'How the building will be used, the climate it must handle, comfort and safety requirements, and running and maintenance costs over the life of the building.',
+          ar: 'طريقة استخدام المبنى، والظروف المناخية التي يتعامل معها، ومتطلبات الراحة والسلامة، وتكاليف التشغيل والصيانة طوال عمر المبنى.',
+        },
+      },
+    ],
     method: [
       {
         title: { en: 'Define the loads', ar: 'تحديد الأحمال' },
@@ -399,6 +500,29 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
       en: 'Construction supervision as the client’s independent consultant — checking that what is built matches what was designed, approved and specified. MSP supervises the works; it does not carry out construction.',
       ar: 'إشراف هندسي على التنفيذ بصفتنا استشارياً مستقلاً للعميل، نتحقق فيه من مطابقة ما يُنفَّذ لما صُمّم واعتُمد ووُصّف. تتولى MSP الإشراف على الأعمال، ولا تتولى تنفيذها.',
     },
+    faq: [
+      {
+        q: { en: 'Is construction supervision the same as building the project?', ar: 'هل الإشراف الهندسي هو تنفيذ المشروع؟' },
+        a: {
+          en: 'No. MSP supervises the works as the client’s consultant; the contractor carries out the construction.',
+          ar: 'لا. تشرف MSP على الأعمال بصفتها استشاري العميل، ويتولى المقاول التنفيذ.',
+        },
+      },
+      {
+        q: { en: 'What does supervision include?', ar: 'ماذا يشمل الإشراف الهندسي؟' },
+        a: {
+          en: 'Site inspections and quality checks, review of shop drawings, material submittals and samples, responses to technical queries, progress and quality reporting, and inspection support at handover.',
+          ar: 'الزيارات الميدانية وفحص الجودة، ومراجعة مخططات الورشة وطلبات اعتماد المواد والعينات، والرد على الاستفسارات الفنية، وتقارير سير الأعمال وجودتها، ودعم الفحص عند الاستلام.',
+        },
+      },
+      {
+        q: { en: 'Who receives the supervision reports?', ar: 'لمن تُرفع تقارير الإشراف؟' },
+        a: {
+          en: 'The client. Reporting is agreed with the client at the start, together with the inspection plan.',
+          ar: 'للعميل. يُتفق مع العميل على آلية رفع التقارير وخطة الفحص منذ البداية.',
+        },
+      },
+    ],
     method: [
       {
         title: { en: 'Prepare', ar: 'التحضير' },
