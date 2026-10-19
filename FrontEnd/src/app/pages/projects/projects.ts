@@ -1,3 +1,4 @@
+import { publishedSectorPages } from '../../core/data/sector-pages';
 import { Cta } from '../home/sections/cta/cta';
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -43,6 +44,19 @@ import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
         <p appScrollReveal [revealDelay]="120" class="mt-6 max-w-xl text-lg leading-relaxed text-muted">
           {{ i18n.pick(t.intro) }}
         </p>
+        @if (sectorPages().length) {
+          <nav class="mt-8 flex flex-wrap items-center gap-3" [attr.aria-label]="i18n.pick(t.bySector)">
+            <span class="font-mono text-xs uppercase tracking-[0.12em] text-muted">{{ i18n.pick(t.bySector) }}</span>
+            @for (sp of sectorPages(); track sp.slug) {
+              <a
+                [routerLink]="['/projects', 'sector', sp.slug] | loc"
+                class="border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] text-ink transition-colors hover:border-ink hover:text-accent"
+              >
+                {{ i18n.pick(sp.title) }}
+              </a>
+            }
+          </nav>
+        }
       </app-container>
     </section>
 
@@ -151,6 +165,8 @@ export class Projects {
   private readonly content = inject(PublicContentService);
 
   protected readonly projects = signal<Project[]>([]);
+  /** Sector collections with enough projects to have their own page. */
+  protected readonly sectorPages = computed(() => publishedSectorPages(this.projects()));
   protected readonly loading = signal(true);
   protected readonly skeletons = [0, 1, 2, 3, 4, 5];
 
@@ -190,6 +206,7 @@ export class Projects {
   }
 
   protected readonly t = {
+    bySector: { en: 'Browse by sector', ar: 'تصفح حسب القطاع' },
     eyebrow: { en: 'Works', ar: 'الأعمال' },
     title: { en: 'Selected works.', ar: 'أعمال مختارة.' },
     intro: {

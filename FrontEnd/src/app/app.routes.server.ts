@@ -1,5 +1,5 @@
 import { PrerenderFallback, RenderMode, ServerRoute } from '@angular/ssr';
-import { publishedSlugs } from './core/seo/prerender-slugs';
+import { publishedSectorSlugs, publishedSlugs } from './core/seo/prerender-slugs';
 import { APPROVED_SERVICE_SLUGS } from './core/data/service-pages';
 
 function slugRoute(path: string, resource: 'projects' | 'blog'): ServerRoute {
@@ -16,6 +16,16 @@ export const serverRoutes: ServerRoute[] = [
   // build time, so crawlers get real titles, text and images. Anything
   // published after the build falls back to the client shell (nginx serves
   // index.csr.html for unknown slugs) until the next deploy.
+  // Sector pages: only sectors with enough projects are generated; nginx
+  // answers any other /projects/sector/<x> with a real 404.
+  ...['projects/sector/:sector', 'ar/projects/sector/:sector'].map(
+    (path): ServerRoute => ({
+      path,
+      renderMode: RenderMode.Prerender,
+      fallback: PrerenderFallback.None,
+      getPrerenderParams: async () => (await publishedSectorSlugs()).map((sector) => ({ sector })),
+    }),
+  ),
   slugRoute('projects/:slug', 'projects'),
   slugRoute('ar/projects/:slug', 'projects'),
   slugRoute('blog/:slug', 'blog'),

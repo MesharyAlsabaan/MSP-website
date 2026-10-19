@@ -81,6 +81,19 @@ server {
     return 404;
   }
 
+  # Sector pages exist only when prerendered (enough projects in the sector);
+  # any other sector URL is a real 404, not an empty app shell.
+  location ~ ^/projects/sector/[^/]+$ {
+    add_header Cache-Control "no-cache";
+    error_page 404 /404/index.html;
+    try_files $uri/index.html =404;
+  }
+  location ~ ^/ar/projects/sector/[^/]+$ {
+    add_header Cache-Control "no-cache";
+    error_page 404 /ar/404/index.html;
+    try_files $uri/index.html =404;
+  }
+
   # Static Angular site. Prerendered routes resolve to their own index.html;
   # client-rendered routes (/admin, /auth) fall back to the app shell.
   #

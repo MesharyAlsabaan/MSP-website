@@ -26,6 +26,7 @@ import { LocPipe } from '../../shared/pipes/loc.pipe';
 import { SrcsetPipe } from '../../shared/pipes/srcset.pipe';
 import { JsonLd, ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
 import { SERVICE_PAGES } from '../../core/data/service-pages';
+import { sectorPageFor } from '../../core/data/sector-pages';
 
 type LoadState =
   | { status: 'loading'; project: null }
@@ -241,6 +242,52 @@ type LoadState =
           />
         }
 
+        <!-- Related projects (same sector) and the sector collection -->
+        @if (related().length) {
+          <section class="border-t border-hairline py-16 sm:py-20">
+            <app-container>
+              <div class="flex flex-wrap items-baseline justify-between gap-4">
+                <h2 class="t-section font-display font-medium tracking-[-0.03em] text-ink">{{ i18n.pick(t.related) }}</h2>
+                @if (sectorPage(); as sp) {
+                  <a
+                    [routerLink]="['/projects', 'sector', sp.slug] | loc"
+                    class="font-mono text-xs uppercase tracking-[0.12em] text-accent hover:underline"
+                  >
+                    {{ i18n.pick(t.allIn) }}{{ i18n.pick(sp.title) }} <span class="dir-flip inline-block" aria-hidden="true">&rarr;</span>
+                  </a>
+                }
+              </div>
+              <ul class="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                @for (rp of related(); track rp.slug) {
+                  <li>
+                    <a [routerLink]="['/projects', rp.slug] | loc" class="group block">
+                      @if (rp.cover | asset; as cover) {
+                        <div class="aspect-[4/3] overflow-hidden bg-hairline/40">
+                          <img
+                            [src]="cover"
+                            [attr.srcset]="rp.cover | srcset"
+                            sizes="(min-width: 1024px) 360px, (min-width: 640px) 46vw, 92vw"
+                            [alt]="coverAlt(rp)"
+                            width="800"
+                            height="600"
+                            loading="lazy"
+                            decoding="async"
+                            class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                          />
+                        </div>
+                      }
+                      <h3 class="mt-4 font-display text-lg font-medium text-ink transition-colors group-hover:text-accent">
+                        {{ i18n.pick(rp.title) }}
+                      </h3>
+                      <p class="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-muted">{{ i18n.pick(rp.location) }}</p>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </app-container>
+          </section>
+        }
+
         <!-- Contact -->
         <section class="border-t border-hairline py-12 sm:py-14">
           <app-container>
@@ -335,6 +382,23 @@ export class ProjectDetail {
     return list[(idx + 1) % list.length];
   });
 
+  /** Up to three other projects sharing a sector with this one. */
+  protected readonly related = computed(() => {
+    const current = this.project();
+    if (!current) return [];
+    const keys = new Set(sectorsOf(current).map((t) => t.key));
+    if (!keys.size) return [];
+    return this.all()
+      .filter((p) => p.slug !== current.slug && sectorsOf(p).some((t) => keys.has(t.key)))
+      .slice(0, 3);
+  });
+
+  /** The published sector collection this project belongs to, if any. */
+  protected readonly sectorPage = computed(() => {
+    const current = this.project();
+    return current ? sectorPageFor(current, this.all()) : null;
+  });
+
   /** Full-screen viewer state for the gallery. */
   protected readonly viewerOpen = signal(false);
   protected readonly viewerIndex = signal(0);
@@ -381,6 +445,8 @@ export class ProjectDetail {
     next: { en: 'Next project', ar: 'المشروع التالي' },
     notFound: { en: 'Project not found.', ar: 'المشروع غير موجود.' },
     overview: { en: 'Project overview', ar: 'نظرة عامة على المشروع' },
+    related: { en: 'Related projects', ar: 'مشاريع ذات صلة' },
+    allIn: { en: 'All ', ar: 'كل ' },
     location: { en: 'Location', ar: 'الموقع' },
     servicesLink: { en: 'About these services', ar: 'تعرّف على هذه الخدمات' },
     discuss: {

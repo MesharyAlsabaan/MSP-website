@@ -41,6 +41,13 @@ const publicPages: Routes = [
     redirectTo: 'projects/SBC',
   },
   {
+    // Sector collections (residential, hospitality, …); before :slug so
+    // "sector" is never read as a project slug.
+    path: 'projects/sector/:sector',
+    loadComponent: () =>
+      import('./pages/projects/sector-page').then((m) => m.SectorPage),
+  },
+  {
     path: 'projects/:slug',
     loadComponent: () =>
       import('./pages/projects/project-detail').then((m) => m.ProjectDetail),
