@@ -188,6 +188,8 @@ export interface ServicePage {
    */
   approved: boolean;
   title: L;
+  /** Page heading when it should say more than the title (service and place, as clients search). */
+  h1?: L;
   seoTitle: L;
   seoDescription: L;
   intro: L;
@@ -206,10 +208,11 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     discipline: 'architectural-design',
     approved: true,
     title: { en: 'Architectural Design', ar: 'التصميم المعماري' },
-    seoTitle: { en: 'Architectural Design Services in Riyadh', ar: 'خدمات التصميم المعماري في الرياض' },
+    h1: { en: 'Architectural Design Firm in Riyadh', ar: 'مكتب تصميم معماري في الرياض' },
+    seoTitle: { en: 'Architectural Design Firm in Riyadh', ar: 'مكتب تصميم معماري في الرياض' },
     seoDescription: {
-      en: 'Architectural design by MSP in Riyadh: from site study and concept to construction documents, coordinated with structural and MEP engineering.',
-      ar: 'التصميم المعماري لدى MSP في الرياض: من دراسة الموقع والفكرة التصميمية إلى المخططات التنفيذية، بالتنسيق مع الهندسة الإنشائية والكهروميكانيكية.',
+      en: 'MSP designs villas, residential compounds, hotels and commercial buildings in Riyadh, from site study to construction documents. Request a consultation.',
+      ar: 'تصمم MSP الفلل والمجمعات السكنية والفنادق والمباني التجارية في الرياض، من دراسة الموقع إلى المخططات التنفيذية. اطلب استشارة.',
     },
     intro: {
       en: 'Architectural design that begins with the people who will use a building — shaping plan, massing, daylight and movement so that creative expression and everyday performance are resolved together.',
@@ -242,6 +245,20 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
         a: {
           en: 'Send us the site location, plot details and a short brief through the contact form. We will respond to arrange an initial consultation.',
           ar: 'أرسل إلينا موقع الأرض وبيانات القطعة ونبذة مختصرة عن المشروع عبر نموذج التواصل، وسنتواصل معك لترتيب استشارة أولية.',
+        },
+      },
+      {
+        q: { en: 'Can one office handle the architecture, structure, MEP and interiors?', ar: 'هل يمكن أن يتولى مكتب واحد التصميم المعماري والإنشائي والكهروميكانيكي والداخلي؟' },
+        a: {
+          en: 'Yes. Architectural, interior, structural and MEP design are all MSP disciplines, coordinated by one team from the first concept to the construction documents.',
+          ar: 'نعم. التصميم المعماري والداخلي والإنشائي والكهروميكانيكي كلها من تخصصات MSP، وينسقها فريق واحد من الفكرة الأولى حتى المخططات التنفيذية.',
+        },
+      },
+      {
+        q: { en: 'Do you work on projects outside Riyadh?', ar: 'هل تعملون على مشاريع خارج الرياض؟' },
+        a: {
+          en: 'Yes. MSP’s portfolio includes a hotel in Madinah, and MSP also has an office in Cairo.',
+          ar: 'نعم. تضم أعمال MSP فندقاً في المدينة المنورة، ولدى MSP مكتب في القاهرة أيضاً.',
         },
       },
     ],
@@ -282,10 +299,11 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     discipline: 'interior-design',
     approved: true,
     title: { en: 'Interior Design', ar: 'التصميم الداخلي' },
-    seoTitle: { en: 'Interior Design Consultancy in Riyadh', ar: 'استشارات التصميم الداخلي في الرياض' },
+    h1: { en: 'Interior Design Consultancy in Riyadh', ar: 'مكتب تصميم داخلي في الرياض' },
+    seoTitle: { en: 'Interior Design Consultancy in Riyadh', ar: 'مكتب تصميم داخلي في الرياض' },
     seoDescription: {
-      en: 'Interior design by MSP: layouts, materials, lighting and joinery for residential, hospitality and workplace interiors, coordinated with building services.',
-      ar: 'التصميم الداخلي لدى MSP: تخطيط الفراغات والمواد والإضاءة والأعمال الخشبية للمساكن ومنشآت الضيافة وبيئات العمل، بالتنسيق مع أنظمة المبنى.',
+      en: 'Interior design by MSP in Riyadh for homes, serviced apartments and hotels: layouts, materials, lighting and joinery, coordinated with building services.',
+      ar: 'تصميم داخلي من MSP في الرياض للمساكن والشقق المخدومة والفنادق: التوزيع والمواد والإضاءة والأعمال الخشبية، بالتنسيق مع أنظمة المبنى.',
     },
     intro: {
       en: 'Interior design that carries the architectural idea into the rooms people use every day — planned for comfort, durability and maintenance, and coordinated with the building’s services.',
@@ -311,6 +329,13 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
         a: {
           en: 'No. MSP designs and specifies; supply and installation are carried out by suppliers and contractors, with MSP following up where this is part of the appointment.',
           ar: 'لا. تتولى MSP التصميم وإعداد المواصفات، ويتولى الموردون والمقاولون التوريد والتركيب، مع متابعة MSP متى شمل التكليف ذلك.',
+        },
+      },
+      {
+        q: { en: 'Do you design interiors outside Riyadh?', ar: 'هل تصممون فراغات داخلية خارج الرياض؟' },
+        a: {
+          en: 'Yes. MSP’s interior design work includes a hotel in Madinah as well as serviced apartments in Riyadh.',
+          ar: 'نعم. تشمل أعمال MSP في التصميم الداخلي فندقاً في المدينة المنورة، إلى جانب شقق مخدومة في الرياض.',
         },
       },
     ],
@@ -351,10 +376,11 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     discipline: 'engineering-design',
     approved: true,
     title: { en: 'Structural Engineering', ar: 'الهندسة الإنشائية' },
-    seoTitle: { en: 'Structural Engineering Design in Riyadh', ar: 'التصميم الإنشائي في الرياض' },
+    h1: { en: 'Structural Engineering Design in Riyadh', ar: 'مكتب تصميم إنشائي في الرياض' },
+    seoTitle: { en: 'Structural Engineering Design in Riyadh', ar: 'مكتب تصميم إنشائي في الرياض' },
     seoDescription: {
-      en: 'Structural engineering by MSP in Riyadh: safe, efficient and buildable structures, designed alongside the architecture to the applicable Saudi codes.',
-      ar: 'الهندسة الإنشائية لدى MSP في الرياض: منشآت آمنة وكفؤة وقابلة للتنفيذ، تُصمَّم بالتوازي مع التصميم المعماري ووفق الأكواد السعودية المعمول بها.',
+      en: 'Structural design by MSP in Riyadh for villas, compounds and commercial buildings: structure and foundations to the Saudi codes, coordinated with the architecture.',
+      ar: 'تصميم إنشائي من MSP في الرياض للفلل والمجمعات والمباني التجارية: الهيكل والأساسات وفق الأكواد السعودية، بالتنسيق مع التصميم المعماري.',
     },
     intro: {
       en: 'Structural engineering that gives the architecture a safe, efficient and buildable frame — developed with the design from the start, so that the structure supports the spaces rather than constraining them.',
@@ -380,6 +406,13 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
         a: {
           en: 'Structural drawings and details, and calculation reports for the superstructure and foundations.',
           ar: 'المخططات والتفاصيل الإنشائية، والمذكرات الحسابية للهيكل العلوي والأساسات.',
+        },
+      },
+      {
+        q: { en: 'Do you design the structure of villas and residential compounds?', ar: 'هل تصممون الهيكل الإنشائي للفلل والمجمعات السكنية؟' },
+        a: {
+          en: 'Yes. MSP’s engineering design work includes private residences and residential villa compounds in Riyadh, alongside commercial and hospitality buildings.',
+          ar: 'نعم. تشمل أعمال MSP في التصميم الهندسي مساكن خاصة ومجمعات فلل سكنية في الرياض، إلى جانب مبانٍ تجارية ومنشآت ضيافة.',
         },
       },
     ],
@@ -421,7 +454,8 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     discipline: 'engineering-design',
     approved: true,
     title: { en: 'MEP Engineering', ar: 'الهندسة الكهروميكانيكية' },
-    seoTitle: { en: 'MEP Engineering Design in Riyadh', ar: 'تصميم الأنظمة الكهروميكانيكية في الرياض' },
+    h1: { en: 'MEP Engineering Design in Riyadh', ar: 'التصميم الكهروميكانيكي في الرياض' },
+    seoTitle: { en: 'MEP Engineering Design in Riyadh', ar: 'التصميم الكهروميكانيكي في الرياض' },
     seoDescription: {
       en: 'MEP engineering by MSP in Riyadh: cooling, ventilation, power, lighting, water and fire safety systems, coordinated with the structure and architecture.',
       ar: 'الهندسة الكهروميكانيكية لدى MSP في الرياض: أنظمة التكييف والتهوية والكهرباء والإنارة والمياه والحماية من الحريق، بالتنسيق مع الهيكل الإنشائي والتصميم المعماري.',
@@ -491,10 +525,11 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
     discipline: 'supervision',
     approved: true,
     title: { en: 'Construction Supervision', ar: 'الإشراف الهندسي' },
-    seoTitle: { en: 'Construction Supervision Consultancy in Riyadh', ar: 'استشارات الإشراف الهندسي على التنفيذ في الرياض' },
+    h1: { en: 'Construction Supervision Consultant in Riyadh', ar: 'مكتب إشراف هندسي في الرياض' },
+    seoTitle: { en: 'Construction Supervision Consultant in Riyadh', ar: 'مكتب إشراف هندسي في الرياض' },
     seoDescription: {
-      en: 'Construction supervision by MSP as the client’s consultant: site inspections, submittal review and reporting, so that what is built matches the approved design.',
-      ar: 'الإشراف الهندسي لدى MSP بصفتها استشاري العميل: زيارات ميدانية، ومراجعة الاعتمادات، وتقارير دورية، ليطابق المنفَّذُ التصميمَ المعتمد.',
+      en: 'Construction supervision in Riyadh by MSP as the client’s consultant: site inspections, submittal review and reporting, so the building matches the approved design.',
+      ar: 'إشراف هندسي في الرياض من MSP بصفتها استشاري العميل: زيارات ميدانية ومراجعة الاعتمادات وتقارير دورية، ليطابق المنفَّذُ التصميمَ المعتمد.',
     },
     intro: {
       en: 'Construction supervision as the client’s independent consultant — checking that what is built matches what was designed, approved and specified. MSP supervises the works; it does not carry out construction.',
@@ -520,6 +555,13 @@ export const SERVICE_PAGES: readonly ServicePage[] = [
         a: {
           en: 'The client. Reporting is agreed with the client at the start, together with the inspection plan.',
           ar: 'للعميل. يُتفق مع العميل على آلية رفع التقارير وخطة الفحص منذ البداية.',
+        },
+      },
+      {
+        q: { en: 'Do you supervise the construction of villas in Riyadh?', ar: 'هل تشرفون على تنفيذ الفلل في الرياض؟' },
+        a: {
+          en: 'Yes, where supervision is part of the appointment. MSP’s portfolio includes the supervision of a residential villas compound in Riyadh.',
+          ar: 'نعم، متى شمل التكليف الإشراف. وتضم أعمال MSP الإشراف على مجمع فلل سكني في الرياض.',
         },
       },
     ],

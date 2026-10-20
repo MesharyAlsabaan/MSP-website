@@ -7,6 +7,7 @@ import { CompanyInfo } from '../../../../core/models/content.model';
 import { LocPipe } from '../../../../shared/pipes/loc.pipe';
 import { AnalyticsService } from '../../../../core/services/analytics.service';
 import { ConsentService } from '../../../../core/services/consent.service';
+import { SERVICE_PAGES } from '../../../../core/data/service-pages';
 
 interface NavLink {
   readonly path: string;
@@ -20,7 +21,7 @@ interface NavLink {
   template: `
     <footer class="border-t border-hairline bg-surface">
       <app-container>
-        <div class="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
+        <div class="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <a
               [routerLink]="'/' | loc"
@@ -51,6 +52,24 @@ interface NavLink {
                     class="text-sm text-muted transition-colors hover:text-ink"
                   >
                     {{ i18n.pick(item.label) }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div>
+            <p class="font-mono text-xs uppercase tracking-[0.18em] text-accent">
+              {{ i18n.pick(servicesHeading) }}
+            </p>
+            <ul class="mt-5 space-y-3">
+              @for (sp of servicePages; track sp.slug) {
+                <li>
+                  <a
+                    [routerLink]="['/services', sp.slug] | loc"
+                    class="text-sm text-muted transition-colors hover:text-ink"
+                  >
+                    {{ i18n.pick(sp.title) }}
                   </a>
                 </li>
               }
@@ -167,6 +186,9 @@ export class Footer {
   protected readonly city = { en: 'Riyadh · Saudi Arabia', ar: 'الرياض · المملكة العربية السعودية' };
   protected readonly established = { en: 'Established 2010', ar: 'تأسست عام 2010' };
   protected readonly navHeading = { en: 'Navigate', ar: 'تصفّح' };
+  protected readonly servicesHeading = { en: 'Services', ar: 'الخدمات' };
+  /** Every approved service page, linked from every page of the site. */
+  protected readonly servicePages = SERVICE_PAGES.filter((sp) => sp.approved);
   protected readonly contactHeading = { en: 'Contact', ar: 'تواصل معنا' };
   protected readonly address = { en: 'Irqah, Riyadh', ar: 'حي عرقة، الرياض' };
   protected readonly cairoAddress = { en: 'Rayhana Plaza, Maadi, Cairo', ar: 'ريحانة بلازا، المعادي، القاهرة' };

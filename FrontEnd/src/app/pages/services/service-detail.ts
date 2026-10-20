@@ -1,3 +1,4 @@
+import { publishedSectorPages } from '../../core/data/sector-pages';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -37,7 +38,7 @@ import { ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
             <span class="dir-flip">&larr;</span> {{ i18n.pick(t.back) }}
           </a>
           <h1 class="mt-8 max-w-4xl t-display font-display font-medium tracking-[-0.035em] text-ink">
-            {{ i18n.pick(p.title) }}
+            {{ i18n.pick(p.h1 ?? p.title) }}
           </h1>
           <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted">{{ i18n.pick(p.intro) }}</p>
         </app-container>
@@ -61,6 +62,20 @@ import { ORG_ID, absoluteUrl } from '../../core/seo/structured-data';
                 </ul>
                 <h2 class="mt-10 font-mono text-xs uppercase tracking-[0.18em] text-accent">{{ i18n.pick(t.types) }}</h2>
                 <p class="mt-4 text-sm leading-relaxed text-muted">{{ i18n.pick(d.projectTypes) }}</p>
+                @if (sectors().length) {
+                  <ul class="mt-5 flex flex-wrap gap-3">
+                    @for (sp of sectors(); track sp.slug) {
+                      <li>
+                        <a
+                          [routerLink]="['/projects', 'sector', sp.slug] | loc"
+                          class="inline-block border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.1em] text-ink transition-colors hover:border-ink hover:text-accent"
+                        >
+                          {{ i18n.pick(sp.title) }}
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
               </div>
             </div>
           </app-container>
@@ -192,6 +207,12 @@ export class ServiceDetail {
     const page = this.page();
     if (!page) return [];
     return this.projects().filter((p) => (p.disciplines ?? []).some((d) => d.key === page.discipline));
+  });
+
+  /** Published sector pages whose projects use this service. */
+  protected readonly sectors = computed(() => {
+    const page = this.page();
+    return page ? publishedSectorPages(this.projects()).filter((sp) => sp.services.includes(page.slug)) : [];
   });
 
   protected readonly t = {
