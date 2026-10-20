@@ -46,7 +46,7 @@ async function render(sector: string) {
 describe('SectorPage', () => {
   it('lists the sector projects with a CollectionPage and ItemList', async () => {
     const { el, doc } = await render('residential');
-    expect(el.querySelector('h1')?.textContent).toContain('Residential projects');
+    expect(el.querySelector('h1')?.textContent).toContain('Villa and residential compound projects in Riyadh');
     expect([...el.querySelectorAll('li h2')].map((h) => h.textContent?.trim())).toEqual(['Project a', 'Project b']);
     const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent).join('');
     expect(ld).toContain('"CollectionPage"');

@@ -59,7 +59,7 @@ describe('sector pages', () => {
 
   it('has bilingual copy and links only to existing service pages', () => {
     for (const p of SECTOR_PAGES) {
-      for (const field of [p.title, p.seoTitle, p.seoDescription, p.intro]) {
+      for (const field of [p.title, p.h1, p.seoTitle, p.seoDescription, p.intro]) {
         expect(field.en.trim()).not.toBe('');
         expect(field.ar.trim()).not.toBe('');
       }

@@ -2,6 +2,8 @@
 
 Date: 2026-10-19 · For: the MSP editor who updates projects in Admin → Projects
 
+> **Status (2026-10-20): DO NOT PUBLISH YET.** Management asked that none of these descriptions go live until MSP confirms each one matches the real project. The three held projects stay as they are: not deleted, and their location and classification unchanged until confirmed. Renders may be shown, but must not be presented as photos of completed work.
+
 ## Sources and rules
 
 The only sources are what MSP has already published: each project's CMS record (title, summary, location, year, status, disciplines, design categories) and its published images. Every published image is a **render**, so descriptions talk about the design, not about a finished building or its users. Nothing here adds a year, area, unit count, client, address or service that isn't already on record.

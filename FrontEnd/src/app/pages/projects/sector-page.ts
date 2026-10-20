@@ -33,7 +33,7 @@ import { absoluteUrl } from '../../core/seo/structured-data';
             <span class="dir-flip">&larr;</span> {{ i18n.pick(t.back) }}
           </a>
           <h1 class="mt-8 max-w-4xl t-display font-display font-medium tracking-[-0.035em] text-ink">
-            {{ i18n.pick(p.title) }}
+            {{ i18n.pick(p.h1) }}
           </h1>
           <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted">{{ i18n.pick(p.intro) }}</p>
         </app-container>

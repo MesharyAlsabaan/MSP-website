@@ -19,6 +19,8 @@ export interface SectorPage {
   /** CMS sector keys that belong to this page. */
   sectorKeys: readonly string[];
   title: L;
+  /** Page heading in the words clients search with. */
+  h1: L;
   seoTitle: L;
   seoDescription: L;
   intro: L;
@@ -31,6 +33,7 @@ export const SECTOR_PAGES: readonly SectorPage[] = [
     slug: 'residential',
     sectorKeys: ['residential'],
     title: { en: 'Residential projects', ar: 'المشاريع السكنية' },
+    h1: { en: 'Villa and residential compound projects in Riyadh', ar: 'مشاريع الفلل والمجمعات السكنية في الرياض' },
     seoTitle: { en: 'Residential Architecture Projects in Riyadh', ar: 'مشاريع سكنية: تصميم فلل ومجمعات في الرياض' },
     seoDescription: {
       en: 'Private villas, residential compounds and residential communities designed by MSP in Riyadh, with architecture, engineering and interiors.',
@@ -46,6 +49,7 @@ export const SECTOR_PAGES: readonly SectorPage[] = [
     slug: 'hospitality',
     sectorKeys: ['hospitality'],
     title: { en: 'Hospitality projects', ar: 'مشاريع الضيافة' },
+    h1: { en: 'Hotel and serviced-apartment projects', ar: 'مشاريع الفنادق والشقق المخدومة' },
     seoTitle: { en: 'Hospitality Design Projects: Hotels and Serviced Apartments', ar: 'مشاريع الضيافة: تصميم فنادق وشقق مخدومة' },
     seoDescription: {
       en: 'Hospitality projects by MSP: a hotel in Madinah and serviced apartments in Riyadh, with architecture and interior design.',
@@ -61,6 +65,7 @@ export const SECTOR_PAGES: readonly SectorPage[] = [
     slug: 'commercial',
     sectorKeys: ['work', 'commercial'],
     title: { en: 'Commercial and office projects', ar: 'المشاريع التجارية والمكتبية' },
+    h1: { en: 'Commercial and office building projects in Riyadh', ar: 'مشاريع المباني التجارية والمكتبية في الرياض' },
     seoTitle: { en: 'Commercial and Office Building Design Projects', ar: 'مشاريع تصميم المباني التجارية والمكتبية' },
     seoDescription: {
       en: 'Office, commercial and commercial-residential buildings designed by MSP in Riyadh.',

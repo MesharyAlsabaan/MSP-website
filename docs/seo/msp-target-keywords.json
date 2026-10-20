@@ -1,0 +1,223 @@
+{
+  "_note": "MSP's 20 commercial target keywords (contract intent). No volumes: none are measured. 'match' terms are matched against Search Console queries (normalised, all must appear). Edit with the keyword map in MSP-SEARCH-VISIBILITY-PLAN.md. A query counts toward one target only: the most specific match ('generic' targets only when nothing more specific matches). Informational queries (ما هو، كيف، what is…) never count.",
+  "targets": [
+    {
+      "id": 1,
+      "lang": "ar",
+      "keyword": "مكتب تصميم معماري بالرياض",
+      "match": [
+        "تصميم",
+        "معماري"
+      ],
+      "page": "/ar/services/architectural-design",
+      "priority": "P1"
+    },
+    {
+      "id": 2,
+      "lang": "ar",
+      "keyword": "مكتب هندسي بالرياض",
+      "match": [
+        "مكتب",
+        "هندسي"
+      ],
+      "page": "/ar",
+      "priority": "P1",
+      "generic": true
+    },
+    {
+      "id": 3,
+      "lang": "ar",
+      "keyword": "مكتب استشارات هندسية بالرياض",
+      "match": [
+        "استشارات",
+        "هندسي"
+      ],
+      "page": "/ar",
+      "priority": "P1",
+      "generic": true
+    },
+    {
+      "id": 4,
+      "lang": "ar",
+      "keyword": "تصميم فلل بالرياض",
+      "match": [
+        "فلل|فيلا|فله"
+      ],
+      "page": "/ar/projects/sector/residential",
+      "priority": "P1"
+    },
+    {
+      "id": 5,
+      "lang": "ar",
+      "keyword": "مكتب إشراف هندسي بالرياض",
+      "match": [
+        "اشراف"
+      ],
+      "page": "/ar/services/construction-supervision",
+      "priority": "P1"
+    },
+    {
+      "id": 6,
+      "lang": "ar",
+      "keyword": "مكتب تصميم داخلي بالرياض",
+      "match": [
+        "تصميم",
+        "داخلي"
+      ],
+      "page": "/ar/services/interior-design",
+      "priority": "P1"
+    },
+    {
+      "id": 7,
+      "lang": "ar",
+      "keyword": "شركة استشارات هندسية ومعمارية",
+      "match": [
+        "شركه|شركات",
+        "استشار"
+      ],
+      "page": "/ar/about",
+      "priority": "P2",
+      "generic": true
+    },
+    {
+      "id": 8,
+      "lang": "ar",
+      "keyword": "مكتب تصميم إنشائي بالرياض",
+      "match": [
+        "انشائي"
+      ],
+      "page": "/ar/services/structural-engineering",
+      "priority": "P2"
+    },
+    {
+      "id": 9,
+      "lang": "ar",
+      "keyword": "تصميم كهروميكانيكي",
+      "match": [
+        "كهروميكانيك"
+      ],
+      "page": "/ar/services/mep-engineering",
+      "priority": "P2"
+    },
+    {
+      "id": 10,
+      "lang": "ar",
+      "keyword": "تصميم مجمعات سكنية",
+      "match": [
+        "مجمع|مجمعات",
+        "سكني"
+      ],
+      "page": "/ar/projects/sector/residential",
+      "priority": "P2"
+    },
+    {
+      "id": 11,
+      "lang": "ar",
+      "keyword": "تصميم فنادق",
+      "match": [
+        "فندق|فنادق|ضيافه"
+      ],
+      "page": "/ar/projects/sector/hospitality",
+      "priority": "P2"
+    },
+    {
+      "id": 12,
+      "lang": "ar",
+      "keyword": "تصميم مباني تجارية بالرياض",
+      "match": [
+        "تجاري|تجاريه|مكتبي"
+      ],
+      "page": "/ar/projects/sector/commercial",
+      "priority": "P3"
+    },
+    {
+      "id": 13,
+      "lang": "en",
+      "keyword": "architectural design firm riyadh",
+      "match": [
+        "architect"
+      ],
+      "page": "/services/architectural-design",
+      "priority": "P1"
+    },
+    {
+      "id": 14,
+      "lang": "en",
+      "keyword": "engineering consultancy riyadh",
+      "match": [
+        "engineering",
+        "consult"
+      ],
+      "page": "/",
+      "priority": "P1",
+      "generic": true
+    },
+    {
+      "id": 15,
+      "lang": "en",
+      "keyword": "villa design riyadh",
+      "match": [
+        "villa"
+      ],
+      "page": "/projects/sector/residential",
+      "priority": "P2"
+    },
+    {
+      "id": 16,
+      "lang": "en",
+      "keyword": "interior design consultancy riyadh",
+      "match": [
+        "interior"
+      ],
+      "page": "/services/interior-design",
+      "priority": "P2"
+    },
+    {
+      "id": 17,
+      "lang": "en",
+      "keyword": "construction supervision consultant riyadh",
+      "match": [
+        "supervision"
+      ],
+      "page": "/services/construction-supervision",
+      "priority": "P2"
+    },
+    {
+      "id": 18,
+      "lang": "en",
+      "keyword": "structural engineering design riyadh",
+      "match": [
+        "structural"
+      ],
+      "page": "/services/structural-engineering",
+      "priority": "P3"
+    },
+    {
+      "id": 19,
+      "lang": "en",
+      "keyword": "mep design consultant riyadh",
+      "match": [
+        "mep|mechanical|electrical"
+      ],
+      "page": "/services/mep-engineering",
+      "priority": "P3"
+    },
+    {
+      "id": 20,
+      "lang": "en",
+      "keyword": "hotel design saudi arabia",
+      "match": [
+        "hotel|hospitality"
+      ],
+      "page": "/projects/sector/hospitality",
+      "priority": "P3"
+    }
+  ],
+  "brand": [
+    "msp",
+    "ام اس بي",
+    "منصور السبعان",
+    "mansour al-sabaan",
+    "mansour alsabaan"
+  ]
+}
