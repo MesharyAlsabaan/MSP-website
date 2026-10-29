@@ -6,7 +6,7 @@ import { AdminProjectSyncItem } from './project-sync-item';
 import { API, detail, status } from './project-sync.fixtures';
 import { SyncItemDetail } from './project-sync.models';
 
-describe('AdminProjectSyncItem (review page)', () => {
+describe('AdminProjectSyncItem (project page)', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
@@ -44,13 +44,16 @@ describe('AdminProjectSyncItem (review page)', () => {
     return { fixture, el, q, type };
   }
 
-  it('shows what to confirm and marks each fact with its source', () => {
-    const { q } = render();
-    expect(q('readiness').textContent).toContain('Complete');
-    expect(q('readiness').textContent).toContain('Title (Arabic)');
-    expect(q('editor').textContent).toContain('Suggested · folder name');
-    expect(q('editor').textContent).toContain('Verified');
-    expect(q('editor').textContent).toContain('AI draft');
+  it('shows that it is published, what is missing, and where each fact came from', () => {
+    const { q, el } = render();
+    expect(q('readiness').textContent).toContain('Published automatically');
+    expect(q('missing').textContent).toContain('written description');
+    expect(q('editor').textContent).toContain('From the folder name');
+    expect(q('editor').textContent).toContain('Edited in the admin');
+    expect(q('editor').textContent).toContain('AI · Arabic rendering');
+    expect(q('editor').textContent).toContain('Written by AI');
+    // No approval step: no approve button and no confirmation box.
+    expect([...el.querySelectorAll('button, label')].map((b) => b.textContent).join()).not.toMatch(/approve|I confirm/i);
   });
 
   it('previews the page in English and in Arabic (right to left)', () => {
@@ -74,40 +77,39 @@ describe('AdminProjectSyncItem (review page)', () => {
     expect(tiles[0].textContent).toContain('Cover');
   });
 
-  it('approves only after the suggested facts are confirmed, and can publish at once', () => {
+  it('publishes changes at once, without any approval step', () => {
     const { fixture, q } = render();
-    expect(q('approve-now').hasAttribute('disabled')).toBe(true);
-    (q('confirm') as HTMLInputElement).click();
-    fixture.detectChanges();
-    expect(q('approve-now').hasAttribute('disabled')).toBe(false);
-    q('approve-now').click();
+    expect(q('publish-now').textContent).toContain('Publish changes now');
+    q('publish-now').click();
     const req = http.expectOne(`${API}/items/i-16/decision`);
-    expect(req.request.body).toEqual({ decision: 'approve', publishNow: true, confirmFacts: true });
-    req.flush({ data: detail({ state: 'approved', readiness: { blocking: [], unconfirmed: [], warnings: [] } }) });
+    expect(req.request.body).toEqual({ decision: 'publish' });
+    req.flush({ data: detail({ state: 'approved' }) });
     fixture.detectChanges();
     expect(q('notice').textContent).toContain('Publishing has started');
   });
 
-  it('cannot approve while something required is missing', () => {
-    const { q } = render(detail({ readiness: { blocking: ['The Arabic summary is missing'], unconfirmed: [], warnings: [] } }));
-    expect(q('readiness').textContent).toContain('The Arabic summary is missing');
-    expect(q('approve').hasAttribute('disabled')).toBe(true);
+  it('cannot publish a folder that has no usable image', () => {
+    const { q } = render(detail({ state: 'draft', projectId: null, readiness: { blocking: ['No usable image in the folder'], missing: [], warnings: [] } }));
+    expect(q('readiness').textContent).toContain('Cannot be published yet');
+    expect(q('readiness').textContent).toContain('No usable image in the folder');
+    expect(q('publish-now').hasAttribute('disabled')).toBe(true);
+    expect(q('retry')).not.toBeNull();
   });
 
-  it('saves only the fields that changed, and holds decisions until saved', () => {
+  it('saves only the fields that changed, and holds publishing until saved', () => {
     const { fixture, q, type } = render();
     type('f-titleEn', 'Rihana Plaza Mall');
     type('c-descriptionEn', 'One.\n\nTwo.\n\nThree.');
-    expect(q('approve-now')).toBeNull();
+    expect(q('publish-now')).toBeNull();
     q('save').click();
     const req = http.expectOne(`${API}/items/i-16/draft`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual({ facts: { titleEn: 'Rihana Plaza Mall' }, content: { descriptionEn: ['One.', 'Two.', 'Three.'] }, images: {} });
-    req.flush({ data: detail() });
+    req.flush({ data: detail({ state: 'approved' }) });
     fixture.detectChanges();
     flushImages();
-    expect(q('notice').textContent).toContain('Saved');
-    expect(q('approve-now')).not.toBeNull();
+    expect(q('notice').textContent).toContain('Published at the next run');
+    expect(q('publish-now')).not.toBeNull();
   });
 
   it('moves the cover when the cover image is left out', () => {
@@ -121,18 +123,33 @@ describe('AdminProjectSyncItem (review page)', () => {
 
   it('shows the reason when the server refuses', () => {
     const { fixture, q } = render();
-    (q('confirm') as HTMLInputElement).click();
+    q('publish-now').click();
+    http.expectOne(`${API}/items/i-16/decision`).flush({ message: 'Cannot publish: No usable image in the folder' }, { status: 400, statusText: 'Bad Request' });
     fixture.detectChanges();
-    q('approve').click();
-    http.expectOne(`${API}/items/i-16/decision`).flush({ message: 'Not ready: The Arabic title is missing' }, { status: 400, statusText: 'Bad Request' });
-    fixture.detectChanges();
-    expect(q('error').textContent).toContain('The Arabic title is missing');
+    expect(q('error').textContent).toContain('No usable image in the folder');
   });
 
-  it('offers reopen for a rejected project and undo for an updated one', () => {
-    const { q } = render(detail({ state: 'rejected' }));
-    expect(q('reopen')).not.toBeNull();
-    expect(q('reject')).toBeNull();
+  it('holds after asking, and resumes a held folder', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const { fixture, q } = render();
+    q('hold').click();
+    const req = http.expectOne(`${API}/items/i-16/decision`);
+    expect(req.request.body).toEqual({ decision: 'hold' });
+    req.flush({ data: detail({ state: 'postponed' }) });
+    fixture.detectChanges();
+    flushImages();
+    expect(q('publish-now')).toBeNull();
+    q('resume').click();
+    expect(http.expectOne(`${API}/items/i-16/decision`).request.body).toEqual({ decision: 'resume' });
+  });
+
+  it('shows an existing CMS project as images only, with no text editor', () => {
+    const linked = detail({ mode: 'linked', state: 'linked', readiness: null });
+    const { q } = render(linked);
+    expect(q('linked').textContent).toContain('Its text stays as written in the Projects admin');
+    expect(q('editor')).toBeNull();
+    expect(q('gallery').querySelector('input')).toBeNull();
+    expect(q('publish-now').textContent).toContain('Sync images now');
   });
 
   it('asks before undoing the last update', () => {

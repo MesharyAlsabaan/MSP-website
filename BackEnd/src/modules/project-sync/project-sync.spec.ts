@@ -2,82 +2,21 @@ import { mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import sharp from 'sharp';
-import { buildFields, diffFields, duplicateSummary } from './content';
-import {
-  applyEdit,
-  applyRegister,
-  confirmFacts,
-  deriveFromFolder,
-  DraftImage,
-  draftHash,
-  emptyDraft,
-  galleryOrder,
-  ProjectDraft,
-  readiness,
-  suggest,
-} from './draft';
+import { buildFields, diffFields, duplicateSummary, mergeGallery, ownedFields } from './content';
+import { applyEdit, deriveFromFolder, DraftImage, draftHash, emptyDraft, fallbackText, galleryOrder, ProjectDraft, publishable, readiness, suggest } from './draft';
 import { checkText, DrafterOutput, mergeOutput } from './drafter';
-import { isRenderPass, orderImages, prepareImage, PreviewStore, storeImage } from './images';
+import { distance, fingerprint, isRenderPass, orderImages, prepareImage, PreviewStore, SAME_PICTURE, samePicture, storeImage } from './images';
 import { LocalSource } from './local-source';
-import { editedInCms, KnownItem, MAX_ATTEMPTS, plan, SiteProject, sourceHash } from './planner';
-import { parseCsv, parseRegister } from './register';
-import { emptyReport, formatReport } from './report';
+import { KnownItem, MAX_ATTEMPTS, plan, SiteProject, sourceHash } from './planner';
+import { emptyReport, formatReport, reportSubject } from './report';
 import { nextSlot, parseTimes, previousSlot, slotKey } from './schedule';
 import { parseFolderName, SourceFile, SourceFolder } from './source';
-
-const HEADER =
-  'folder,approved_for_web,title_en,title_ar,sectors,design_categories,disciplines,location_en,location_ar,year,status_en,status_ar,summary_en,summary_ar,description_en,description_ar,cover,exclude,site_slug';
-
-function csvRow(over: Record<string, string> = {}): string {
-  const v: Record<string, string> = {
-    folder: '16_rihana-plaza-commercial-building',
-    approved_for_web: 'YES',
-    title_en: 'Rihana Plaza',
-    title_ar: 'ريحانة بلازا',
-    sectors: 'commercial',
-    design_categories: 'architecture',
-    disciplines: 'architectural-design',
-    location_en: 'Cairo, Egypt',
-    location_ar: 'القاهرة، مصر',
-    year: '2025',
-    status_en: '',
-    status_ar: '',
-    summary_en: 'A commercial building in Maadi with a layered street facade that steps back at its upper floors.',
-    summary_ar: 'مبنى تجاري في المعادي بواجهة متدرجة على الشارع تتراجع في أدوارها العليا.',
-    description_en: '',
-    description_ar: '',
-    cover: '',
-    exclude: '',
-    site_slug: '',
-    ...over,
-  };
-  return HEADER.split(',').map((k) => `"${(v[k] ?? '').replace(/"/g, '""')}"`).join(',');
-}
-
-const register = (...rows: string[]) => parseRegister([HEADER, ...rows].join('\r\n')).rows;
 
 const img = (path: string, md5 = path): SourceFile => ({ id: `id-${path}`, path, mimeType: 'image/jpeg', size: 1, md5, modifiedTime: '2026-10-01T00:00:00Z' });
 const folder = (name: string, files = [img('1.jpg'), img('2.jpg'), img('3.jpg')], id = `F-${name}`): SourceFolder => ({ id, name, files });
 
-describe('register', () => {
-  it('reads quoted CSV with commas, quotes and line breaks', () => {
-    expect(parseCsv('a,b\r\n"x, y","he said ""hi""\nnext"\r\n')).toEqual([['a', 'b'], ['x, y', 'he said "hi"\nnext']]);
-  });
-
-  it('parses a row, splits description paragraphs and reads the decision column', () => {
-    const rows = register(csvRow({ description_en: 'One.\n\nTwo.' }), csvRow({ folder: '17_x', approved_for_web: 'later' }), csvRow({ folder: '18_y', approved_for_web: 'Reject' }), csvRow({ folder: '19_z', approved_for_web: '' }));
-    const r = rows.get('16_rihana-plaza-commercial-building')!;
-    expect(r.decision).toBe('approve');
-    expect(r.descriptionEn).toEqual(['One.', 'Two.']);
-    expect([...rows.values()].map((x) => x.decision)).toEqual(['approve', 'later', 'reject', '']);
-  });
-
-  it('accepts a sheet with only the folder column', () => {
-    const { rows } = parseRegister('folder\r\n20_radisson-blu-hotel-suites\r\n');
-    expect(rows.get('20_radisson-blu-hotel-suites')).toMatchObject({ decision: '', titleEn: '', sectors: [] });
-  });
-
-  it('reads folder names', () => {
+describe('folder names', () => {
+  it('reads "NN_slug" names', () => {
     expect(parseFolderName('16_rihana-plaza-commercial-building')).toEqual({ no: '16', slug: 'rihana-plaza-commercial-building' });
     expect(parseFolderName('7_madinah-hotel')).toEqual({ no: '07', slug: 'madinah-hotel' });
     expect(parseFolderName('دياري عرقه')).toBeNull();
@@ -88,110 +27,100 @@ describe('planner', () => {
   const madinah: SiteProject = { id: 'p-madinah', slug: 'madinah-hotel', no: '07', updatedAt: new Date('2026-10-01') };
   const sbc: SiteProject = { id: 'p-sbc', slug: 'SBC', no: '08', updatedAt: new Date('2026-10-01') };
   const f16 = folder('16_rihana-plaza-commercial-building');
-  const hash16 = sourceHash(undefined, orderImages(f16.files, '', []));
+  const hash16 = sourceHash(f16.name, orderImages(f16.files));
   const known = (over: Partial<KnownItem>): KnownItem => ({
-    sourceFolderId: f16.id, slug: 'rihana-plaza-commercial-building', mode: 'owned', state: 'pending_review', sourceHash: hash16, projectId: null, attempts: 0, lastPublishedAt: null, ...over,
+    sourceFolderId: f16.id, slug: 'rihana-plaza-commercial-building', mode: 'owned', state: 'published', sourceHash: hash16, projectId: 'p1', attempts: 0, ...over,
   });
   const live: SiteProject = { id: 'p1', slug: 'rihana-plaza-commercial-building', no: '16', updatedAt: new Date('2026-10-02T00:00:00Z') };
-  const act = (items: KnownItem[], projects: SiteProject[] = [], rows = new Map()) => plan({ folders: [f16], rows, items, projects }).folders[0].action;
+  const act = (items: KnownItem[], projects: SiteProject[] = [live], f = f16) => plan({ folders: [f], items, projects }).folders[0].action;
 
-  it('drafts a new folder without needing a register row', () => {
-    expect(act([])).toEqual({ kind: 'prepare', reason: 'new' });
+  it('prepares a new folder for publishing, with no register and no approval step', () => {
+    expect(act([], [])).toEqual({ kind: 'prepare', reason: 'new' });
   });
 
   it('links folders matching an existing site project by slug or number instead of duplicating it', () => {
-    const p = plan({ folders: [folder('07_madinah-hotel'), folder('08_sbc-commercial-office')], rows: new Map(), items: [], projects: [madinah, sbc] });
+    const p = plan({ folders: [folder('07_madinah-hotel'), folder('08_sbc-commercial-office')], items: [], projects: [madinah, sbc] });
     expect(p.folders.map((f) => f.action)).toEqual([
       { kind: 'link', project: madinah, how: 'slug' },
       { kind: 'link', project: sbc, how: 'number 08' },
     ]);
   });
 
-  it('publishes only approved items', () => {
-    expect(act([known({ state: 'pending_review' })]).kind).toBe('unchanged');
-    expect(act([known({ state: 'postponed' })]).kind).toBe('unchanged');
-    expect(act([known({ state: 'rejected' })]).kind).toBe('unchanged');
-    expect(act([known({ state: 'approved' })])).toEqual({ kind: 'publish', project: undefined });
+  it('never links a second folder to a project already kept in step with one', () => {
+    const linked: KnownItem = { sourceFolderId: 'other', slug: 'madinah-hotel', mode: 'linked', state: 'linked', sourceHash: 'h', projectId: madinah.id, attempts: 0 };
+    expect(plan({ folders: [folder('07_madinah-hotel-copy')], items: [linked], projects: [madinah] }).folders[0].action).toMatchObject({ kind: 'review' });
   });
 
-  it('is a no-op for a published project when nothing changed', () => {
-    expect(act([known({ state: 'published', projectId: 'p1', lastPublishedAt: live.updatedAt })], [live]).kind).toBe('unchanged');
+  it('is a no-op when nothing changed, and updates when the folder changes', () => {
+    expect(act([known({})]).kind).toBe('unchanged');
+    expect(act([known({ sourceHash: 'old' })])).toEqual({ kind: 'prepare', reason: 'source-changed', project: live });
   });
 
-  it('re-drafts when the source changes, for review before anything goes live', () => {
-    expect(act([known({ state: 'published', projectId: 'p1', sourceHash: 'old', lastPublishedAt: live.updatedAt })], [live])).toEqual({ kind: 'prepare', reason: 'source-changed', project: live });
-    expect(act([known({ state: 'approved', sourceHash: 'old' })]).kind).toBe('prepare');
-  });
-
-  it('does not apply an approved update over edits made in the CMS since', () => {
-    const edited = { ...live, updatedAt: new Date('2026-10-05T00:00:00Z') };
-    const item = known({ state: 'approved', projectId: 'p1', lastPublishedAt: live.updatedAt });
-    expect(editedInCms(edited, item)).toBe(true);
-    expect(act([item], [edited])).toMatchObject({ kind: 'review', reasons: [expect.stringMatching(/Edited in the CMS/)] });
-    // Our own save a few seconds after lastPublishedAt is not a person's edit.
-    expect(editedInCms({ ...live, updatedAt: new Date(live.updatedAt.getTime() + 3000) }, item)).toBe(false);
-  });
-
-  it('never modifies linked (CMS-owned) projects, only flags source changes', () => {
+  it('keeps existing projects in step with their folder (images), like sync pages', () => {
     const f = folder('07_madinah-hotel');
-    const item: KnownItem = { sourceFolderId: f.id, slug: 'madinah-hotel', mode: 'linked', state: 'linked', sourceHash: 'old', projectId: madinah.id, attempts: 0, lastPublishedAt: null };
-    const action = plan({ folders: [f], rows: new Map(), items: [item], projects: [madinah] }).folders[0].action;
-    expect(action.kind).toBe('review');
+    const item: KnownItem = { sourceFolderId: f.id, slug: 'madinah-hotel', mode: 'linked', state: 'linked', sourceHash: 'old', projectId: madinah.id, attempts: 0 };
+    expect(act([item], [madinah], f)).toEqual({ kind: 'prepare', reason: 'source-changed', project: madinah });
   });
 
-  it('does not recreate a project deleted from the site', () => {
-    expect(act([known({ state: 'published', projectId: 'deleted' })], [])).toMatchObject({ kind: 'review' });
-  });
-
-  it('flags folders that disappeared instead of deleting their projects', () => {
-    const item: KnownItem = { sourceFolderId: 'gone', slug: 'x', mode: 'owned', state: 'published', sourceHash: 'h', projectId: 'p', attempts: 0, lastPublishedAt: null };
-    expect(plan({ folders: [], rows: new Map(), items: [item], projects: [] }).missing).toEqual([item]);
-  });
-
-  it('retries failed publishing, then stops after repeated failures', () => {
+  it('publishes admin edits and retries failures, then stops after repeated failures', () => {
+    expect(act([known({ state: 'approved' })])).toEqual({ kind: 'publish', project: live });
     expect(act([known({ state: 'failed', attempts: 1 })]).kind).toBe('publish');
     expect(act([known({ state: 'failed', attempts: MAX_ATTEMPTS })]).kind).toBe('review');
   });
 
-  it('retries a draft that could not be prepared', () => {
-    expect(act([known({ state: 'draft' })])).toEqual({ kind: 'prepare', reason: 'retry-draft' });
+  it('leaves a folder on hold alone, even when it changes', () => {
+    expect(act([known({ state: 'postponed', sourceHash: 'old' })])).toEqual({ kind: 'unchanged', held: true });
   });
 
-  it('refuses two folders claiming one slug, and bad folder names', () => {
-    const p = plan({ folders: [folder('16_rihana', undefined, 'A'), folder('17_rihana', undefined, 'B'), folder('دياري عرقه')], rows: new Map(), items: [], projects: [] });
-    expect(p.folders[1].action).toMatchObject({ kind: 'review', reasons: [expect.stringMatching(/also used/)] });
-    expect(p.folders[2].action).toMatchObject({ kind: 'review', reasons: [expect.stringMatching(/NN_slug/)] });
+  it('retries a folder that could not be published', () => {
+    expect(act([known({ state: 'draft', projectId: null })], [])).toEqual({ kind: 'prepare', reason: 'retry-draft', project: undefined });
+  });
+
+  it('keeps the page URL when a published folder is renamed', () => {
+    const renamed = { ...f16, name: '16_rihana-plaza-mall' };
+    const p = plan({ folders: [renamed], items: [known({})], projects: [live] }).folders[0];
+    expect(p.slug).toBe('rihana-plaza-commercial-building');
+    expect(p.action.kind).toBe('prepare');
+  });
+
+  it('does not recreate a project deleted from the site', () => {
+    expect(act([known({ projectId: 'deleted' })], [])).toMatchObject({ kind: 'review' });
+  });
+
+  it('flags folders that disappeared instead of deleting their projects', () => {
+    const item: KnownItem = { sourceFolderId: 'gone', slug: 'x', mode: 'owned', state: 'published', sourceHash: 'h', projectId: 'p', attempts: 0 };
+    expect(plan({ folders: [], items: [item], projects: [] }).missing).toEqual([item]);
+  });
+
+  it('refuses two folders claiming one slug, a slug taken on the site, and bad folder names', () => {
+    const p = plan({ folders: [folder('16_rihana', undefined, 'A'), folder('17_rihana', undefined, 'B'), folder('دياري عرقه')], items: [], projects: [] });
+    expect(p.folders[1].action).toMatchObject({ kind: 'review', reasons: [expect.stringMatching(/already publishes "rihana"/)] });
+    expect(p.folders[2].action).toMatchObject({ kind: 'review', reasons: [expect.stringMatching(/NN_project-name/)] });
   });
 });
 
 const usable = (n: number): DraftImage[] =>
   Array.from({ length: n }, (_, i) => ({ sourceId: `s${i}`, path: `${i}.jpg`, md5: `m${i}`, width: 2000, height: 1500, included: true }));
 
-/** A draft as the sync would build it from folder 16, plus AI-style text. */
+/** A draft as the sync builds it from folder 16's name, before any text. */
 function draft16(): ProjectDraft {
   const d = emptyDraft();
-  suggest(d, deriveFromFolder('16_rihana-plaza-commercial-building', ['a.jpg']));
-  d.facts.titleAr = { value: 'ريحانة بلازا', source: 'ai', basis: 'AI suggestion' };
-  d.facts.locationEn = { value: 'Cairo, Egypt', source: 'ai' };
-  d.facts.locationAr = { value: 'القاهرة، مصر', source: 'ai' };
-  d.content.summaryEn = { value: 'A commercial building with a layered street facade that steps back at its upper floors.', source: 'ai' };
-  d.content.summaryAr = { value: 'مبنى تجاري بواجهة متدرجة على الشارع تتراجع في أدواره العليا.', source: 'ai' };
+  suggest(d, deriveFromFolder('16_rihana-plaza-commercial-building-cairo', ['a.jpg']));
   d.images = usable(4);
   return d;
 }
 
 describe('draft', () => {
-  it('reads suggestions from folder names, never as verified facts', () => {
+  it('takes facts from the folder name as published facts, and guesses nothing else', () => {
     const f = deriveFromFolder('17_private-twin-villa-riyadh', ['RENDER/2-First Floor/a.jpg']);
     expect(f.titleEn).toMatchObject({ value: 'Private Twin Villa', source: 'folder' });
     expect(f.locationEn).toMatchObject({ value: 'Riyadh, Saudi Arabia', source: 'folder' });
     expect(f.locationAr?.value).toBe('الرياض، المملكة العربية السعودية');
     expect(f.sectors?.value).toEqual(['residential']);
     expect(f.designCategories?.value).toEqual(['architecture']);
+    expect(publishable('locationEn', f.locationEn!)).toBe(true);
 
     expect(deriveFromFolder('29_bic-corporate-office-interior', []).designCategories?.value).toEqual(['interiors']);
-    // "bic" cannot be told from a word; the AI suggestion and the reviewer fix such titles.
-    expect(deriveFromFolder('29_bic-corporate-office-interior', []).titleEn?.value).toBe('Bic Corporate Office Interior');
     expect(deriveFromFolder('08_sbc-commercial-office', []).titleEn?.value).toBe('SBC Commercial Office');
     expect(deriveFromFolder('42_private-residential-villa-stacked-volumes', ['INT/3.jpg']).designCategories?.value).toEqual(['architecture', 'interiors']);
     expect(deriveFromFolder('20_radisson-blu-hotel-suites', []).sectors?.value).toEqual(['hospitality']);
@@ -199,47 +128,58 @@ describe('draft', () => {
     expect(deriveFromFolder('19_al-ateeq-commercial-residential-al-qirawan', []).locationEn).toBeUndefined();
   });
 
-  it('lets the register correct facts, but never overrides the owner', () => {
+  it('follows a renamed folder, but never overrides what the owner typed in the admin', () => {
     const d = draft16();
     d.facts.year = { value: '2024', source: 'owner' };
-    const row = register(csvRow({ year: '2025', title_en: 'Rihana Plaza' })).get('16_rihana-plaza-commercial-building')!;
-    applyRegister(d, row);
-    expect(d.facts.year).toMatchObject({ value: '2024', source: 'owner' });
-    expect(d.facts.titleEn).toMatchObject({ value: 'Rihana Plaza', source: 'register' });
+    d.facts.titleEn = { value: 'Rihana Plaza', source: 'owner' };
+    suggest(d, deriveFromFolder('16_rihana-plaza-commercial-building', []));
+    expect(d.facts.titleEn.value).toBe('Rihana Plaza');
+    expect(d.facts.year.value).toBe('2024');
+    // The city was removed from the folder name: the location it gave is removed too.
+    expect(d.facts.locationEn.value).toBe('');
   });
 
-  it('separates what blocks publication from what only needs confirming', () => {
+  it('publishes with what is known and reports what is missing; blocks only a page that cannot exist', () => {
     const d = draft16();
+    fallbackText(d);
     const r = readiness(d, 3);
     expect(r.blocking).toEqual([]);
-    expect(r.unconfirmed).toEqual(['Title (English)', 'Title (Arabic)', 'Location (English)', 'Location (Arabic)', 'Sectors', 'Design categories']);
+    expect(r.missing).toEqual(['Arabic title (the English title is shown on the Arabic page)', 'written description (only a one-line factual summary is published)']);
 
-    confirmFacts(d, 'owner@msp.sa');
-    expect(readiness(d, 3).unconfirmed).toEqual([]);
-    expect(d.facts.titleEn).toMatchObject({ source: 'owner', basis: expect.stringMatching(/confirmed by owner@msp.sa/) });
+    const bare = emptyDraft();
+    suggest(bare, deriveFromFolder('31_private-house', []));
+    expect(readiness(bare, 3).blocking).toEqual(['No usable image in the folder']);
+    expect(readiness(bare, 3).missing).toContain('location');
   });
 
-  it('blocks missing facts, wrong script, mismatched paragraphs and too few images', () => {
+  it('still blocks wrong script and mismatched paragraphs', () => {
     const d = draft16();
-    d.facts.locationEn.value = '';
-    d.facts.titleAr.value = 'Rihana';
-    d.content.descriptionEn.value = ['One.'];
-    d.images = usable(2);
+    d.facts.titleAr = { value: 'Rihana', source: 'owner' };
+    d.content.descriptionEn = { value: ['One.'], source: 'owner' };
     const b = readiness(d, 3).blocking.join('\n');
-    expect(b).toMatch(/Location \(English\) is missing/);
     expect(b).toMatch(/Arabic title is not in Arabic/);
     expect(b).toMatch(/1 paragraph\(s\) and the Arabic 0/);
-    expect(b).toMatch(/2 image\(s\) selected; at least 3/);
   });
 
-  it('records edits as owner facts and changes the approval hash', () => {
+  it('builds a factual one-line summary when there is no AI text, and never over written text', () => {
     const d = draft16();
-    const approved = draftHash(d);
+    fallbackText(d);
+    expect(d.content.summaryEn.value).toBe('Rihana Plaza Commercial Building — an architecture project by MSP in Cairo, Egypt.');
+    expect(d.content.summaryAr.value).toBe('Rihana Plaza Commercial Building — مشروع معماري من MSP في القاهرة، مصر.');
+    expect(d.content.summaryEn.source).toBe('template');
+    d.content.summaryEn = { value: 'Written by the studio.', source: 'owner' };
+    fallbackText(d);
+    expect(d.content.summaryEn.value).toBe('Written by the studio.');
+  });
+
+  it('records edits as owner facts and changes the draft hash', () => {
+    const d = draft16();
+    const before = draftHash(d);
     applyEdit(d, { facts: { titleEn: '  Rihana   Plaza ', sectors: ['commercial', 'work'] }, images: { m3: false }, cover: 'm2' }, 'owner@msp.sa');
     expect(d.facts.titleEn).toMatchObject({ value: 'Rihana Plaza', source: 'owner' });
     expect(d.facts.sectors.value).toEqual(['commercial', 'work']);
     expect(galleryOrder(d).map((i) => i.md5)).toEqual(['m2', 'm0', 'm1']);
-    expect(draftHash(d)).not.toBe(approved);
+    expect(draftHash(d)).not.toBe(before);
     expect(() => applyEdit(d, { facts: { clientName: 'x' } as never }, 'x')).toThrow(/Unknown field/);
     expect(() => applyEdit(d, { cover: 'nope' }, 'x')).toThrow(/cover/);
   });
@@ -247,13 +187,8 @@ describe('draft', () => {
 
 describe('AI drafter output', () => {
   const out = (over: Partial<DrafterOutput> = {}): DrafterOutput => ({
-    title_en: 'Rihana Plaza',
-    title_ar: 'ريحانة بلازا',
-    location_en: '',
-    location_ar: '',
-    sectors: ['commercial'],
-    design_categories: ['architecture'],
-    basis: { title: 'folder name', location: 'not stated', classification: 'folder name' },
+    title_ar: 'مبنى ريحانة بلازا التجاري',
+    location_ar: 'القاهرة، مصر',
     visual_notes: ['Stepped glass facade', 'Ground-floor shopfronts'],
     summary_en: 'A commercial building whose glazed facade steps back at the upper floors above street-level shopfronts.',
     summary_ar: 'مبنى تجاري تتراجع واجهته الزجاجية في الأدوار العليا فوق محلات على مستوى الشارع.',
@@ -275,28 +210,42 @@ describe('AI drafter output', () => {
     expect(checkText(out({ description_ar: [] }), '').join()).toMatch(/paragraph counts/);
   });
 
-  it('merges suggestions without touching verified facts or human text, and drops failing text', () => {
+  it('only renders the title and location in Arabic: no fact of its own, no change to verified ones', () => {
     const d = draft16();
-    d.facts.titleEn = { value: 'Rihana Plaza Mall', source: 'owner' };
+    mergeOutput(d, out(), 'claude-opus-5-5', []);
+    expect(d.facts.titleAr).toMatchObject({ value: 'مبنى ريحانة بلازا التجاري', source: 'ai' });
+    expect(publishable('titleAr', d.facts.titleAr)).toBe(true);
+    // The location came from the folder name: the folder's Arabic wording stays.
+    expect(d.facts.locationAr.source).toBe('folder');
+
+    // No English location: an Arabic one is not accepted.
+    const e = emptyDraft();
+    suggest(e, deriveFromFolder('31_private-house', []));
+    mergeOutput(e, out(), 'm', []);
+    expect(e.facts.locationAr.value).toBe('');
+    // An AI value for any other fact would never be published.
+    expect(publishable('sectors', { value: ['residential'], source: 'ai' })).toBe(false);
+  });
+
+  it('keeps human text and drops failing text', () => {
+    const d = draft16();
     d.content.summaryEn = { value: 'Owner text, kept as written by the studio.', source: 'owner' };
     mergeOutput(d, out(), 'claude-opus-5-5', []);
-    expect(d.facts.titleEn.value).toBe('Rihana Plaza Mall');
-    expect(d.facts.titleAr).toMatchObject({ value: 'ريحانة بلازا', source: 'ai' });
     expect(d.content.summaryEn.value).toBe('Owner text, kept as written by the studio.');
     expect(d.content.summaryAr.source).toBe('ai');
     expect(d.visualNotes).toHaveLength(2);
 
     const e = emptyDraft();
     mergeOutput(e, out(), 'm', ['numbers not in the facts: 12']);
-    expect(e.content.summaryEn.value).toBe('');
+    expect(e.content.summaryEn).toMatchObject({ value: '', source: 'template' });
     expect(e.notes.join()).toMatch(/AI text discarded/);
   });
 });
 
 describe('images', () => {
-  it('orders naturally, leads with the cover and drops exclusions and non-images', () => {
+  it('keeps the folder order (natural) and drops non-images', () => {
     const files = [img('10.jpg'), img('2.jpg'), img('INT/1.png'), img('Thumbs.db'), img('cover.jpg')];
-    expect(orderImages(files, 'cover.jpg', ['2.jpg']).map((f) => f.path)).toEqual(['cover.jpg', '10.jpg', 'INT/1.png']);
+    expect(orderImages(files).map((f) => f.path)).toEqual(['10.jpg', '2.jpg', 'INT/1.png', 'cover.jpg'].sort((a, b) => a.localeCompare(b, 'en', { numeric: true })));
   });
 
   it('downscales proportionally without cropping and rejects small or corrupt files', async () => {
@@ -310,6 +259,30 @@ describe('images', () => {
     const small = await sharp({ create: { width: 800, height: 600, channels: 3, background: '#000' } }).png().toBuffer();
     expect(await prepareImage(img('s.png'), small)).toMatchObject({ problem: expect.stringMatching(/too small/) });
     expect(await prepareImage(img('c.jpg'), Buffer.from('not an image'))).toMatchObject({ problem: expect.stringMatching(/not a readable image/) });
+  });
+
+  it('recognises the same picture across formats and sizes, and keeps other views and other light apart', async () => {
+    const scene = (flip: boolean) =>
+      sharp({ create: { width: 3000, height: 2000, channels: 3, background: '#d8d2c4' } })
+        .composite([
+          { input: { create: { width: 900, height: 1400, channels: 3, background: '#2f3b45' } }, left: flip ? 1900 : 200, top: 400 },
+          { input: { create: { width: 700, height: 500, channels: 3, background: '#8a6f4d' } }, left: flip ? 300 : 1600, top: 1300 },
+        ])
+        .jpeg()
+        .toBuffer();
+    const a = await scene(false);
+    const sameAsWebpSmall = await sharp(a).resize(1200).webp({ quality: 70 }).toBuffer();
+    const samePng = await sharp(a).png().toBuffer();
+    const other = await scene(true);
+    // The same view in another light: same composition, different tones.
+    const dusk = await sharp(a).modulate({ brightness: 0.55 }).jpeg().toBuffer();
+    const [fa, fw, fp, fo, fd] = await Promise.all([a, sameAsWebpSmall, samePng, other, dusk].map(fingerprint));
+    expect(samePicture(fa, fw)).toBe(true);
+    expect(samePicture(fa, fp)).toBe(true);
+    expect(distance(fa, fo)).toBeGreaterThan(SAME_PICTURE);
+    expect(samePicture(fa, fo)).toBe(false);
+    expect(distance(fa, fd)).toBeLessThanOrEqual(SAME_PICTURE);
+    expect(samePicture(fa, fd)).toBe(false);
   });
 
   it('stores under an SEO name without overwriting and makes web copies', async () => {
@@ -342,22 +315,26 @@ describe('images', () => {
 });
 
 describe('content', () => {
-  const approved = () => {
+  const full = () => {
     const d = draft16();
+    d.facts.titleAr = { value: 'ريحانة بلازا', source: 'ai' };
     d.facts.statusEn = { value: 'Under construction', source: 'owner' };
     d.facts.statusAr = { value: 'قيد الإنشاء', source: 'owner' };
     d.facts.disciplines = { value: ['architectural-design'], source: 'owner' };
-    d.facts.sectors = { value: ['commercial'], source: 'owner' };
+    d.facts.sectors = { value: ['commercial'], source: 'folder' };
+    d.content.summaryEn = { value: 'A commercial building with a layered street facade.', source: 'ai' };
+    d.content.summaryAr = { value: 'مبنى تجاري بواجهة متدرجة.', source: 'ai' };
     d.content.descriptionEn = { value: ['A.', 'B.'], source: 'ai' };
     d.content.descriptionAr = { value: ['أ.', 'ب.'], source: 'ai' };
     return d;
   };
 
-  it('builds the record from the approved draft only', () => {
-    const f = buildFields(approved(), 'rihana-plaza-commercial-building', '16', ['/api/uploads/a.webp', '/api/uploads/b.webp']);
+  it('builds the record from publishable facts only', () => {
+    const f = buildFields(full(), 'rihana-plaza-commercial-building', '16', ['/api/uploads/a.webp', '/api/uploads/b.webp']);
     expect(f).toMatchObject({
       slug: 'rihana-plaza-commercial-building',
       no: '16',
+      title: { en: 'Rihana Plaza Commercial Building', ar: 'ريحانة بلازا' },
       typology: { key: 'commercial' },
       location: { en: 'Cairo, Egypt', ar: 'القاهرة، مصر' },
       cover: '/api/uploads/a.webp',
@@ -368,14 +345,44 @@ describe('content', () => {
     expect(f).not.toHaveProperty('clientName');
   });
 
+  it('leaves a missing fact empty: English title on the Arabic page, design field as the card label', () => {
+    const d = emptyDraft();
+    suggest(d, deriveFromFolder('31_private-house', []));
+    d.facts.sectors = { value: ['residential'], source: 'ai' }; // never published
+    const f = buildFields(d, 'private-house', '31', ['/a.webp']);
+    expect(f.title).toEqual({ en: 'Private House', ar: 'Private House' });
+    expect(f.sectors).toEqual([]);
+    expect(f.typology).toMatchObject({ key: 'architecture' });
+    expect(f.location).toEqual({ en: '', ar: '' });
+  });
+
   it('lists changed fields and catches duplicate meta descriptions', () => {
-    const f = buildFields(approved(), 's', '16', ['/c.webp']);
+    const f = buildFields(full(), 's', '16', ['/c.webp']);
     const changes = diffFields({ ...f, year: '2024', gallery: ['/x.webp'] }, f);
     expect(changes.map((c) => c.field)).toEqual(['year', 'gallery']);
     // The same text with keys in another order (as stored in jsonb) is not a change.
     const reordered = f.description.map((d) => ({ ar: d.ar, en: d.en }));
     expect(diffFields({ ...f, description: reordered }, f)).toEqual([]);
     expect(duplicateSummary(f, [{ slug: 'other', summary: f.summary }])).toMatch(/identical to project "other"/);
+  });
+
+  it('writes only fields nobody edited in the CMS; never the text of an existing CMS project', () => {
+    const f = buildFields(full(), 's', '16', []);
+    const written = { title: f.title, summary: f.summary, year: f.year };
+    const current = { ...f, summary: { en: 'Edited in the CMS', ar: f.summary.ar } };
+    expect(ownedFields(current, written)).toEqual({ owned: ['title', 'year'], kept: ['summary'] });
+    expect(ownedFields(current, null)).toEqual({ owned: [], kept: [] });
+  });
+
+  it('merges gallery changes: replaced in place, new appended, CMS additions and removals respected', () => {
+    const written = ['/c.webp', '/a.webp', '/b.webp'];
+    // A person added /mine.webp and removed /b.webp in the CMS.
+    const current = ['/c.webp', '/a.webp', '/mine.webp'];
+    const out = mergeGallery({ current, written, replace: new Map([['/a.webp', '/a2.webp']]), drop: new Set(), add: ['/n.webp'], cover: '/c.webp' });
+    expect(out).toEqual(['/c.webp', '/a2.webp', '/mine.webp', '/n.webp']);
+    // Images gone from the folder leave a sync page; the cover follows the folder unless changed in the CMS.
+    expect(mergeGallery({ current: written, written, replace: new Map(), drop: new Set(['/b.webp']), add: [], cover: '/a.webp' })).toEqual(['/a.webp', '/c.webp']);
+    expect(mergeGallery({ current: ['/a.webp', '/c.webp'], written, replace: new Map(), drop: new Set(), add: [], cover: '/c.webp' })).toEqual(['/a.webp', '/c.webp']);
   });
 });
 
@@ -416,23 +423,28 @@ describe('schedule', () => {
 });
 
 describe('report', () => {
-  it('names every required section and only calls verified projects published', () => {
+  it('names every section and only calls verified projects published', () => {
     const r = emptyReport('r', 'schedule', false, Date.parse('2026-10-29T05:00:00Z'));
-    r.summary = { ...r.summary, scanned: 3, newDetected: 1, published: 1, awaitingVerification: 1, pendingApproval: 1 };
-    r.detected = [{ folder: '20_radisson-blu-hotel-suites', name: 'Radisson Blu Hotel Suites', images: 12, blocking: [], notes: [] }];
+    r.summary = { ...r.summary, scanned: 3, newDetected: 2, published: 1, awaitingVerification: 1, notPublished: 1 };
     r.created = [
-      { folder: 'a', name: 'A', category: 'commercial', urlEn: 'u', urlAr: 'ua', images: 5, outcome: 'published', aiDrafted: ['summaryAr'] },
+      { folder: 'a', name: 'A', category: 'commercial', urlEn: 'u', urlAr: 'ua', images: 5, outcome: 'published', text: 'One-line factual summary', missing: ['location'] },
       { folder: 'b', name: 'B', category: 'commercial', urlEn: 'v', urlAr: 'va', images: 4, outcome: 'awaiting_verification' },
     ];
-    r.pending = [{ folder: '20_radisson-blu-hotel-suites', name: 'Radisson Blu Hotel Suites', blocking: [], update: false }];
-    r.failed = [{ folder: 'c', error: 'Drive 500' }];
-    r.ownerActions = ['Review and approve 1 project(s)'];
+    r.updated = [{ folder: 'c', name: 'C', category: '', urlEn: 'w', urlAr: 'wa', images: 6, outcome: 'updated', imagesAdded: 1, imagesReplaced: 2, keptEdits: ['summary'], changes: [] }];
+    r.linked = [{ folder: '07_madinah-hotel', name: 'Madinah Hotel', url: 'm', sourceImages: 12, onSite: 7 }];
+    r.notPublished = [{ folder: '31_x', name: 'X', reasons: ['No usable image in the folder'] }];
+    r.failed = [{ folder: 'd', error: 'Drive 500' }];
     const text = formatReport(r);
-    for (const heading of ['NEW PROJECTS DETECTED', 'PUBLISHED PROJECTS', 'UPDATED PROJECTS', 'PENDING APPROVAL', 'ERRORS', 'REQUIRED ACTIONS']) expect(text).toContain(heading);
+    for (const heading of ['NEW PROJECTS PUBLISHED', 'UPDATED PROJECTS', 'EXISTING PROJECTS LINKED', 'MISSING DETAILS', 'NOT PUBLISHED YET', 'ERRORS', 'REQUIRED ACTIONS']) expect(text).toContain(heading);
+    expect(text).not.toMatch(/approv/i);
     expect(text).toContain('Execution Time:     08:00 (Riyadh)');
-    expect(text).toContain('Successfully published (verified live)');
+    expect(text).toContain('Published (verified live)');
     expect(text).toContain('Saved — awaiting live verification');
-    expect(text).toContain('ready: review and approve');
-    expect(text).toContain('- c: Drive 500');
+    expect(text).toContain('Images:    6 (1 added, 2 replaced)');
+    expect(text).toContain('Kept CMS edits to: summary');
+    expect(text).toContain('- A: location');
+    expect(text).toContain('7 of 12 folder image(s) already on the page');
+    expect(text).toContain('- d: Drive 500');
+    expect(reportSubject({ ...r, status: 'attention' })).toBe('MSP project sync — ATTENTION — 1 published, 1 awaiting verification, 1 not publishable');
   });
 });

@@ -26,10 +26,25 @@ export function db(): Client {
   return new Client({ host: process.env.DB_HOST, port: Number(process.env.DB_PORT), user: process.env.DB_USERNAME, password: process.env.DB_PASSWORD, database: process.env.DB_NAME });
 }
 
-/** A distinct JPEG (each colour has its own checksum). */
+/**
+ * A distinct picture per colour: the colour seeds where light and dark blocks
+ * sit, so different colours are different pictures (not only different bytes),
+ * and the same colour is the same picture at any size or format.
+ */
+export async function picture(colour: string, width = 2000, height = 1500): Promise<Buffer> {
+  let seed = parseInt(colour.slice(1), 16) || 1;
+  const next = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0);
+  const blocks = Array.from({ length: 6 }, (_, i) => ({
+    input: { create: { width: Math.round(width * 0.22), height: Math.round(height * 0.28), channels: 3 as const, background: i % 2 ? '#f4f1ea' : '#15181c' } },
+    left: Math.round(((next() % 1000) / 1000) * width * 0.76),
+    top: Math.round(((next() % 1000) / 1000) * height * 0.7),
+  }));
+  return sharp({ create: { width, height, channels: 3, background: colour } }).composite(blocks).jpeg({ quality: 90 }).toBuffer();
+}
+
 export async function photo(path: string, colour: string, width = 2000, height = 1500): Promise<void> {
   mkdirSync(join(path, '..'), { recursive: true });
-  writeFileSync(path, await sharp({ create: { width, height, channels: 3, background: colour } }).jpeg({ quality: 90 }).toBuffer());
+  writeFileSync(path, await picture(colour, width, height));
 }
 
 /**

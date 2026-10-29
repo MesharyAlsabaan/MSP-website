@@ -4,9 +4,10 @@ import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../../core/constants/api.constants';
 
 /**
- * A private preview image from the sync. Unapproved images are never on the
- * public site, so they are fetched through the authenticated API (the auth
- * interceptor adds the token) and shown from a local object URL.
+ * A private preview image from the sync. Folder images not used on the page
+ * are never on the public site, so previews are fetched through the
+ * authenticated API (the auth interceptor adds the token) and shown from a
+ * local object URL.
  */
 @Component({
   selector: 'app-sync-image',

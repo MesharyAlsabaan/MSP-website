@@ -3,6 +3,15 @@ import { Column, Entity, Index, PrimaryColumn, UpdateDateColumn } from 'typeorm'
 import { BaseEntity } from '../../../common/entities/base.entity';
 import type { ItemMode, ItemState } from '../planner';
 import type { ProjectDraft } from '../draft';
+
+/** One source image and the image on the page it became (url empty: not on the page). */
+export interface SyncedImage {
+  sourceId: string;
+  md5: string;
+  url: string;
+  path?: string;
+  fingerprint?: string;
+}
 import type { SyncReport } from '../report';
 
 /** One execution of the sync: scheduled, manual or dry run. */
@@ -17,7 +26,7 @@ export class ProjectSyncRun extends BaseEntity {
   @Column()
   slot: string;
 
-  @ApiProperty({ enum: ['schedule', 'catch-up', 'manual', 'retry', 'approval'] })
+  @ApiProperty({ enum: ['schedule', 'catch-up', 'manual', 'retry', 'publish-now'] })
   @Column()
   trigger: string;
 
@@ -66,12 +75,12 @@ export class ProjectSyncItem extends BaseEntity {
   @Column({ default: '' })
   slug: string;
 
-  @ApiProperty({ enum: ['owned', 'linked'], description: 'linked = existing CMS project, never modified by the sync' })
+  @ApiProperty({ enum: ['owned', 'linked'], description: 'linked = existing CMS project: its images follow the folder, its text stays the CMS\'s' })
   @Column({ type: 'varchar', default: 'owned' })
   mode: ItemMode;
 
   @ApiProperty({
-    enum: ['draft', 'pending_review', 'approved', 'postponed', 'rejected', 'awaiting_verification', 'published', 'failed', 'linked', 'missing_from_source'],
+    enum: ['draft', 'approved', 'postponed', 'awaiting_verification', 'published', 'failed', 'linked', 'missing_from_source'],
   })
   @Column({ type: 'varchar', default: 'draft' })
   state: ItemState;
@@ -84,9 +93,9 @@ export class ProjectSyncItem extends BaseEntity {
   @Column({ name: 'source_hash', default: '' })
   sourceHash: string;
 
-  @ApiProperty({ description: 'Source image → published upload, for change detection' })
+  @ApiProperty({ description: 'Source image → the image on the page (uploaded by the sync, or matched to one already there)' })
   @Column({ type: 'jsonb', default: () => "'[]'" })
-  images: { sourceId: string; md5: string; url: string }[];
+  images: SyncedImage[];
 
   @ApiProperty({ type: [String] })
   @Column({ type: 'jsonb', default: () => "'[]'" })
@@ -112,11 +121,11 @@ export class ProjectSyncItem extends BaseEntity {
   @Column({ name: 'last_run_id', type: 'uuid', nullable: true })
   lastRunId: string | null;
 
-  @ApiProperty({ description: 'The proposed page: facts with their sources, text, images', required: false })
+  @ApiProperty({ description: 'The page content: facts with their sources, text, images', required: false })
   @Column({ type: 'jsonb', nullable: true })
   draft: ProjectDraft | null;
 
-  @ApiProperty({ description: 'Hash of the draft as approved; publishing requires it to still match', required: false })
+  @ApiProperty({ description: 'Hash of the draft as last published', required: false })
   @Column({ name: 'approved_hash', default: '' })
   approvedHash: string;
 

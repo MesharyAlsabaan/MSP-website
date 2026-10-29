@@ -1,11 +1,11 @@
 import { createHash } from 'crypto';
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
+import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { IMAGE_FILE, MAX_DEPTH, skipName, SourceFile, SourceFolder, SyncSource } from './source';
 
 /**
  * The same layout read from a local folder (e.g. the Google Drive for
- * desktop copy). Used for dry runs and tests; the register is `_register.csv`.
+ * desktop copy). Used for dry runs and tests.
  * File IDs are relative paths, so they are stable only while names are.
  */
 export class LocalSource implements SyncSource {
@@ -53,10 +53,6 @@ export class LocalSource implements SyncSource {
     return files;
   }
 
-  async readRegister(): Promise<string | null> {
-    const path = join(this.root, '_register.csv');
-    return existsSync(path) ? readFileSync(path, 'utf8') : null;
-  }
 
   async download(file: SourceFile): Promise<Buffer> {
     return readFileSync(join(this.root, file.id));

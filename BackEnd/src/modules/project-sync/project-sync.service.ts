@@ -2,34 +2,20 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { ConfigService } from '@nestjs/config';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
-import { unlinkSync } from 'fs';
+import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { createTransport } from 'nodemailer';
 import { basename, join, relative, resolve } from 'path';
-import { DataSource, In, LessThan, Repository } from 'typeorm';
+import { DataSource, LessThan, Repository } from 'typeorm';
 import { Project, ProjectStatus } from '../projects/entities/project.entity';
-import { buildFields, diffFields, duplicateSummary } from './content';
-import {
-  applyEdit,
-  applyRegister,
-  confirmFacts,
-  deriveFromFolder,
-  DraftEdit,
-  DraftImage,
-  draftHash,
-  emptyDraft,
-  galleryOrder,
-  ProjectDraft,
-  readiness,
-  suggest,
-} from './draft';
+import { buildFields, diffFields, duplicateSummary, mergeGallery, ownedFields, SourceFields, TEXT_FIELDS } from './content';
+import { applyEdit, deriveFromFolder, DraftEdit, DraftImage, draftHash, emptyDraft, fallbackText, galleryOrder, ProjectDraft, readiness, suggest } from './draft';
 import { Drafter, MAX_IMAGES } from './drafter';
 import { DriveSource, parseServiceAccount } from './drive-source';
-import { ProjectSyncControl, ProjectSyncItem, ProjectSyncRun } from './entities/project-sync.entity';
-import { forModel, isRenderPass, prepareImage, PreviewStore, storeImage } from './images';
+import { ProjectSyncControl, ProjectSyncItem, ProjectSyncRun, SyncedImage } from './entities/project-sync.entity';
+import { fingerprint, forModel, isRenderPass, prepareImage, PreviewStore, samePicture, storeImage } from './images';
 import { LocalSource } from './local-source';
-import { FolderPlan, ItemState, plan, SiteProject } from './planner';
-import { parseRegister, RegisterRow } from './register';
-import { emptyReport, formatReport, Outcome, PendingLine, ProjectLine, reportSubject, SyncReport } from './report';
+import { FolderPlan, plan, SiteProject } from './planner';
+import { emptyReport, formatReport, Outcome, ProjectLine, reportSubject, SyncReport } from './report';
 import { nextSlot, parseTimes, previousSlot, slotKey } from './schedule';
 import { pageUrl, rebuildConfigured, sitemapUrls, SITE_ORIGIN, triggerFrontendBuild, verifyProject } from './site';
 import { SourceFile, SyncSource } from './source';
@@ -41,11 +27,9 @@ const RUN_DEADLINE_MS = 45 * 60_000;
 const STALE_RUN_MS = 2 * 60 * 60_000;
 /** Catch up a missed slot (service was down) if it is at most this old. */
 const CATCH_UP_WINDOW_MS = 6 * 60 * 60_000;
-/** States that wait for a person's decision. */
-const AWAITING_DECISION: ItemState[] = ['pending_review'];
 
 export interface RunOptions {
-  trigger: 'schedule' | 'catch-up' | 'manual' | 'retry' | 'approval';
+  trigger: 'schedule' | 'catch-up' | 'manual' | 'retry' | 'publish-now';
   slot?: string;
   dryRun?: boolean;
   requestedBy?: string;
@@ -54,6 +38,8 @@ export interface RunOptions {
 }
 
 type Touched = { item: ProjectSyncItem; kind: 'created' | 'updated'; line: ProjectLine; changes?: ReturnType<typeof diffFields> };
+/** A live image a source file is already on the page as (matched by its picture, not its bytes). */
+type SiteImage = { url: string; fingerprint: string };
 
 /**
  * Google Drive → MSP website. See docs/automation/PROJECT-SYNC.md for the
@@ -61,9 +47,9 @@ type Touched = { item: ProjectSyncItem; kind: 'created' | 'updated'; line: Proje
  * backend's disk; a Postgres advisory lock plus a unique slot key keep it to
  * one execution per slot however many replicas are running.
  *
- * Every run: detect folders → draft new/changed ones (images checked, facts
- * suggested, text written) → publish what a person approved → one frontend
- * rebuild → verify the live pages → report.
+ * Every run: detect folders → prepare new and changed ones (facts from the
+ * folder name, images checked, text written) → publish them (the folder is
+ * the owner's approval) → one frontend rebuild → verify the live pages → report.
  */
 @Injectable()
 export class ProjectSyncService implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -83,7 +69,7 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     @InjectRepository(ProjectSyncItem) private readonly items: Repository<ProjectSyncItem>,
     @InjectRepository(ProjectSyncControl) private readonly controls: Repository<ProjectSyncControl>,
   ) {
-    // Previews of unapproved images must never be under the public uploads folder.
+    // Previews (including images not used on the page) must never be under the public uploads folder.
     const uploads = resolve(this.uploadDir());
     const dir = resolve(process.env.PROJECT_SYNC_PREVIEW_DIR || 'project-sync-previews');
     const inside = !relative(uploads, dir).startsWith('..');
@@ -170,7 +156,7 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
       .select('i.state', 'state')
       .addSelect('COUNT(*)::int', 'count')
       .groupBy('i.state')
-      .getRawMany<{ state: ItemState; count: number }>();
+      .getRawMany<{ state: string; count: number }>();
     return {
       enabled: control.enabled,
       scheduleActive: this.scheduleActive,
@@ -198,23 +184,24 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     return run;
   }
 
-  /** The admin list: one row per folder with what it needs, without the full draft. */
+  /** The admin list: one row per folder with its state and what it lacks, without the full draft. */
   async listItems() {
     const items = await this.items.find({ order: { folderName: 'ASC' } });
     return items.map((i) => this.summarize(i));
   }
 
   private summarize(i: ProjectSyncItem) {
-    const r = i.draft ? readiness(i.draft, this.minImages) : null;
+    const r = i.draft && i.mode === 'owned' ? readiness(i.draft, this.minImages) : null;
     const { draft, previousSnapshot, ...rest } = i;
+    const shown = draft ? (i.mode === 'linked' ? draft.images.filter((x) => x.included && !x.problem) : galleryOrder(draft)) : [];
     return {
       ...rest,
-      title: draft?.facts.titleEn.value || i.slug || i.folderName,
+      title: (i.mode === 'owned' && draft?.facts.titleEn.value) || i.slug || i.folderName,
       titleAr: draft?.facts.titleAr.value ?? '',
-      cover: draft ? (galleryOrder(draft)[0]?.md5 ?? '') : '',
-      imageCount: draft ? galleryOrder(draft).length : i.images.length,
+      cover: shown[0]?.md5 ?? '',
+      imageCount: draft ? shown.length : i.images.length,
       blocking: r?.blocking ?? [],
-      unconfirmed: r?.unconfirmed ?? [],
+      missing: r?.missing ?? [],
       aiText: draft ? (['summaryEn', 'summaryAr', 'descriptionEn', 'descriptionAr'] as const).some((k) => draft.content[k].source === 'ai' && draft.content[k].value.length) : false,
       canUndo: !!previousSnapshot,
       urlEn: i.slug && i.projectId ? pageUrl(i.slug, 'en') : '',
@@ -224,7 +211,12 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
 
   async getItem(id: string) {
     const item = await this.findItem(id);
-    return { ...this.summarize(item), draft: item.draft, readiness: item.draft ? readiness(item.draft, this.minImages) : null, minImages: this.minImages };
+    return {
+      ...this.summarize(item),
+      draft: item.draft,
+      readiness: item.draft && item.mode === 'owned' ? readiness(item.draft, this.minImages) : null,
+      minImages: this.minImages,
+    };
   }
 
   private async findItem(id: string): Promise<ProjectSyncItem> {
@@ -245,79 +237,78 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     return prepared.data;
   }
 
+  /** A correction in the admin. It becomes the owner's value and is published in the next run (or at once with Publish now). */
   async editDraft(id: string, edit: DraftEdit, by: string) {
     const item = await this.findItem(id);
-    if (!item.draft || item.mode === 'linked') throw new BadRequestException('This folder has no draft to edit');
+    if (!item.draft || item.mode === 'linked') throw new BadRequestException('Existing projects are edited in the Projects admin; the sync only keeps their images in step');
+    const before = draftHash(item.draft);
     try {
       applyEdit(item.draft, edit, by);
     } catch (err) {
       throw new BadRequestException((err as Error).message);
     }
-    // An approved draft that changes needs approving again; a live page's draft becomes a pending update.
-    if (item.state === 'approved' || item.state === 'published' || item.state === 'failed') {
-      if (draftHash(item.draft) !== item.approvedHash) {
-        item.state = 'pending_review';
-        item.issues = ['Edited after approval — approve again to publish the changes'];
-      }
+    fallbackText(item.draft);
+    if (draftHash(item.draft) !== before && item.state !== 'postponed') {
+      const r = readiness(item.draft, this.minImages);
+      item.state = r.blocking.length ? 'draft' : 'approved';
+      item.attempts = 0;
+      item.issues = r.blocking.length ? r.blocking : [`Edited by ${by}; published in the next run, or press Publish now`];
     }
     await this.items.save(item);
     return this.getItem(id);
   }
 
-  async decide(
-    id: string,
-    decision: 'approve' | 'postpone' | 'reject' | 'reopen',
-    by: string,
-    opts: { confirmFacts?: boolean; note?: string; publishNow?: boolean } = {},
-  ) {
+  /**
+   * publish: publish this folder now instead of at the next scheduled run.
+   * hold:    keep it off the site (or stop updating its live page).
+   * resume:  undo a hold; the folder is read again and published.
+   */
+  async decide(id: string, decision: 'publish' | 'hold' | 'resume', by: string, opts: { note?: string } = {}) {
     const item = await this.findItem(id);
-    if (item.mode === 'linked') throw new BadRequestException('This project is managed in the CMS, not by the sync');
-    if (!item.draft) throw new BadRequestException('The draft is not ready yet — run the sync first');
     const note = (opts.note ?? '').slice(0, 500);
 
-    if (decision === 'approve') {
-      if (!['pending_review', 'postponed', 'rejected', 'failed'].includes(item.state)) {
-        throw new ConflictException(`Cannot approve a project that is ${item.state.replace(/_/g, ' ')}`);
+    if (decision === 'publish') {
+      if (item.state === 'postponed') throw new ConflictException('This folder is on hold — resume it first');
+      if (!item.draft) throw new BadRequestException('The folder has not been read yet — run the sync first');
+      if (item.mode === 'owned') {
+        const r = readiness(item.draft, this.minImages);
+        if (r.blocking.length) throw new BadRequestException(`Cannot publish: ${r.blocking.join('; ')}`);
+        item.state = 'approved';
+      } else {
+        item.sourceHash = ''; // read the folder again and apply its images
       }
-      const r = readiness(item.draft, this.minImages);
-      if (r.blocking.length) throw new BadRequestException(`Not ready: ${r.blocking.join('; ')}`);
-      if (r.unconfirmed.length && !opts.confirmFacts) throw new BadRequestException(`Confirm these facts first: ${r.unconfirmed.join(', ')}`);
-      confirmFacts(item.draft, by);
-      item.approvedHash = draftHash(item.draft);
-      item.state = 'approved';
       item.attempts = 0;
       item.issues = [];
-    } else if (decision === 'postpone') {
-      item.state = item.projectId ? 'published' : 'postponed';
-      if (item.projectId) item.issues = [`Update postponed by ${by}`];
-    } else if (decision === 'reject') {
-      // Rejecting an update to a live page keeps the live page as it is.
-      item.state = item.projectId ? 'published' : 'rejected';
-      if (item.projectId) item.issues = [`Update discarded by ${by}; the live page is unchanged`];
+    } else if (decision === 'hold') {
+      item.state = 'postponed';
+      item.issues = [item.projectId ? `On hold (${by}): the live page is not updated from the folder` : `On hold (${by}): not published`];
     } else {
-      if (!['postponed', 'rejected'].includes(item.state)) throw new ConflictException('Only postponed or rejected projects can be reopened');
-      item.state = 'pending_review';
+      if (item.state !== 'postponed') throw new ConflictException('Only a folder on hold can be resumed');
+      item.state = item.mode === 'linked' ? 'linked' : item.projectId ? 'published' : 'draft';
+      item.sourceHash = ''; // read the folder again in the next run
+      item.issues = [];
     }
     Object.assign(item, { decidedBy: by, decidedAt: new Date(), decisionNote: note });
     await this.items.save(item);
 
-    if (decision === 'approve' && opts.publishNow) {
-      this.run({ trigger: 'approval', folderId: item.sourceFolderId, requestedBy: by }).catch((err) =>
+    if (decision === 'publish') {
+      this.run({ trigger: 'publish-now', folderId: item.sourceFolderId, requestedBy: by }).catch((err) =>
         this.logger.error(`Publish-now of ${item.folderName} failed: ${(err as Error).message}`),
       );
     }
     return this.getItem(id);
   }
 
-  /** Writes the draft text again with the AI (human-written text is kept). */
+  /** Writes the text again with the AI (text a person wrote is kept); published in the next run. */
   async redraft(id: string, by: string) {
     if (!this.drafter.enabled) throw new BadRequestException('AI drafting is off: set ANTHROPIC_API_KEY on the backend');
     const item = await this.findItem(id);
-    if (!item.draft || item.mode === 'linked') throw new BadRequestException('This folder has no draft');
+    if (!item.draft || item.mode === 'linked') throw new BadRequestException('This folder has no page text');
     item.draft.notes = [];
     await this.aiDraft(item, item.draft);
-    if (item.state === 'approved') item.state = 'pending_review';
-    item.issues = [`Redrafted by ${by}`];
+    fallbackText(item.draft);
+    if (item.state !== 'postponed') item.state = readiness(item.draft, this.minImages).blocking.length ? 'draft' : 'approved';
+    item.issues = [`Redrafted by ${by}; published in the next run`];
     await this.items.save(item);
     return this.getItem(id);
   }
@@ -331,13 +322,19 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     return run;
   }
 
-  /** Puts a project the sync changed back to the record it replaced. */
+  /**
+   * Puts a project the sync changed back to the record it replaced. It stays
+   * that way until the folder changes again.
+   */
   async revert(itemId: string, by: string): Promise<Project> {
     const item = await this.findItem(itemId);
-    if (!item.projectId || !item.previousSnapshot) throw new NotFoundException('Nothing to undo for this project');
+    const snap = item.previousSnapshot as { fields: Record<string, unknown>; images: SyncedImage[]; written: Record<string, unknown> | null } | null;
+    if (!item.projectId || !snap?.fields) throw new NotFoundException('Nothing to undo for this project');
     const project = await this.projects.findOneOrFail({ where: { id: item.projectId } });
-    Object.assign(project, item.previousSnapshot);
+    Object.assign(project, snap.fields);
     const saved = await this.projects.save(project);
+    item.images = snap.images;
+    if (item.draft) item.draft.written = snap.written;
     item.previousSnapshot = null;
     item.lastPublishedAt = saved.updatedAt;
     item.issues = [`Last update undone by ${by} on ${new Date().toISOString()}; the site shows it after the next rebuild`];
@@ -401,25 +398,25 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     const dry = !!opts.dryRun;
     const report = emptyReport(run.id, opts.trigger, dry, started);
     const touched: Touched[] = [];
+    const keep = (t: Touched | null) => {
+      if (t) touched.push(t);
+    };
 
     try {
       const source = this.source();
       report.source = source.label;
-      const [csv, folders] = await Promise.all([source.readRegister(), source.listFolders()]);
+      const folders = await source.listFolders();
       const scoped = opts.folderId ? folders.filter((f) => f.id === opts.folderId) : folders;
       if (opts.folderId && !scoped.length) throw new Error('That folder is no longer in the source');
       report.summary.scanned = scoped.length;
 
-      const { rows, duplicates } = parseRegister(csv ?? '');
-      for (const d of duplicates) report.issues.push(`The register has more than one row for folder "${d}" — only the first is used.`);
-
-      const allProjects = await this.projects.find({ select: ['id', 'slug', 'no', 'updatedAt', 'summary'] });
+      const allProjects = await this.projects.find({ select: ['id', 'slug', 'no', 'updatedAt', 'summary', 'title'] });
       const known = await this.items.find();
-      const p = plan({ folders: scoped, rows, items: known, projects: allProjects as SiteProject[] });
+      const p = plan({ folders: scoped, items: known, projects: allProjects as SiteProject[] });
 
       const itemFor = (fp: FolderPlan) =>
         known.find((k) => k.sourceFolderId === fp.folder.id) ??
-        this.items.create({ sourceFolderId: fp.folder.id, folderName: fp.folder.name, slug: fp.slug, mode: 'owned', state: 'draft' });
+        this.items.create({ sourceFolderId: fp.folder.id, folderName: fp.folder.name, slug: fp.slug, mode: 'owned', state: 'draft', images: [], issues: [] });
 
       for (const fp of p.folders) {
         if (Date.now() - started > RUN_DEADLINE_MS) {
@@ -435,16 +432,19 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
         try {
           switch (a.kind) {
             case 'unchanged':
-              report.summary.unchanged++;
+              if (a.held) {
+                report.summary.held++;
+                report.held.push(fp.folder.name);
+              } else if (this.wantsAiText(item)) {
+                // The AI became available: pages published with the factual summary get full text.
+                publishing = await this.prepare(fp, item, 'retry-draft', dry, report);
+                if (publishing) keep(await this.publish(fp, item, allProjects, dry));
+              } else report.summary.unchanged++;
               break;
             case 'verify':
               break; // the verification pass below covers it
             case 'link':
-              report.summary.linked++;
-              if (!dry) {
-                Object.assign(item, { mode: 'linked', state: 'linked', projectId: a.project.id, slug: a.project.slug, sourceHash: fp.hash, issues: [] });
-                await this.items.save(item);
-              }
+              await this.link(fp, item, allProjects.find((x) => x.id === a.project.id)!, dry, report);
               break;
             case 'review':
               report.summary.attention++;
@@ -454,21 +454,13 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
                 await this.items.save(item);
               }
               break;
-            case 'prepare': {
-              await this.prepare(fp, item, a.reason, dry, report);
-              // Approved straight away (the register said YES): publish in this run, not the next.
-              if (!dry && item.state === 'approved') {
-                publishing = true;
-                const t = await this.publish(fp, item, a.project?.id, allProjects, dry);
-                if (t) touched.push(t);
-              }
+            case 'prepare':
+              publishing = await this.prepare(fp, item, a.reason, dry, report);
+              if (publishing) keep(await this.publish(fp, item, allProjects, dry));
               break;
-            }
-            case 'publish': {
-              const t = await this.publish(fp, item, a.project?.id, allProjects, dry);
-              if (t) touched.push(t);
+            case 'publish':
+              keep(await this.publish(fp, item, allProjects, dry));
               break;
-            }
           }
         } catch (err) {
           const message = (err as Error).message;
@@ -479,8 +471,6 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
             if (publishing) {
               item.state = 'failed';
               item.attempts += 1;
-            } else if (!item.draft) {
-              item.state = 'draft';
             }
             item.issues = [message];
             await this.items.save(item);
@@ -496,11 +486,13 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
       }
 
       if (dry) {
-        for (const t of touched) report.created.push(t.line);
+        for (const t of touched) {
+          if (t.kind === 'created') report.created.push(t.line);
+          else report.updated.push({ ...t.line, changes: t.changes ?? [] });
+        }
       } else {
         await this.deployAndVerify(report, touched);
       }
-      if (!dry) await this.pendingList(report);
     } catch (err) {
       const message = (err as Error).message;
       report.status = 'failed';
@@ -512,16 +504,18 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     }
 
     const adminUrl = `${SITE_ORIGIN}/admin/project-sync`;
-    if (report.pending.length) report.ownerActions.unshift(`Review and approve ${report.pending.length} project(s) waiting for you: ${adminUrl}`);
-    if (!this.drafter.enabled && (report.detected.length || report.pending.some((p) => p.blocking.some((b) => b.includes('summary'))))) {
-      report.ownerActions.push('Drafts have no text because AI drafting is off: write the summaries in the admin, or set ANTHROPIC_API_KEY so the sync writes them.');
+    const plainText = [...report.created, ...report.updated].some((l) => l.missing?.some((m) => m.startsWith('written description')));
+    if (!this.drafter.enabled && plainText) {
+      report.ownerActions.push(
+        'Pages were published with a one-line factual summary only: set ANTHROPIC_API_KEY on the backend so the sync writes full English and Arabic descriptions (about US$0.05–0.10 per project); existing sync pages are upgraded automatically.',
+      );
     }
 
     report.finishedAt = new Date().toISOString();
     report.durationMs = Date.now() - started;
     if (report.status !== 'failed') {
       const s = report.summary;
-      report.status = s.failed || s.attention || s.awaitingVerification || report.issues.length ? 'attention' : 'succeeded';
+      report.status = s.failed || s.attention || s.awaitingVerification || s.notPublished || report.issues.length ? 'attention' : 'succeeded';
     }
     const text = formatReport(report, adminUrl);
     await this.runs.update(run.id, { status: report.status, finishedAt: new Date(), report, reportText: text, error: report.status === 'failed' ? report.issues.at(-1) ?? '' : '' });
@@ -530,76 +524,139 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
     return this.runs.findOneByOrFail({ id: run.id });
   }
 
-  // ---------------------------------------------------------------- drafting
+  /** A live sync page still carrying the factual summary, now that the AI can write its text. */
+  private wantsAiText(item: ProjectSyncItem): boolean {
+    return this.drafter.enabled && item.mode === 'owned' && item.state === 'published' && item.draft?.content.summaryEn.source === 'template';
+  }
+
+  // ---------------------------------------------------------------- reading folders
 
   /**
-   * Builds or refreshes a folder's draft. Owner edits and verified facts are
-   * kept; images are re-checked only when new; the AI writes only for new
-   * drafts (or when its text is missing). Then the register's decision, if any.
+   * First sight of a folder for a project already on the site: records which
+   * folder images are already on its page (by picture, so the site's webp of
+   * a source JPEG counts) and changes nothing. From then on, images added to
+   * or replaced in the folder are synced to the page; its text stays the CMS's.
    */
-  private async prepare(fp: FolderPlan, item: ProjectSyncItem, reason: 'new' | 'source-changed' | 'retry-draft', dry: boolean, report: SyncReport): Promise<void> {
-    const draft: ProjectDraft = item.draft ? structuredClone(item.draft) : emptyDraft();
-    draft.notes = [];
-    suggest(draft, deriveFromFolder(fp.folder.name, fp.folder.files.map((f) => f.path)));
-    if (fp.row) applyRegister(draft, fp.row);
-
-    await this.collectImages(fp, item, draft, dry);
-
-    const wantsText = !(['summaryEn', 'summaryAr'] as const).every((k) => draft.content[k].value);
-    if (!dry && this.drafter.enabled && (reason === 'new' || !draft.ai || wantsText)) await this.aiDraft(item, draft, fp.folder.files.map((f) => f.path));
-    if (!this.drafter.enabled && wantsText) draft.notes.push('AI drafting is off, so the text must be written in the editor.');
-
-    const r = readiness(draft, this.minImages);
-    const isNew = reason === 'new';
-    if (isNew) report.summary.newDetected++;
-    if (isNew || reason === 'retry-draft') {
-      report.detected.push({ folder: fp.folder.name, name: draft.facts.titleEn.value || fp.slug, images: galleryOrder(draft).length, blocking: r.blocking, notes: draft.notes });
-    }
+  private async link(fp: FolderPlan, item: ProjectSyncItem, project: Pick<Project, 'id' | 'slug' | 'title'>, dry: boolean, report: SyncReport): Promise<void> {
+    report.summary.linked++;
+    const draft = emptyDraft();
+    const site = await this.siteImages(project.id);
+    const matched = await this.collectImages(fp, item, draft, dry, site, true);
+    report.linked.push({
+      folder: fp.folder.name,
+      name: project.title?.en || project.slug,
+      url: pageUrl(project.slug, 'en'),
+      sourceImages: draft.images.filter((i) => !i.problem && !isRenderPass(i.path)).length,
+      onSite: matched.length,
+    });
     if (dry) return;
-
-    const wasApproved = item.state === 'approved';
-    item.draft = draft;
-    item.slug = fp.slug;
-    item.sourceHash = fp.hash;
-    item.issues = reason === 'source-changed' ? [item.projectId ? 'New or changed source files: review the update to the live page' : 'Source files changed — review again'] : [];
-    if (!['postponed', 'rejected'].includes(item.state) || reason === 'source-changed') item.state = 'pending_review';
-    if (wasApproved && draftHash(draft) === item.approvedHash) item.state = 'approved';
-    this.applyRegisterDecision(item, fp.row, reason);
+    Object.assign(item, { mode: 'linked', state: 'linked', projectId: project.id, slug: project.slug, sourceHash: fp.hash, images: matched, draft, issues: [] });
     await this.items.save(item);
   }
 
-  /** Applies the register's approved_for_web column when it changed, or as a standing YES on new source. */
-  private applyRegisterDecision(item: ProjectSyncItem, row: RegisterRow | undefined, reason: string): void {
-    const draft = item.draft!;
-    const decision = row?.decision ?? '';
-    const changed = decision !== draft.registerDecision;
-    draft.registerDecision = decision;
-    if (!decision || (!changed && !(decision === 'approve' && reason !== 'retry-draft'))) return;
+  /**
+   * Reads a new or changed folder into its draft: facts from the folder name,
+   * images checked, text written. Returns whether it can be published; a
+   * folder that cannot (no title or no usable image) is reported and retried.
+   */
+  private async prepare(fp: FolderPlan, item: ProjectSyncItem, reason: 'new' | 'source-changed' | 'retry-draft', dry: boolean, report: SyncReport): Promise<boolean> {
+    const draft: ProjectDraft = item.draft ? structuredClone(item.draft) : emptyDraft();
+    draft.notes = [];
+    const site = item.projectId ? await this.siteImages(item.projectId) : [];
 
-    const by = 'the _REGISTER sheet';
-    if (decision === 'later') item.state = item.projectId ? item.state : 'postponed';
-    else if (decision === 'reject') item.state = item.projectId ? item.state : 'rejected';
-    else if (item.state === 'pending_review') {
-      const r = readiness(draft, this.minImages);
-      if (r.blocking.length || r.unconfirmed.length) {
-        item.issues = [`Approved in the register, but first: ${[...r.blocking, ...r.unconfirmed.map((u) => `confirm ${u}`)].join('; ')}`];
-        return;
+    if (item.mode === 'linked') {
+      const matched = await this.collectImages(fp, item, draft, dry, site, false);
+      if (!dry) {
+        Object.assign(item, { draft, sourceHash: fp.hash, images: this.withMatches(item.images, matched), issues: [] });
+        await this.items.save(item);
       }
-      item.approvedHash = draftHash(draft);
-      item.state = 'approved';
-    } else return;
-    Object.assign(item, { decidedBy: by, decidedAt: new Date(), decisionNote: '' });
+      return true;
+    }
+
+    const f = draft.facts;
+    const was = { title: f.titleEn.value, location: f.locationEn.value };
+    suggest(draft, deriveFromFolder(fp.folder.name, fp.folder.files.map((x) => x.path)));
+    const renamed = !!item.draft && (was.title !== f.titleEn.value || was.location !== f.locationEn.value);
+    if (renamed) {
+      // Text and translations written for the old name no longer fit.
+      if (f.titleAr.source === 'ai') f.titleAr = { value: '', source: 'folder' };
+      if (f.locationAr.source === 'ai') f.locationAr = { value: '', source: 'folder' };
+      const c = draft.content;
+      for (const k of ['summaryEn', 'summaryAr'] as const) if (c[k].source === 'ai') c[k] = { value: '', source: 'template' };
+      for (const k of ['descriptionEn', 'descriptionAr'] as const) if (c[k].source === 'ai') c[k] = { value: [], source: 'template' };
+    }
+
+    const matched = await this.collectImages(fp, item, draft, dry, site, false);
+
+    const c = draft.content;
+    const wantsText = reason === 'new' || renamed || (['summaryEn', 'summaryAr'] as const).some((k) => c[k].source === 'template' || !c[k].value);
+    if (!dry && this.drafter.enabled && wantsText) await this.aiDraft(item, draft, fp.folder.files.map((x) => x.path));
+    fallbackText(draft);
+
+    const r = readiness(draft, this.minImages);
+    if (reason === 'new') report.summary.newDetected++;
+    if (r.blocking.length) {
+      report.summary.notPublished++;
+      report.notPublished.push({ folder: fp.folder.name, name: f.titleEn.value || fp.slug, reasons: r.blocking });
+    }
+    if (dry) return !r.blocking.length;
+
+    Object.assign(item, {
+      draft,
+      slug: fp.slug,
+      sourceHash: fp.hash,
+      images: this.withMatches(item.images, matched),
+      state: r.blocking.length ? 'draft' : 'approved',
+      issues: r.blocking,
+    });
+    await this.items.save(item);
+    return !r.blocking.length;
   }
 
-  /** Checks every new source image once (by content) and keeps a private preview of it. */
-  private async collectImages(fp: FolderPlan, item: ProjectSyncItem, draft: ProjectDraft, dry: boolean): Promise<void> {
+  private withMatches(images: SyncedImage[], matched: SyncedImage[]): SyncedImage[] {
+    return [...images, ...matched.filter((m) => !images.some((i) => i.md5 === m.md5))];
+  }
+
+  /** The page's current images with their fingerprints, read from the uploads folder. */
+  private async siteImages(projectId: string): Promise<SiteImage[]> {
+    const project = await this.projects.findOne({ where: { id: projectId }, select: ['id', 'cover', 'gallery'] });
+    const out: SiteImage[] = [];
+    for (const url of [project?.cover, ...(project?.gallery ?? [])].filter((u): u is string => !!u)) {
+      const path = join(this.uploadDir(), basename(url.split('?')[0]));
+      if (!url.includes('/uploads/') || !existsSync(path)) continue;
+      try {
+        out.push({ url, fingerprint: await fingerprint(readFileSync(path)) });
+      } catch {
+        /* unreadable: treated as not matching */
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Checks every new source image once (by content), keeps a private preview
+   * and a fingerprint of it, and decides what goes on the page:
+   *  - exact copies (same bytes) and the same picture in another file (a
+   *    smaller export, a PNG beside the JPEG) are used once — the largest;
+   *  - a file that replaces an earlier version keeps that version's place;
+   *  - render passes and images that are too small are listed, not used;
+   *  - new images join up to the gallery cap.
+   * Returns the source images already on the page (matched by picture), so
+   * they are never uploaded a second time. `baseline`: first sight of an
+   * existing project — only the images already on its page count as included.
+   */
+  private async collectImages(fp: FolderPlan, item: ProjectSyncItem, draft: ProjectDraft, dry: boolean, site: SiteImage[], baseline: boolean): Promise<SyncedImage[]> {
     const source = this.source();
     const before = new Map(draft.images.map((i) => [i.md5, i]));
+    const bySource = new Map(draft.images.map((i) => [i.sourceId, i]));
+    const byPath = new Map(draft.images.map((i) => [i.path, i]));
     const out: DraftImage[] = [];
-    const seen = new Map<string, string>();
-    const duplicates: string[] = [];
+    const fresh = new Set<DraftImage>();
+    const matched: SyncedImage[] = [];
+    const seen = new Set<string>();
+    const copies: string[] = [];
+    const twins: string[] = [];
     let passes = 0;
-    let included = draft.images.filter((i) => i.included && !i.problem).length;
 
     for (const file of fp.images) {
       let md5 = file.md5;
@@ -609,44 +666,76 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
         md5 = createHash('md5').update(raw).digest('hex');
       }
       if (seen.has(md5)) {
-        duplicates.push(file.path.split('/').pop()!);
+        copies.push(file.path.split('/').pop()!);
         continue;
       }
-      seen.set(md5, file.path);
+      seen.add(md5);
 
       const old = before.get(md5);
-      if (old && (old.problem || dry || this.previews.has(item.sourceFolderId, md5))) {
-        out.push({ ...old, sourceId: file.id, path: file.path });
-        continue;
+      let img: DraftImage;
+      if (old && (old.problem || (old.fingerprint && (dry || this.previews.has(item.sourceFolderId, md5))))) {
+        img = { ...old, sourceId: file.id, path: file.path };
+      } else {
+        raw ??= await source.download(file);
+        const r = dry ? await prepareImage(file, raw, { maxEdge: 64, quality: 50 }) : await this.previews.add(item.sourceFolderId, file, raw);
+        if ('problem' in r) {
+          out.push({ sourceId: file.id, path: file.path, md5, width: 0, height: 0, included: false, problem: r.problem });
+          continue;
+        }
+        const pass = isRenderPass(file.path);
+        // An earlier version of this file (same Drive file or same path) keeps its place.
+        const prior = old ?? bySource.get(file.id) ?? byPath.get(file.path);
+        img = { sourceId: file.id, path: file.path, md5, width: r.width, height: r.height, fingerprint: await fingerprint(r.data), included: prior ? prior.included : !pass && !baseline };
+        if (!prior) {
+          fresh.add(img);
+          if (pass) passes++;
+        }
       }
-      raw ??= await source.download(file);
-      const r = dry ? await prepareImage(file, raw, { maxEdge: 64, quality: 50 }) : await this.previews.add(item.sourceFolderId, file, raw);
-      if ('problem' in r) {
-        out.push({ sourceId: file.id, path: file.path, md5, width: 0, height: 0, included: false, problem: r.problem });
-        continue;
-      }
-      // New images join the gallery up to the cap; the rest, and render passes, wait unticked in the admin.
-      const pass = isRenderPass(file.path);
-      if (pass && !old) passes++;
-      const include = old ? old.included : !pass && included < this.maxGallery;
-      if (include && !old) included++;
-      out.push({ sourceId: file.id, path: file.path, md5, width: r.width, height: r.height, included: include });
-    }
-    draft.images = out;
-    if (passes) draft.notes.push(`${passes} render-pass file(s) (lighting, texture or mask layers) are listed in the gallery but not selected.`);
-    if (duplicates.length) draft.notes.push(`${duplicates.length} identical copy(ies) skipped, e.g. ${duplicates.slice(0, 3).join(', ')}`);
 
-    const coverName = fp.row?.cover?.toLowerCase();
-    const named = coverName ? draft.images.find((i) => !i.problem && (i.path.toLowerCase() === coverName || i.path.split('/').pop()!.toLowerCase() === coverName)) : undefined;
-    if (named) {
-      named.included = true;
-      draft.cover = named.md5;
-    } else if (!draft.images.some((i) => i.md5 === draft.cover && i.included && !i.problem)) {
-      draft.cover = draft.images.find((i) => i.included && !i.problem)?.md5 ?? '';
+      if (!img.problem && img.fingerprint && !isRenderPass(img.path)) {
+        // Already on the page (uploaded by hand, or the existing project's own images): never uploaded again.
+        if (fresh.has(img) || baseline) {
+          const onSite = site.find((s) => samePicture(s.fingerprint, img.fingerprint!));
+          if (onSite) {
+            matched.push({ sourceId: img.sourceId, md5: img.md5, url: onSite.url, path: img.path, fingerprint: img.fingerprint });
+            img.included = true;
+          }
+        }
+        // The same picture in another file of this folder: the larger one is used.
+        const twin = out.find((o) => !o.problem && o.fingerprint && !isRenderPass(o.path) && samePicture(o.fingerprint, img.fingerprint!));
+        if (twin) {
+          const [kept, dropped] = img.width * img.height > twin.width * twin.height ? [img, twin] : [twin, img];
+          kept.included = kept.included || dropped.included;
+          dropped.included = false;
+          dropped.problem = `same picture as ${kept.path}`;
+          twins.push(dropped.path.split('/').pop()!);
+        }
+      }
+      out.push(img);
     }
+
+    // New images join the gallery up to the cap, in folder order.
+    let count = out.filter((i) => i.included && !i.problem && !fresh.has(i)).length;
+    let over = 0;
+    for (const img of out) {
+      if (!fresh.has(img) || !img.included || img.problem) continue;
+      if (count < this.maxGallery || matched.some((m) => m.md5 === img.md5)) count++;
+      else {
+        img.included = false;
+        over++;
+      }
+    }
+
+    draft.images = out;
+    if (passes) draft.notes.push(`${passes} render-pass file(s) (lighting, texture or mask layers) are not used.`);
+    if (copies.length) draft.notes.push(`${copies.length} identical copy(ies) skipped, e.g. ${copies.slice(0, 3).join(', ')}`);
+    if (twins.length) draft.notes.push(`${twins.length} smaller copy(ies) of the same picture skipped, e.g. ${twins.slice(0, 3).join(', ')}`);
+    if (over) draft.notes.push(`${over} image(s) beyond the ${this.maxGallery}-image gallery limit are not used; choose others in the admin if wanted.`);
+    if (!out.some((i) => i.md5 === draft.cover && i.included && !i.problem)) draft.cover = out.find((i) => i.included && !i.problem)?.md5 ?? '';
+    return matched;
   }
 
-  /** Runs the AI on a few images spread across the gallery. Failures become notes, never block the draft. */
+  /** Runs the AI on a few images spread across the gallery. Failures become notes; the factual summary is used. */
   private async aiDraft(item: ProjectSyncItem, draft: ProjectDraft, paths?: string[]): Promise<void> {
     if (!this.drafter.enabled) return;
     try {
@@ -660,115 +749,160 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
       }
       await this.drafter.draft(item.folderName, paths ?? draft.images.map((i) => i.path), draft, images);
     } catch (err) {
-      draft.notes.push(`AI drafting failed: ${(err as Error).message}. Write the text in the editor, or press Redraft later.`);
+      draft.notes.push(`AI drafting failed: ${(err as Error).message}. The factual summary is used until the next change.`);
     }
-  }
-
-  private async pendingList(report: SyncReport): Promise<void> {
-    const waiting = await this.items.find({ where: { state: In(AWAITING_DECISION) }, order: { folderName: 'ASC' } });
-    report.pending = waiting.map((i): PendingLine => {
-      const r = i.draft ? readiness(i.draft, this.minImages) : { blocking: ['draft not ready'], unconfirmed: [] };
-      return { folder: i.folderName, name: i.draft?.facts.titleEn.value || i.slug, blocking: r.blocking, update: !!i.projectId };
-    });
-    report.summary.pendingApproval = report.pending.length;
   }
 
   // ---------------------------------------------------------------- publishing
 
   /**
-   * Publishes an approved draft. Nothing is written to the project table
-   * until every image is stored; if anything fails before that, the images
-   * written in this attempt are removed and the live record is as it was.
+   * Writes a folder's draft to its project. Nothing is written to the project
+   * table until every new image is stored; if anything fails before that,
+   * the images written in this attempt are removed and the record is as it was.
+   *
+   * New folder: a new published project. Existing page: only what changed,
+   * field by field — a field a person edited in the CMS is kept, images a
+   * person added stay, images a person removed are not brought back, and a
+   * changed source file replaces its old version in place. A linked (existing
+   * CMS) project gets image changes only.
    */
-  private async publish(fp: FolderPlan, item: ProjectSyncItem, projectId: string | undefined, others: Pick<Project, 'slug' | 'summary'>[], dry: boolean): Promise<Touched | null> {
+  private async publish(fp: FolderPlan, item: ProjectSyncItem, others: Pick<Project, 'slug' | 'summary'>[], dry: boolean): Promise<Touched | null> {
     const draft = item.draft;
-    if (!draft || draftHash(draft) !== item.approvedHash) {
-      // Belt and braces: the planner only sends approved items, and edits reset approval.
-      if (!dry) {
-        item.state = 'pending_review';
-        item.issues = ['The draft changed after approval — approve again'];
-        await this.items.save(item);
-      }
-      return null;
-    }
-    const gallery = galleryOrder(draft);
-    if (dry) {
-      return { item, kind: projectId ? 'updated' : 'created', line: this.line(fp.folder.name, fp.slug, draft, gallery.length, 'skipped') };
-    }
+    if (!draft) return null;
+    const linked = item.mode === 'linked';
+    const r = linked ? null : readiness(draft, this.minImages);
+    if (r?.blocking.length) return null;
+    const desired = linked ? draft.images.filter((i) => i.included && !i.problem) : galleryOrder(draft);
+    const projectId = item.projectId ?? undefined;
+    const extra: Partial<ProjectLine> = r ? { missing: r.missing } : {};
+    if (dry) return { item, kind: projectId ? 'updated' : 'created', line: this.line(item, fp.slug, desired.length, 'skipped', extra) };
 
     const source = this.source();
     const uploadDir = this.uploadDir();
     const prefix = this.config.get<string>('apiPrefix', 'api');
-    const previous = new Map(item.images.map((i) => [`${i.sourceId}:${i.md5}`, i.url]));
-    const published: ProjectSyncItem['images'] = [];
+    const current = projectId ? await this.projects.findOneByOrFail({ id: projectId }) : null;
+    const currentList = current ? [current.cover, ...(current.gallery ?? [])].filter(Boolean) : [];
+    const written = draft.written ?? null;
+    const writtenList = written && 'gallery' in written ? [written.cover as string, ...((written.gallery as string[]) ?? [])].filter(Boolean) : null;
+    // Sync images a person took off the page: never put back, nor their new versions.
+    const removedByPerson = new Set((writtenList ?? []).filter((u) => !currentList.includes(u)));
+    const prev = item.images ?? [];
+    const published: SyncedImage[] = [];
     const writtenNow: string[] = [];
+    const replace = new Map<string, string>();
+    const add: string[] = [];
 
     try {
-      for (const img of gallery) {
-        const reuse = previous.get(`${img.sourceId}:${img.md5}`);
-        if (reuse) {
-          published.push({ sourceId: img.sourceId, md5: img.md5, url: reuse });
+      for (const img of desired) {
+        const exact = prev.find((p) => p.md5 === img.md5 && p.url);
+        if (exact) {
+          if (!removedByPerson.has(exact.url)) published.push({ ...exact, sourceId: img.sourceId, path: img.path });
           continue;
         }
+        const older = prev.find((p) => p.url && (p.sourceId === img.sourceId || (!!p.path && p.path === img.path)));
+        if (older && removedByPerson.has(older.url)) continue;
         const file = this.fileOf(img);
         const prepared = await prepareImage(file, await source.download(file));
         if ('problem' in prepared) throw new Error(`${prepared.file}: ${prepared.problem}`);
-        const url = await storeImage(uploadDir, prefix, fp.slug, published.length, prepared);
+        const url = await storeImage(uploadDir, prefix, fp.slug, currentList.length + published.length, prepared);
         writtenNow.push(url);
-        published.push({ sourceId: img.sourceId, md5: img.md5, url });
+        published.push({ sourceId: img.sourceId, md5: img.md5, url, path: img.path, fingerprint: img.fingerprint });
+        if (older) replace.set(older.url, url);
+        else add.push(url);
       }
-
-      const fields = buildFields(draft, fp.slug, fp.no, published.map((i) => i.url));
-      const dup = duplicateSummary(fields, others);
-      if (dup) throw new Error(`${dup} — change it in the editor`);
+      // Linked projects keep the record of every matched image; sync pages drop images no longer in the folder.
+      const kept = linked ? prev.filter((p) => !published.some((q) => q.md5 === p.md5) && !replace.has(p.url)) : [];
+      const drop = new Set(linked ? [] : prev.filter((p) => p.url && !published.some((q) => q.url === p.url) && !replace.has(p.url)).map((p) => p.url));
+      const images = [...kept, ...published];
+      const coverUrl = linked ? undefined : published.find((p) => p.md5 === desired[0]?.md5)?.url;
 
       let saved: Project;
       let changes: ReturnType<typeof diffFields> | undefined;
-      if (projectId) {
-        const current = await this.projects.findOneByOrFail({ id: projectId });
-        changes = diffFields(current, fields);
-        item.previousSnapshot = JSON.parse(JSON.stringify(current));
-        Object.assign(current, fields);
-        saved = await this.projects.save(current);
-      } else {
+      let newWritten: Record<string, unknown>;
+      const warnings: string[] = [...(r?.warnings ?? [])];
+
+      if (!current) {
+        const fields = buildFields(draft, fp.slug, fp.no, published.map((p) => p.url));
+        const dup = duplicateSummary(fields, others);
+        if (dup) warnings.push(`${dup} — two pages share a meta description; edit the summary in the admin`);
         // Re-check the slug at the last moment: never create a second record for it.
         if (await this.projects.findOneBy({ slug: fields.slug })) throw new Error(`Slug "${fields.slug}" was taken on the site meanwhile`);
         saved = await this.projects.save(this.projects.create({ ...fields, status: ProjectStatus.Published, featured: false }));
+        newWritten = this.pick(fields);
         item.previousSnapshot = null;
+      } else {
+        const next = buildFields(draft, current.slug, current.no, []);
+        const { owned, kept: editedFields } = ownedFields(current, written);
+        const list = mergeGallery({ current: currentList, written: writtenList, replace, drop, add, cover: coverUrl });
+        const after: Partial<Project> = { cover: list[0] ?? '', gallery: list.slice(1) };
+        for (const f of owned) (after as Record<string, unknown>)[f] = next[f];
+        changes = diffFields(current, { ...current, ...after } as Project);
+        if (editedFields.length) extra.keptEdits = editedFields;
+        if (!changes.length) {
+          // Nothing on the page changes: only the record of the folder is brought up to date.
+          Object.assign(item, { images, sourceHash: fp.hash, state: linked ? 'linked' : 'published', issues: [], attempts: 0 });
+          await this.items.save(item);
+          return null;
+        }
+        item.previousSnapshot = { fields: JSON.parse(JSON.stringify(current)), images: prev, written };
+        Object.assign(current, after);
+        saved = await this.projects.save(current);
+        newWritten = { ...(written ?? {}), cover: after.cover, gallery: after.gallery };
+        for (const f of owned) newWritten[f] = JSON.parse(JSON.stringify(next[f] ?? null));
+        extra.imagesAdded = add.filter((u) => list.includes(u)).length;
+        extra.imagesReplaced = [...replace.values()].filter((u) => list.includes(u)).length;
+        extra.imagesRemoved = [...drop].filter((u) => currentList.includes(u)).length;
       }
 
+      draft.written = newWritten;
       Object.assign(item, {
-        mode: 'owned',
         state: 'awaiting_verification',
         projectId: saved.id,
         slug: saved.slug,
         sourceHash: fp.hash,
-        images: published,
+        images,
         issues: [],
         attempts: 0,
+        approvedHash: draftHash(draft),
         lastPublishedAt: saved.updatedAt,
       });
       await this.items.save(item);
-      const r = readiness(draft, this.minImages);
-      return { item, kind: projectId ? 'updated' : 'created', line: this.line(fp.folder.name, saved.slug, draft, published.length, 'awaiting_verification', r.warnings), changes };
+      if (warnings.length) extra.warnings = warnings;
+      const onPage = [saved.cover, ...(saved.gallery ?? [])].filter(Boolean).length;
+      return { item, kind: current ? 'updated' : 'created', line: this.line(item, saved.slug, onPage, 'awaiting_verification', extra), changes };
     } catch (err) {
       this.discard(writtenNow, uploadDir);
       throw err;
     }
   }
 
-  private line(folder: string, slug: string, draft: ProjectDraft, images: number, outcome: Outcome, warnings: string[] = []): ProjectLine {
-    const aiDrafted = (['summaryEn', 'summaryAr', 'descriptionEn', 'descriptionAr'] as const).filter((k) => draft.content[k].source === 'ai' && draft.content[k].value.length);
+  /** The source-owned part of a record, as the sync wrote it. */
+  private pick(fields: SourceFields): Record<string, unknown> {
+    const out: Record<string, unknown> = { cover: fields.cover, gallery: fields.gallery };
+    for (const f of TEXT_FIELDS) out[f] = JSON.parse(JSON.stringify(fields[f] ?? null));
+    return out;
+  }
+
+  private line(item: ProjectSyncItem, slug: string, images: number, outcome: Outcome, extra: Partial<ProjectLine> = {}): ProjectLine {
+    const draft = item.draft;
+    const linked = item.mode === 'linked';
+    const textSource = draft?.content.summaryEn.source;
     return {
-      folder,
-      name: draft.facts.titleEn.value || slug,
-      category: draft.facts.sectors.value.join(', '),
+      folder: item.folderName,
+      name: (linked ? '' : draft?.facts.titleEn.value) || slug,
+      category: linked || !draft ? '' : draft.facts.sectors.value.join(', '),
       urlEn: pageUrl(slug, 'en'),
       urlAr: pageUrl(slug, 'ar'),
       images,
       outcome,
-      aiDrafted,
-      warnings,
+      text: linked
+        ? 'Existing project: text kept as in the CMS; images kept in step with the folder'
+        : textSource === 'ai'
+          ? 'Written by the AI from the folder facts and images, checked for added facts'
+          : textSource === 'owner'
+            ? 'As edited in the admin'
+            : 'One-line factual summary',
+      ...extra,
     };
   }
 
@@ -805,7 +939,7 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
           report.issues.push(`The website rebuild could not be started: ${(err as Error).message}`);
         }
       } else {
-        report.issues.push('Website rebuild is not configured, so new pages are not prerendered or in the sitemap until the next deploy.');
+        report.issues.push('Website rebuild is not configured, so changed pages are prerendered and in the sitemap only after the next website deploy.');
         report.ownerActions.push('Set RAILWAY_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID and RAILWAY_FRONTEND_SERVICE_ID on the backend service.');
       }
     }
@@ -827,7 +961,7 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
         if (!project) continue;
         const check = await verifyProject(project.slug, project.cover, sitemap);
         if (check.ok) {
-          item.state = 'published';
+          item.state = item.mode === 'linked' ? 'linked' : 'published';
           item.lastVerifiedAt = new Date();
           await this.items.save(item);
           results.set(item.sourceFolderId, []);
@@ -846,17 +980,12 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
       const ok = problems.length === 0;
       const t = lines.get(item.sourceFolderId);
       const wasUpdate = t ? t.kind === 'updated' : !!item.previousSnapshot;
-      const line: ProjectLine = t?.line ?? (item.draft ? this.line(item.folderName, item.slug, item.draft, item.images.length, 'awaiting_verification') : {
-        folder: item.folderName,
-        name: item.slug,
-        category: '',
-        urlEn: pageUrl(item.slug, 'en'),
-        urlAr: pageUrl(item.slug, 'ar'),
-        images: item.images.length,
-        outcome: 'awaiting_verification',
-      });
+      const line: ProjectLine = t?.line ?? this.line(item, item.slug, item.images.length, 'awaiting_verification');
       line.outcome = ok ? (wasUpdate ? 'updated' : 'published') : 'awaiting_verification';
-      if (!ok) line.warnings = [...(line.warnings ?? []), `Live check: ${problems.join('; ')}`];
+      if (!ok) {
+        const why = rebuildConfigured() ? `Live check: ${problems.join('; ')}` : 'Saved; live (prerendered, in the sitemap) after the next website deploy, as the rebuild is not configured';
+        line.warnings = [...(line.warnings ?? []), why];
+      }
       if (wasUpdate) report.updated.push({ ...line, changes: t?.changes ?? [] });
       else report.created.push(line);
       if (ok) {
@@ -867,7 +996,7 @@ export class ProjectSyncService implements OnApplicationBootstrap, OnApplication
 
     if (remaining.length) {
       const waited = control.deployRequestedAt ? Date.now() - control.deployRequestedAt.getTime() : Infinity;
-      if (!rebuilt && waited > 2 * 60 * 60_000) {
+      if (rebuildConfigured() && !rebuilt && waited > 2 * 60 * 60_000) {
         report.issues.push(`${remaining.length} project(s) saved but still not live more than 2 hours after the last rebuild request — check the frontend deployment.`);
         report.ownerActions.push('Open Railway → frontend service → Deployments and check the latest build log.');
       }

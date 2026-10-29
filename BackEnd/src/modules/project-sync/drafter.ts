@@ -1,69 +1,56 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Logger } from '@nestjs/common';
-import { ARABIC, CATEGORY_KEYS, DraftFacts, FACT_KEYS, Fact, ProjectDraft, SECTOR_KEYS, VERIFIED_SOURCES } from './draft';
+import { ARABIC, FACT_KEYS, ProjectDraft, VERIFIED_SOURCES } from './draft';
 
 /**
- * Optional AI step that writes a project's bilingual draft, so nobody has to
+ * Optional AI step that writes a project's bilingual text, so nobody has to
  * type descriptions. Off unless ANTHROPIC_API_KEY is set; without it the
- * draft keeps the folder-name suggestions and the text is written in the admin.
+ * page gets a one-line summary built from the facts (draft.ts fallbackText).
  *
- * The model sees: the folder name, the sub-folder and file names, the facts
- * already known (with their sources) and up to MAX_IMAGES downscaled images.
- * It returns:
- *  - fact SUGGESTIONS (title, Arabic title, location, sectors, categories),
- *    each stored as source `ai` — a person confirms them before publishing;
- *  - visual notes (what the images show), for the reviewer only;
+ * The model sees: the folder name, the sub-folder and file names, the
+ * verified facts and up to MAX_IMAGES downscaled images. It returns:
+ *  - the Arabic title and location: renderings of the verified English ones,
+ *    nothing more (it adds no fact of its own);
+ *  - visual notes (what the images show), for the admin only;
  *  - summary and description in both languages, written from the facts and
  *    the visible design only.
  *
  * The text is then checked mechanically (checkText): no number that is not
  * in the facts, no area, award, certification, client, contractor or cost
  * wording, the right script, matching paragraph counts. Output that fails is
- * discarded and the reason is shown in the draft.
+ * discarded, the fallback summary is kept, and the reason is reported.
  *
- * Cost: one request per new project (and per manual "redraft"): about 6
- * images + 2K tokens in, 2–4K out — roughly US$0.05–0.10 on claude-opus-5-5.
+ * Cost: one request per new project (and when its title or images change):
+ * about 6 images + 2K tokens in, 2–4K out — roughly US$0.05–0.10 on claude-opus-5-5.
  */
 
 export const MAX_IMAGES = 6;
 
-const SYSTEM = `You prepare website project pages for MSP, an architecture and engineering design consultancy in Riyadh (it designs and supervises; it is never a contractor or builder). You write in English and in Arabic.
+const SYSTEM = `You write website project pages for MSP, an architecture and engineering design consultancy in Riyadh (it designs and supervises; it is never a contractor or builder). You write in English and in Arabic. The pages are published without further review, so accuracy matters more than anything else.
 
-You receive a project folder's name, the names of its sub-folders and files, the facts already known (each with its source), and a few of its images (renderings or photographs).
+You receive a project folder's name, the names of its sub-folders and files, the verified facts, and a few of its images (renderings or photographs).
 
-Facts — accuracy matters more than completeness:
-- Suggest a title, an Arabic title, a location and the classification ONLY from what the folder and file names say or the images plainly show. Leave a field empty when it is not supported. Never use outside knowledge to guess a city, district, client, date or size.
-- Keep facts whose source is owner, register or site exactly as given.
-- sectors and design_categories must be keys from the lists in the schema.
+Arabic title and location:
+- title_ar: the Arabic rendering of the English title as an established Saudi practice would write it (transliterate proper names; translate descriptive words). location_ar: the Arabic of the given English location, or empty when no location is given. Add nothing.
 
 Text:
 - summary: one or two sentences, 70–170 characters, usable as the page's meta description. description: 1–3 short paragraphs.
-- Write only from the facts and from design features clearly visible in the images (massing, façade treatment, materials as they appear, light, spatial organisation). Describe what is visible; do not claim performance, sustainability, awards, certifications, areas, floor counts, budgets, dates, clients, contractors or construction status unless they are in the facts.
+- Use only the facts given and design features clearly visible in the images (massing, façade treatment, materials as they appear, light, spatial organisation). Do not state a location, use, sector, client, date, size, floor count, budget, status, award, certification, performance or sustainability claim that is not in the facts. Never use outside knowledge about the project.
 - No digits unless the number is in the facts.
 - Plain, precise, professional tone; no superlatives ("stunning", "world-class", "luxurious" are banned). Arabic: natural Modern Standard Arabic suited to an established Saudi consultancy, not a word-for-word translation; the same number of paragraphs as the English.
 - If studio text is given for a field, keep its meaning and only render the other language.
 
-visual_notes: 3–8 short notes on what the images show, for the reviewer.
+visual_notes: 3–8 short notes on what the images show, for the studio's admin screen.
 
 Return JSON only, matching the schema.`;
 
 const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['title_en', 'title_ar', 'location_en', 'location_ar', 'sectors', 'design_categories', 'basis', 'visual_notes', 'summary_en', 'summary_ar', 'description_en', 'description_ar'],
+  required: ['title_ar', 'location_ar', 'visual_notes', 'summary_en', 'summary_ar', 'description_en', 'description_ar'],
   properties: {
-    title_en: { type: 'string' },
     title_ar: { type: 'string' },
-    location_en: { type: 'string' },
     location_ar: { type: 'string' },
-    sectors: { type: 'array', items: { type: 'string', enum: SECTOR_KEYS } },
-    design_categories: { type: 'array', items: { type: 'string', enum: CATEGORY_KEYS } },
-    basis: {
-      type: 'object',
-      additionalProperties: false,
-      required: ['title', 'location', 'classification'],
-      properties: { title: { type: 'string' }, location: { type: 'string' }, classification: { type: 'string' } },
-    },
     visual_notes: { type: 'array', items: { type: 'string' } },
     summary_en: { type: 'string' },
     summary_ar: { type: 'string' },
@@ -73,13 +60,8 @@ const SCHEMA = {
 } as const;
 
 export interface DrafterOutput {
-  title_en: string;
   title_ar: string;
-  location_en: string;
   location_ar: string;
-  sectors: string[];
-  design_categories: string[];
-  basis: { title: string; location: string; classification: string };
   visual_notes: string[];
   summary_en: string;
   summary_ar: string;
@@ -116,37 +98,30 @@ export function checkText(out: Pick<DrafterOutput, 'summary_en' | 'summary_ar' |
   return problems;
 }
 
-/** Merges the AI's output into the draft: suggestions never replace verified facts or human text. */
+/** Merges the AI's output into the draft: it never replaces a verified fact or text a person wrote. */
 export function mergeOutput(draft: ProjectDraft, out: DrafterOutput, model: string, textProblems: string[]): void {
   const f = draft.facts;
-  const set = (key: keyof DraftFacts, value: string | string[], basis: string) => {
-    const empty = Array.isArray(value) ? !value.length : !value.trim();
-    if (empty) return;
-    const current = f[key] as Fact<unknown>;
-    if (VERIFIED_SOURCES.includes(current.source)) return;
-    // A folder-name value stays unless the AI offers a better-formed one for the same field.
-    (f[key] as Fact<unknown>) = { value: Array.isArray(value) ? value : value.trim(), source: 'ai', basis: `AI suggestion: ${basis || 'no basis given'}` };
+  const render = (key: 'titleAr' | 'locationAr', value: string, of: string) => {
+    if (VERIFIED_SOURCES.includes(f[key].source) && f[key].value) return;
+    if (!of || !value.trim() || !ARABIC.test(value)) return;
+    f[key] = { value: value.trim(), source: 'ai', basis: `Arabic rendering of "${of}"` };
   };
-  set('titleEn', out.title_en, out.basis.title);
-  set('titleAr', out.title_ar, out.basis.title);
-  set('locationEn', out.location_en, out.basis.location);
-  set('locationAr', out.location_ar, out.basis.location);
-  if (!f.sectors.value.length || f.sectors.source === 'ai') set('sectors', out.sectors, out.basis.classification);
-  if (f.designCategories.source !== 'folder' || !f.designCategories.value.length) set('designCategories', out.design_categories, out.basis.classification);
+  render('titleAr', out.title_ar, f.titleEn.value);
+  render('locationAr', out.location_ar, f.locationEn.value);
 
   draft.visualNotes = out.visual_notes.map((n) => n.trim()).filter(Boolean).slice(0, 10);
   draft.ai = { model, at: new Date().toISOString() };
 
   if (textProblems.length) {
-    draft.notes.push(`AI text discarded: ${textProblems.join('; ')}. Write it in the editor, or redraft.`);
+    draft.notes.push(`AI text discarded: ${textProblems.join('; ')}. The factual summary is used instead.`);
     return;
   }
   const c = draft.content;
-  const human = (k: keyof typeof c) => c[k].source === 'owner' || c[k].source === 'register';
+  const human = (k: keyof typeof c) => c[k].source === 'owner';
   if (!human('summaryEn')) c.summaryEn = { value: out.summary_en.trim(), source: 'ai' };
   if (!human('summaryAr')) c.summaryAr = { value: out.summary_ar.trim(), source: 'ai' };
-  if (!human('descriptionEn')) c.descriptionEn = { value: out.description_en.map((p) => p.trim()), source: 'ai' };
-  if (!human('descriptionAr')) c.descriptionAr = { value: out.description_ar.map((p) => p.trim()), source: 'ai' };
+  if (!human('descriptionEn')) c.descriptionEn = { value: out.description_en.map((p) => p.trim()).filter(Boolean), source: 'ai' };
+  if (!human('descriptionAr')) c.descriptionAr = { value: out.description_ar.map((p) => p.trim()).filter(Boolean), source: 'ai' };
 }
 
 export class Drafter {
@@ -170,15 +145,15 @@ export class Drafter {
   async draft(folderName: string, paths: string[], draft: ProjectDraft, images: Buffer[]): Promise<void> {
     if (!this.client) return;
 
+    // Only verified facts are given: the text cannot lean on anything else.
     const known = Object.fromEntries(
-      FACT_KEYS.map((k) => [k, { value: draft.facts[k].value, source: draft.facts[k].source }]).filter(([, v]) => {
-        const val = (v as { value: string | string[] }).value;
-        return Array.isArray(val) ? val.length : val;
-      }),
+      FACT_KEYS.filter((k) => VERIFIED_SOURCES.includes(draft.facts[k].source))
+        .map((k) => [k, draft.facts[k].value])
+        .filter(([, v]) => (Array.isArray(v) ? v.length : v)),
     );
     const studioText = Object.fromEntries(
       (['summaryEn', 'summaryAr', 'descriptionEn', 'descriptionAr'] as const)
-        .filter((k) => draft.content[k].source === 'owner' || draft.content[k].source === 'register')
+        .filter((k) => draft.content[k].source === 'owner')
         .map((k) => [k, draft.content[k].value]),
     );
     // Folder structure tells the model about the scope (floors, rooms, interiors); file names are trimmed.
@@ -195,7 +170,7 @@ export class Drafter {
         `Folder: ${folderName}`,
         `Sub-folders: ${dirs.length ? dirs.join(' | ') : '(none)'}`,
         `Sample file names: ${files.join(' | ')}`,
-        `Known facts (with sources): ${JSON.stringify(known)}`,
+        `Verified facts: ${JSON.stringify(known)}`,
         Object.keys(studioText).length ? `Studio text to keep: ${JSON.stringify(studioText)}` : 'No studio text: write the summary and description.',
         `The ${content.length} image(s) above are from this folder.`,
       ].join('\n'),

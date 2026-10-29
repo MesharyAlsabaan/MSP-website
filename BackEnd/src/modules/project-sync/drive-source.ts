@@ -14,8 +14,6 @@ import { MAX_DEPTH, skipName, SourceFile, SourceFolder, SyncSource } from './sou
 const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 const API = 'https://www.googleapis.com/drive/v3';
 const FOLDER = 'application/vnd.google-apps.folder';
-const SHEET = 'application/vnd.google-apps.spreadsheet';
-export const REGISTER_NAME = '_REGISTER';
 
 interface ServiceAccount {
   client_email: string;
@@ -153,18 +151,6 @@ export class DriveSource implements SyncSource {
     return files;
   }
 
-  async readRegister(): Promise<string | null> {
-    const top = await this.children(this.rootId);
-    const sheet = top.find((f) => f.name === REGISTER_NAME && f.mimeType === SHEET);
-    if (sheet) {
-      // Exports the first tab as CSV.
-      const res = await this.get(`${API}/files/${sheet.id}/export?mimeType=text%2Fcsv`);
-      return res.text();
-    }
-    const csv = top.find((f) => f.name.toLowerCase() === `${REGISTER_NAME.toLowerCase()}.csv`);
-    if (csv) return (await this.download(this.toFile(csv, ''))).toString('utf8');
-    return null;
-  }
 
   async download(file: SourceFile): Promise<Buffer> {
     const res = await this.get(`${API}/files/${file.id}?alt=media&supportsAllDrives=true`, 180_000);

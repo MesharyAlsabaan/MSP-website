@@ -1,7 +1,7 @@
 /**
  * The execution report: stored with every run (admin → sync history) and
- * emailed to the owner. "Published"/"updated" are used only after the live
- * page passed verification; until then a project is "awaiting verification".
+ * emailed after every run. "Published"/"updated" are used only after the
+ * live page passed verification; until then a project is "awaiting verification".
  */
 
 export type Outcome = 'published' | 'updated' | 'awaiting_verification' | 'skipped' | 'failed';
@@ -14,8 +14,16 @@ export interface ProjectLine {
   urlAr: string;
   images: number;
   outcome: Outcome;
-  /** Text fields written by the AI (approved by a person before publishing). */
-  aiDrafted?: string[];
+  /** Where the page text came from: AI-written, a person, or the factual one-line summary. */
+  text?: string;
+  /** Details the source does not give; the page was published without them. */
+  missing?: string[];
+  /** Image changes in this update. */
+  imagesAdded?: number;
+  imagesReplaced?: number;
+  imagesRemoved?: number;
+  /** Fields left as a person edited them in the CMS. */
+  keptEdits?: string[];
   warnings?: string[];
 }
 
@@ -25,21 +33,13 @@ export interface FieldChange {
   to: string;
 }
 
-export interface DetectedLine {
+export interface LinkedLine {
   folder: string;
   name: string;
-  images: number;
-  /** Ready to approve, or what still blocks it. */
-  blocking: string[];
-  notes: string[];
-}
-
-export interface PendingLine {
-  folder: string;
-  name: string;
-  /** Empty = ready to approve in the admin. */
-  blocking: string[];
-  update: boolean;
+  url: string;
+  /** Usable images in the folder, and how many of them are already on the page. */
+  sourceImages: number;
+  onSite: number;
 }
 
 export interface SyncReport {
@@ -54,21 +54,25 @@ export interface SyncReport {
   summary: {
     scanned: number;
     newDetected: number;
-    pendingApproval: number;
     published: number;
     updated: number;
     unchanged: number;
+    linked: number;
+    held: number;
+    notPublished: number;
     attention: number;
     failed: number;
     awaitingVerification: number;
-    linked: number;
   };
-  detected: DetectedLine[];
   created: ProjectLine[];
   updated: (ProjectLine & { changes: FieldChange[] })[];
-  /** Every project waiting for a decision, not only this run's. */
-  pending: PendingLine[];
-  /** Folders the sync could not handle on its own (naming, CMS conflicts, missing folders). */
+  /** Existing site projects connected to their folder in this run. */
+  linked: LinkedLine[];
+  /** Folders that cannot be published yet, and why. */
+  notPublished: { folder: string; name: string; reasons: string[] }[];
+  /** Folders held in the admin. */
+  held: string[];
+  /** Folders the sync could not handle on its own (naming, deleted projects, missing folders). */
   attention: { folder: string; reasons: string[] }[];
   failed: { folder: string; error: string }[];
   /** Run-level problems: permissions, deployment, notifications. */
@@ -86,11 +90,12 @@ export function emptyReport(runId: string, trigger: string, dryRun: boolean, sta
     finishedAt: '',
     durationMs: 0,
     status: 'succeeded',
-    summary: { scanned: 0, newDetected: 0, pendingApproval: 0, published: 0, updated: 0, unchanged: 0, attention: 0, failed: 0, awaitingVerification: 0, linked: 0 },
-    detected: [],
+    summary: { scanned: 0, newDetected: 0, published: 0, updated: 0, unchanged: 0, linked: 0, held: 0, notPublished: 0, attention: 0, failed: 0, awaitingVerification: 0 },
     created: [],
     updated: [],
-    pending: [],
+    linked: [],
+    notPublished: [],
+    held: [],
     attention: [],
     failed: [],
     issues: [],
@@ -102,10 +107,10 @@ const riyadh = (iso: string, opts: Intl.DateTimeFormatOptions) =>
   new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', ...opts });
 
 const OUTCOME_LABEL: Record<Outcome, string> = {
-  published: 'Successfully published (verified live)',
-  updated: 'Successfully updated (verified live)',
+  published: 'Published (verified live)',
+  updated: 'Updated (verified live)',
   awaiting_verification: 'Saved — awaiting live verification',
-  skipped: 'Skipped',
+  skipped: 'Rehearsal: would be published',
   failed: 'Failed',
 };
 
@@ -123,58 +128,58 @@ export function formatReport(r: SyncReport, adminUrl = 'https://www.msp.sa/admin
     '',
     'SUMMARY',
     `- Folders scanned:              ${s.scanned}`,
-    `- New projects detected:        ${s.newDetected}`,
-    `- Waiting for your approval:    ${s.pendingApproval}`,
+    `- New projects found:           ${s.newDetected}`,
     `- Published (verified live):    ${s.published}`,
     `- Updated (verified live):      ${s.updated}`,
     `- Awaiting live verification:   ${s.awaitingVerification}`,
+    `- Existing projects linked:     ${s.linked}`,
     `- Unchanged:                    ${s.unchanged}`,
-    `- Existing CMS projects:        ${s.linked}`,
+    `- Not publishable yet:          ${s.notPublished}`,
+    `- On hold (admin):              ${s.held}`,
     `- Need attention:               ${s.attention}`,
     `- Errors:                       ${s.failed}`,
   ];
   const section = (title: string, items: string[]) => lines.push('', title, ...(items.length ? items : ['- None']));
 
-  section(
-    'NEW PROJECTS DETECTED',
-    r.detected.flatMap((d) => [
-      `- ${d.name}  [${d.folder}] — ${d.images} image(s)`,
-      `  ${d.blocking.length ? `Draft prepared; before approval: ${d.blocking.join('; ')}` : 'Draft prepared and ready for your approval'}`,
-      ...d.notes.map((n) => `  Note: ${n}`),
-    ]),
-  );
-
   const project = (p: ProjectLine) => [
     `- ${p.name}  [${p.folder}]`,
-    `  Category:  ${p.category}`,
+    `  Status:    ${OUTCOME_LABEL[p.outcome]}`,
+    ...(p.category ? [`  Category:  ${p.category}`] : []),
     `  English:   ${p.urlEn}`,
     `  Arabic:    ${p.urlAr}`,
-    `  Images:    ${p.images}`,
-    `  Status:    ${OUTCOME_LABEL[p.outcome]}`,
-    ...(p.aiDrafted?.length ? [`  AI-written text (approved before publishing): ${p.aiDrafted.join(', ')}`] : []),
+    `  Images:    ${p.images}${p.imagesAdded || p.imagesReplaced || p.imagesRemoved ? ` (${[p.imagesAdded && `${p.imagesAdded} added`, p.imagesReplaced && `${p.imagesReplaced} replaced`, p.imagesRemoved && `${p.imagesRemoved} removed`].filter(Boolean).join(', ')})` : ''}`,
+    ...(p.text ? [`  Text:      ${p.text}`] : []),
+    ...(p.missing?.length ? [`  Missing:   ${p.missing.join('; ')}`] : []),
+    ...(p.keptEdits?.length ? [`  Kept CMS edits to: ${p.keptEdits.join(', ')}`] : []),
     ...(p.warnings ?? []).map((w) => `  Note: ${w}`),
   ];
-  section('PUBLISHED PROJECTS', r.created.flatMap(project));
+  section('NEW PROJECTS PUBLISHED', r.created.flatMap(project));
   section('UPDATED PROJECTS', r.updated.flatMap((u) => [...project(u), ...u.changes.map((c) => `  · ${c.field}: "${c.from}" → "${c.to}"`)]));
   section(
-    'PENDING APPROVAL',
-    r.pending.map((p) => `- ${p.name}  [${p.folder}]${p.update ? ' (update to a live page)' : ''} — ${p.blocking.length ? `to complete: ${p.blocking.join('; ')}` : 'ready: review and approve'}`),
+    'EXISTING PROJECTS LINKED TO THEIR FOLDER',
+    r.linked.map((l) => `- ${l.name}  [${l.folder}] ${l.url} — ${l.onSite} of ${l.sourceImages} folder image(s) already on the page; from now on new and replaced images are synced`),
   );
+  section(
+    'MISSING DETAILS (published without them — add them in the admin or the folder name)',
+    [...r.created, ...r.updated].filter((p) => p.missing?.length).map((p) => `- ${p.name}: ${p.missing!.join('; ')}`),
+  );
+  section('NOT PUBLISHED YET', r.notPublished.map((n) => `- ${n.name}  [${n.folder}]: ${n.reasons.join('; ')}`));
+  if (r.held.length) section('ON HOLD IN THE ADMIN', r.held.map((h) => `- ${h}`));
   section('NEEDS ATTENTION', r.attention.map((v) => `- ${v.folder}: ${v.reasons.join('; ')}`));
   section('ERRORS', [...r.failed.map((f) => `- ${f.folder}: ${f.error}`), ...r.issues.map((i) => `- ${i}`)]);
   section('REQUIRED ACTIONS', r.ownerActions.map((a) => `- ${a}`));
 
-  lines.push('', `Review, approve and history: ${adminUrl}`);
+  lines.push('', `Details, corrections and history: ${adminUrl}`);
   return lines.join('\n');
 }
 
 export function reportSubject(r: SyncReport): string {
   const s = r.summary;
   const bits = [
-    s.newDetected && `${s.newDetected} new`,
     s.published && `${s.published} published`,
     s.updated && `${s.updated} updated`,
-    s.pendingApproval && `${s.pendingApproval} awaiting approval`,
+    s.awaitingVerification && `${s.awaitingVerification} awaiting verification`,
+    s.notPublished && `${s.notPublished} not publishable`,
     s.failed && `${s.failed} error(s)`,
   ].filter(Boolean);
   return `MSP project sync — ${r.status.toUpperCase()}${bits.length ? ` — ${bits.join(', ')}` : ' — no changes'}${r.dryRun ? ' (rehearsal)' : ''}`;

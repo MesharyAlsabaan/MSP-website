@@ -19,18 +19,9 @@ class ControlDto {
 }
 
 class DecisionDto {
-  @IsIn(['approve', 'postpone', 'reject', 'reopen'])
-  decision: 'approve' | 'postpone' | 'reject' | 'reopen';
-
-  /** Required to approve while some critical facts are only suggestions. */
-  @IsOptional()
-  @IsBoolean()
-  confirmFacts?: boolean;
-
-  /** Approve and publish at once instead of at the next scheduled run. */
-  @IsOptional()
-  @IsBoolean()
-  publishNow?: boolean;
+  /** publish: now, not at the next run · hold: keep off the site / stop updates · resume: undo a hold */
+  @IsIn(['publish', 'hold', 'resume'])
+  decision: 'publish' | 'hold' | 'resume';
 
   @IsOptional()
   @IsString()

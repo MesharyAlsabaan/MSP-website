@@ -41,34 +41,38 @@ describe('AdminProjectSync (overview)', () => {
 
   const folders = () => [
     item(),
-    item({ id: 'i-17', folderName: '17_private-twin-villa-riyadh', title: 'Private Twin Villa', blocking: ['The Arabic summary is missing'], aiText: false }),
-    item({ id: 'i-15', folderName: '15_x', title: 'Serviced Apartments', state: 'linked', mode: 'linked', cover: '' }),
-    item({ id: 'i-20', folderName: '20_y', title: 'Radisson Blu', state: 'published', projectId: 'p20', cover: '' }),
-    item({ id: 'i-23', folderName: '23_z', title: 'Hammam', state: 'failed', issues: ['Drive download interrupted'], cover: '' }),
+    item({ id: 'i-17', folderName: '17_private-twin-villa-riyadh', title: 'Private Twin Villa', missing: [], aiText: false, projectId: 'p17' }),
+    item({ id: 'i-15', folderName: '15_x', title: 'Serviced Apartments', state: 'linked', mode: 'linked', projectId: 'p15', missing: [], cover: '' }),
+    item({ id: 'i-19', folderName: '19_y', title: 'Empty Pavilion', state: 'draft', projectId: null, blocking: ['No usable image in the folder'], issues: ['No usable image in the folder'], cover: '' }),
+    item({ id: 'i-23', folderName: '23_z', title: 'Hammam', state: 'failed', projectId: null, issues: ['Drive download interrupted'], cover: '' }),
   ];
 
-  it('shows the queues: new, pending, ready, published and errors', () => {
-    const { q } = render(folders());
-    expect(q('tiles').textContent).toMatch(/2\s*New projects detected/);
-    expect(q('tiles').textContent).toMatch(/2\s*Pending approval/);
-    expect(q('tiles').textContent).toMatch(/1\s*Ready to approve/);
-    expect(q('tiles').textContent).toMatch(/1\s*Published by the sync/);
+  it('shows what was published, what lacks details, what could not be published, and errors', () => {
+    const { q, el } = render(folders());
+    expect(q('tiles').textContent).toMatch(/2\s*Published by the sync/);
+    expect(q('tiles').textContent).toMatch(/1\s*With missing details/);
+    expect(q('tiles').textContent).toMatch(/1\s*Not publishable yet/);
+    expect(q('tiles').textContent).toMatch(/1\s*Existing projects in step/);
     expect(q('tiles').textContent).toMatch(/1\s*Errors/);
     expect(q('connections').textContent).toContain('Google Drive: connected');
+    expect(el.textContent).not.toMatch(/approv/i);
   });
 
-  it('lists what each pending project still needs and links to its review page', () => {
+  it('lists published projects with what they lack, linking to each page', () => {
     const { q } = render(folders());
     const rows = q('items').querySelectorAll('li');
     expect(rows).toHaveLength(2);
-    expect(rows[0].textContent).toContain('Ready to approve');
+    expect(rows[0].textContent).toContain('1 detail(s) missing');
     expect(rows[0].textContent).toContain('AI-written text');
     expect(rows[0].querySelector('a')!.getAttribute('href')).toBe('/admin/project-sync/i-16');
-    expect(rows[1].textContent).toContain('1 to complete');
   });
 
-  it('switches tabs: errors show failed folders and failed runs; existing projects are not editable', () => {
+  it('switches tabs: not publishable, errors with failed runs, and existing projects', () => {
     const { fixture, q } = render(folders());
+    q('tab-unpublished').click();
+    fixture.detectChanges();
+    expect(q('items').textContent).toContain('No usable image in the folder');
+
     q('tab-errors').click();
     fixture.detectChanges();
     expect(q('items').textContent).toContain('Drive download interrupted');
@@ -76,7 +80,8 @@ describe('AdminProjectSync (overview)', () => {
 
     q('tab-existing').click();
     fixture.detectChanges();
-    expect(q('items').querySelector('a')!.getAttribute('href')).toBeNull();
+    expect(q('items').textContent).toContain('Serviced Apartments');
+    expect(q('items').querySelector('a')!.getAttribute('href')).toBe('/admin/project-sync/i-15');
   });
 
   it('runs now after confirmation, and rehearses without asking', () => {
@@ -120,11 +125,11 @@ describe('AdminProjectSync (overview)', () => {
     http.expectOne(`${API}/runs/r1`).flush({
       data: {
         id: 'r1', status: 'succeeded', reportText: 'MSP PROJECT SYNC REPORT',
-        report: { summary: { scanned: 34, published: 1 }, detected: [], pending: [], attention: [], failed: [], issues: [], ownerActions: ['Review and approve 2 project(s)'] },
+        report: { summary: { scanned: 34, published: 1 }, notPublished: [], attention: [], failed: [], issues: [], ownerActions: ['Set ANTHROPIC_API_KEY on the backend'] },
       },
     });
     fixture.detectChanges();
-    expect(q('runs').textContent).toContain('Review and approve 2 project(s)');
+    expect(q('runs').textContent).toContain('Set ANTHROPIC_API_KEY on the backend');
     expect(q('runs').textContent).toContain('MSP PROJECT SYNC REPORT');
   });
 });

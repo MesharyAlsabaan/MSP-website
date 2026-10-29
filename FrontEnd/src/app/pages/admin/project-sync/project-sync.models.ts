@@ -2,17 +2,15 @@
 
 export type ItemState =
   | 'draft'
-  | 'pending_review'
   | 'approved'
   | 'postponed'
-  | 'rejected'
   | 'awaiting_verification'
   | 'published'
   | 'failed'
   | 'linked'
   | 'missing_from_source';
 
-export type FactSource = 'owner' | 'register' | 'site' | 'folder' | 'ai';
+export type FactSource = 'owner' | 'site' | 'folder' | 'ai' | 'template';
 
 export interface Fact<T> {
   value: T;
@@ -80,7 +78,7 @@ export interface SyncItem {
   cover: string;
   imageCount: number;
   blocking: string[];
-  unconfirmed: string[];
+  missing: string[];
   aiText: boolean;
   canUndo: boolean;
   urlEn: string;
@@ -89,7 +87,7 @@ export interface SyncItem {
 
 export interface SyncItemDetail extends SyncItem {
   draft: ProjectDraft | null;
-  readiness: { blocking: string[]; unconfirmed: string[]; warnings: string[] } | null;
+  readiness: { blocking: string[]; missing: string[]; warnings: string[] } | null;
   minImages: number;
 }
 
@@ -122,8 +120,7 @@ export interface SyncRun {
 
 export interface SyncReport {
   summary: Partial<Record<string, number>>;
-  detected: { folder: string; name: string; images: number; blocking: string[]; notes: string[] }[];
-  pending: { folder: string; name: string; blocking: string[]; update: boolean }[];
+  notPublished: { folder: string; name: string; reasons: string[] }[];
   attention: { folder: string; reasons: string[] }[];
   failed: { folder: string; error: string }[];
   issues: string[];
@@ -136,11 +133,9 @@ export interface SyncRunDetail extends SyncRun {
 }
 
 export const STATE_LABEL: Record<ItemState, string> = {
-  draft: 'Preparing',
-  pending_review: 'Pending approval',
-  approved: 'Approved — publishing next run',
-  postponed: 'Postponed',
-  rejected: 'Rejected',
+  draft: 'Not publishable yet',
+  approved: 'Publishing in the next run',
+  postponed: 'On hold',
   awaiting_verification: 'Awaiting live check',
   published: 'Published',
   failed: 'Failed',
@@ -150,20 +145,21 @@ export const STATE_LABEL: Record<ItemState, string> = {
 
 export function stateTone(state: ItemState): string {
   if (state === 'published') return 'text-accent';
-  if (state === 'failed' || state === 'missing_from_source') return 'text-red-600';
-  if (state === 'linked' || state === 'rejected' || state === 'postponed') return 'text-muted';
+  if (state === 'failed' || state === 'missing_from_source' || state === 'draft') return 'text-red-600';
+  if (state === 'linked' || state === 'postponed') return 'text-muted';
   return 'text-ink';
 }
 
 export const SOURCE_LABEL: Record<FactSource, string> = {
-  owner: 'Verified',
-  register: 'From the register',
+  owner: 'Edited in the admin',
   site: 'From the site',
-  folder: 'Suggested · folder name',
-  ai: 'Suggested · AI',
+  folder: 'From the folder name',
+  ai: 'AI · Arabic rendering',
+  template: 'Factual summary',
 };
 
-export const isVerified = (s: FactSource) => s === 'owner' || s === 'register' || s === 'site';
+/** Published as it is (the AI only renders the title and location in Arabic). */
+export const isVerified = (s: FactSource) => s === 'owner' || s === 'site' || s === 'folder';
 
 export const RUN_LABEL: Record<string, string> = {
   succeeded: 'Succeeded',
@@ -180,6 +176,6 @@ export function runTone(status: string): string {
 export function triggerLabel(r: SyncRun): string {
   const what = r.dryRun
     ? 'Rehearsal'
-    : ({ schedule: 'Scheduled', 'catch-up': 'Catch-up', manual: 'Manual', retry: 'Retry', approval: 'Publish now' } as Record<string, string>)[r.trigger] ?? r.trigger;
+    : ({ schedule: 'Scheduled', 'catch-up': 'Catch-up', manual: 'Manual', retry: 'Retry', 'publish-now': 'Publish now' } as Record<string, string>)[r.trigger] ?? r.trigger;
   return r.requestedBy ? `${what} · ${r.requestedBy}` : what;
 }

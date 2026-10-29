@@ -6,13 +6,13 @@
  * Layout the sync expects under the root folder:
  *
  *   01_PROJECTS/
- *     _REGISTER            ← Google Sheet (or _register.csv locally): one row per project
- *     16_rihana-plaza-commercial-building/
+ *  *     16_rihana-plaza-commercial-building/
  *       front-elevation.png
  *       INT/lobby.jpg      ← sub-folders are read too, up to MAX_DEPTH levels;
  *                            their names ("2-First Floor/05- Bedroom 4") help the draft
  *
- * A folder is identified by its Drive ID, never its name, so renaming a
+ * Everything in the folder is approved for publication by the owner: the
+ * folder is the approval. A folder is identified by its Drive ID, never its name, so renaming a
  * folder does not create a second project.
  */
 
@@ -39,8 +39,6 @@ export interface SyncSource {
   readonly label: string;
   /** Project folders directly under the root (names starting `_` or `.` are skipped). */
   listFolders(): Promise<SourceFolder[]>;
-  /** The register as CSV text, or null when it does not exist yet. */
-  readRegister(): Promise<string | null>;
   download(file: SourceFile): Promise<Buffer>;
 }
 

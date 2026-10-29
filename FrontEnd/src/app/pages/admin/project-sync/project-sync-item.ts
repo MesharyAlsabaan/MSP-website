@@ -40,7 +40,11 @@ const TEXT_FACTS: { key: FactKey; label: string; ar?: boolean }[] = [
 
 const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean);
 
-/** Review one drafted project: preview, gallery, bilingual editor and the decision. */
+/**
+ * One Drive folder: what was published from it, what it lacks, the bilingual
+ * editor for corrections, the gallery, and publish-now / hold / undo. An
+ * existing CMS project shows only its folder images (its text stays the CMS's).
+ */
 @Component({
   selector: 'app-admin-project-sync-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,24 +74,25 @@ const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+
       @if (error()) { <p class="mt-6 border-s-2 border-red-500 bg-red-500/10 px-3 py-2 text-sm text-red-600" data-test="error">{{ error() }}</p> }
 
       @if (it.draft; as d) {
-        <!-- What blocks, what needs confirming -->
+        <!-- What is published, what it lacks -->
         @if (it.readiness; as r) {
           <section class="mt-8 grid gap-px border border-hairline bg-hairline md:grid-cols-3" data-test="readiness">
             <div class="bg-bg p-5">
               <p class="font-mono text-xs uppercase tracking-[0.15em]" [class]="r.blocking.length ? 'text-red-600' : 'text-accent'">
-                {{ r.blocking.length ? 'To complete before approval' : 'Complete' }}
+                {{ r.blocking.length ? 'Cannot be published yet' : 'Published automatically' }}
               </p>
               <ul class="mt-2 list-disc space-y-1 ps-5 text-sm text-ink">
                 @for (b of r.blocking; track $index) { <li>{{ b }}</li> }
-                @if (!r.blocking.length) { <li class="list-none -ms-5 text-muted">Everything required is filled in.</li> }
+                @if (!r.blocking.length) { <li class="list-none -ms-5 text-muted">The folder is the approval: changes in it reach the website at the next run.</li> }
               </ul>
             </div>
-            <div class="bg-bg p-5">
-              <p class="font-mono text-xs uppercase tracking-[0.15em] text-ink">Suggested facts to confirm</p>
+            <div class="bg-bg p-5" data-test="missing">
+              <p class="font-mono text-xs uppercase tracking-[0.15em] text-ink">Missing details</p>
               <ul class="mt-2 list-disc space-y-1 ps-5 text-sm text-ink">
-                @for (u of r.unconfirmed; track $index) { <li>{{ u }}</li> }
-                @if (!r.unconfirmed.length) { <li class="list-none -ms-5 text-muted">All key facts are verified.</li> }
+                @for (m of r.missing; track $index) { <li>{{ m }}</li> }
+                @if (!r.missing.length) { <li class="list-none -ms-5 text-muted">Nothing missing.</li> }
               </ul>
+              @if (r.missing.length) { <p class="mt-2 text-xs text-muted">Not guessed: add them below if you know them.</p> }
             </div>
             <div class="bg-bg p-5">
               <p class="font-mono text-xs uppercase tracking-[0.15em] text-muted">Notes</p>
@@ -99,8 +104,16 @@ const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+
               </ul>
             </div>
           </section>
+        } @else {
+          <section class="mt-8 border border-hairline bg-bg p-5 text-sm text-ink" data-test="linked">
+            <p class="font-mono text-xs uppercase tracking-[0.15em] text-accent">Existing project</p>
+            <p class="mt-2">Its text stays as written in the Projects admin. Images added to or replaced in this Drive folder are added to its page; images you remove there are not brought back.</p>
+            @for (n of d.notes; track $index) { <p class="mt-1 text-muted">{{ n }}</p> }
+            @for (n of it.issues; track $index) { <p class="mt-1 text-muted">{{ n }}</p> }
+          </section>
         }
 
+        @if (it.mode === 'owned') {
         <div class="mt-10 grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <!-- Preview -->
           <section>
@@ -176,18 +189,19 @@ const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+
               <label class="mt-4 block">
                 <span class="flex items-center justify-between gap-2">
                   <span class="lbl">{{ c.label }} @if (c.key.startsWith('summary')) { · {{ text(c.key).length }} chars }</span>
-                  <span [class]="badge(content(c.key))">{{ content(c.key).source === 'ai' ? 'AI draft' : sourceLabel(content(c.key)) }}</span>
+                  <span [class]="badge(content(c.key))">{{ content(c.key).source === 'ai' ? 'Written by AI' : sourceLabel(content(c.key)) }}</span>
                 </span>
                 <textarea class="inp" [rows]="c.rows" [attr.dir]="c.ar ? 'rtl' : null" [ngModel]="text(c.key)" (ngModelChange)="set(c.key, $event)" [attr.data-test]="'c-' + c.key"></textarea>
               </label>
             }
           </section>
         </div>
+        }
 
         <!-- Gallery -->
         <section class="mt-10">
           <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 class="font-mono text-xs uppercase tracking-[0.15em] text-muted">Gallery · {{ includedCount() }} selected of {{ d.images.length }} (at least {{ it.minImages }})</h2>
+            <h2 class="font-mono text-xs uppercase tracking-[0.15em] text-muted">{{ it.mode === 'linked' ? 'Folder images' : 'Gallery' }} · {{ includedCount() }} on the page of {{ d.images.length }}</h2>
             <span class="text-xs text-muted">Images are published as they are: only resized, never cropped or retouched.</span>
           </div>
           <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" data-test="gallery">
@@ -200,7 +214,7 @@ const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+
                 }
                 <div class="space-y-1 p-2">
                   <p class="truncate font-mono text-[10px] text-muted" [title]="img.path">{{ img.path }}</p>
-                  @if (!img.problem) {
+                  @if (!img.problem && it.mode === 'owned') {
                     <div class="flex items-center justify-between gap-2">
                       <label class="font-mono text-[10px] uppercase text-ink">
                         <input type="checkbox" class="me-1 align-middle" [checked]="form().included[img.md5]" (change)="include(img.md5)" /> Use
@@ -211,8 +225,8 @@ const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+
                         <button type="button" (click)="setCover(img.md5)" class="font-mono text-[10px] uppercase text-muted hover:text-ink">Make cover</button>
                       }
                     </div>
-                    <p class="font-mono text-[10px] text-muted">{{ img.width }}×{{ img.height }}</p>
                   }
+                  @if (!img.problem) { <p class="font-mono text-[10px] text-muted">{{ img.width }}×{{ img.height }}</p> }
                 </div>
               </li>
             }
@@ -229,47 +243,32 @@ const toParagraphs = (s: string) => s.split(/\n\s*\n/).map((p) => p.replace(/\s+
               <button type="button" (click)="reset()" class="font-mono text-xs uppercase tracking-[0.12em] text-muted hover:text-ink">Discard</button>
             </div>
           } @else {
-            @if (canApprove()) {
-              @if (it.readiness?.unconfirmed?.length) {
-                <label class="mb-3 flex items-start gap-2 text-sm text-ink">
-                  <input type="checkbox" class="mt-1" [checked]="confirm()" (change)="confirm.set(!confirm())" data-test="confirm" />
-                  <span>I confirm the facts above are correct ({{ it.readiness!.unconfirmed.join(', ') }}) and that these images are cleared for the public website.</span>
-                </label>
-              }
-            }
             <div class="flex flex-wrap items-center gap-3">
-              @if (canApprove()) {
-                <button type="button" (click)="decide('approve', true)" [disabled]="!approvable() || acting()" data-test="approve-now"
-                  class="bg-ink px-5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-bg hover:bg-accent disabled:opacity-40">Approve &amp; publish now</button>
-                <button type="button" (click)="decide('approve', false)" [disabled]="!approvable() || acting()" data-test="approve"
-                  class="border border-ink/30 px-5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-ink hover:bg-ink hover:text-bg disabled:opacity-40">Approve for next run</button>
-              }
-              @if (it.state === 'pending_review' || it.state === 'approved') {
-                <button type="button" (click)="decide('postpone')" [disabled]="acting()" data-test="postpone" class="font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent">{{ it.projectId ? 'Not now' : 'Postpone' }}</button>
-                <button type="button" (click)="decide('reject')" [disabled]="acting()" data-test="reject" class="font-mono text-xs uppercase tracking-[0.12em] text-red-600 hover:underline">{{ it.projectId ? 'Discard update' : 'Reject' }}</button>
-              }
-              @if (it.state === 'postponed' || it.state === 'rejected') {
-                <button type="button" (click)="decide('reopen')" [disabled]="acting()" data-test="reopen" class="font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent">Reopen</button>
+              @if (it.state !== 'postponed') {
+                <button type="button" (click)="decide('publish')" [disabled]="!publishable() || acting()" data-test="publish-now"
+                  class="bg-ink px-5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-bg hover:bg-accent disabled:opacity-40">{{ it.mode === 'linked' ? 'Sync images now' : it.projectId ? 'Publish changes now' : 'Publish now' }}</button>
+                <button type="button" (click)="decide('hold')" [disabled]="acting()" data-test="hold" class="font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent">{{ it.projectId ? 'Hold updates' : 'Hold — keep off the site' }}</button>
+              } @else {
+                <button type="button" (click)="decide('resume')" [disabled]="acting()" data-test="resume"
+                  class="bg-ink px-5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-bg hover:bg-accent disabled:opacity-40">Resume</button>
               }
               @if (it.state === 'failed' || it.state === 'draft') {
                 <button type="button" (click)="retry()" [disabled]="acting()" data-test="retry" class="font-mono text-xs uppercase tracking-[0.12em] text-ink hover:text-accent">Retry now</button>
               }
-              @if (aiOn() && it.state !== 'published' && it.state !== 'awaiting_verification') {
-                <button type="button" (click)="redraft()" [disabled]="acting()" data-test="redraft" class="font-mono text-xs uppercase tracking-[0.12em] text-muted hover:text-ink">Redraft text with AI</button>
+              @if (aiOn() && it.mode === 'owned') {
+                <button type="button" (click)="redraft()" [disabled]="acting()" data-test="redraft" class="font-mono text-xs uppercase tracking-[0.12em] text-muted hover:text-ink">Rewrite text with AI</button>
               }
               @if (it.canUndo) {
                 <button type="button" (click)="undo()" [disabled]="acting()" data-test="undo" class="ms-auto font-mono text-xs uppercase tracking-[0.12em] text-red-600 hover:underline">Undo last update</button>
               }
             </div>
-            @if (canApprove() && !approvable()) {
-              <p class="mt-2 text-xs text-muted">
-                {{ it.readiness?.blocking?.length ? 'Complete the items listed at the top first.' : 'Tick the confirmation to approve.' }}
-              </p>
+            @if (!publishable() && it.state !== 'postponed') {
+              <p class="mt-2 text-xs text-muted">Complete the items listed at the top first.</p>
             }
           }
         </section>
       } @else {
-        <p class="mt-8 text-muted">This folder has no draft yet. It is prepared on the next run.</p>
+        <p class="mt-8 text-muted">This folder has not been read yet. It is read and published at the next run.</p>
       }
     }
   `,
@@ -305,7 +304,6 @@ export class AdminProjectSyncItem implements OnInit {
   protected readonly form = signal<Form>(emptyForm());
   private readonly saved = signal<Form>(emptyForm());
   protected readonly lang = signal<'en' | 'ar'>('en');
-  protected readonly confirm = signal(false);
   protected readonly saving = signal(false);
   protected readonly acting = signal(false);
   protected readonly notice = signal('');
@@ -315,13 +313,9 @@ export class AdminProjectSyncItem implements OnInit {
   protected readonly dirty = computed(() => JSON.stringify(this.form()) !== JSON.stringify(this.saved()));
   protected readonly includedCount = computed(() => Object.values(this.form().included).filter(Boolean).length);
   protected readonly paragraphs = computed(() => toParagraphs(this.lang() === 'en' ? this.form().descriptionEn : this.form().descriptionAr));
-  protected readonly canApprove = computed(() => {
-    const s = this.item()?.state;
-    return s === 'pending_review' || s === 'postponed' || s === 'rejected' || s === 'failed';
-  });
-  protected readonly approvable = computed(() => {
-    const r = this.item()?.readiness;
-    return !!r && !r.blocking.length && (!r.unconfirmed.length || this.confirm());
+  protected readonly publishable = computed(() => {
+    const it = this.item();
+    return !!it && (it.mode === 'linked' || !it.readiness?.blocking.length);
   });
 
   ngOnInit(): void {
@@ -348,7 +342,6 @@ export class AdminProjectSyncItem implements OnInit {
     const f = it.draft ? formOf(it) : emptyForm();
     this.form.set(f);
     this.saved.set(structuredClone(f));
-    this.confirm.set(false);
     this.loading.set(false);
   }
 
@@ -392,7 +385,7 @@ export class AdminProjectSyncItem implements OnInit {
     this.form.set(structuredClone(this.saved()));
   }
 
-  /** Sends only what changed, so untouched suggestions stay marked as suggestions. */
+  /** Sends only what changed, so untouched values keep their source (folder name, AI). */
   protected save(): void {
     const f = this.form();
     const s = this.saved();
@@ -412,7 +405,7 @@ export class AdminProjectSyncItem implements OnInit {
       next: (it) => {
         this.saving.set(false);
         this.show(it);
-        this.notice.set('Saved.');
+        this.notice.set(it.state === 'approved' ? 'Saved. Published at the next run, or press Publish now.' : 'Saved.');
       },
       error: (e: HttpErrorResponse) => {
         this.saving.set(false);
@@ -421,22 +414,16 @@ export class AdminProjectSyncItem implements OnInit {
     });
   }
 
-  protected decide(decision: 'approve' | 'postpone' | 'reject' | 'reopen', publishNow = false): void {
-    if (decision === 'reject' && !confirm(this.item()?.projectId ? 'Discard this update? The live page stays as it is.' : 'Reject this project? It will not be published unless reopened.')) return;
-    this.act(this.admin.create<SyncItemDetail>(`project-sync/items/${this.id()}/decision`, { decision, publishNow, confirmFacts: this.confirm() }), (it) => {
+  protected decide(decision: 'publish' | 'hold' | 'resume'): void {
+    if (decision === 'hold' && !confirm(this.item()?.projectId ? 'Stop updating this page from its folder? The live page stays as it is.' : 'Keep this project off the website until you resume it?')) return;
+    this.act(this.admin.create<SyncItemDetail>(`project-sync/items/${this.id()}/decision`, { decision }), (it) => {
       this.show(it);
       this.notice.set(
-        decision === 'approve'
-          ? publishNow
-            ? 'Approved. Publishing has started; the page is checked live once the website has rebuilt (about 10–20 minutes).'
-            : 'Approved. It is published at the next scheduled run.'
-          : decision === 'postpone'
-            ? 'Postponed.'
-            : decision === 'reject'
-              ? it.projectId
-                ? 'Update discarded.'
-                : 'Rejected.'
-              : 'Reopened for review.',
+        decision === 'publish'
+          ? 'Publishing has started; the page is checked live once the website has rebuilt (about 10–20 minutes).'
+          : decision === 'hold'
+            ? 'On hold. The sync leaves it alone until you resume it.'
+            : 'Resumed. The folder is read again and published at the next run.',
       );
     });
   }
@@ -500,7 +487,7 @@ export class AdminProjectSyncItem implements OnInit {
   }
 
   protected stateLabel(it: SyncItemDetail): string {
-    return it.state === 'pending_review' && it.projectId ? 'Update pending approval' : STATE_LABEL[it.state];
+    return it.mode === 'linked' && it.state === 'linked' ? 'Existing project · images in step' : STATE_LABEL[it.state];
   }
 
   protected tone(it: SyncItemDetail): string {

@@ -16,41 +16,43 @@ import {
   triggerLabel,
 } from './project-sync.models';
 
-type Tab = 'new' | 'pending' | 'published' | 'errors' | 'hold' | 'existing' | 'history';
+type Tab = 'published' | 'missing' | 'unpublished' | 'errors' | 'hold' | 'existing' | 'history';
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'new', label: 'New projects' },
-  { key: 'pending', label: 'Pending approval' },
   { key: 'published', label: 'Published' },
+  { key: 'missing', label: 'Missing details' },
+  { key: 'unpublished', label: 'Not publishable' },
   { key: 'errors', label: 'Errors' },
   { key: 'hold', label: 'On hold' },
-  { key: 'existing', label: 'Existing' },
+  { key: 'existing', label: 'Existing projects' },
   { key: 'history', label: 'History' },
 ];
 
 const IN_TAB: Record<Exclude<Tab, 'history'>, (i: SyncItem) => boolean> = {
-  new: (i) => !i.projectId && (i.state === 'draft' || i.state === 'pending_review'),
-  pending: (i) => i.state === 'pending_review' || i.state === 'approved',
-  published: (i) => i.state === 'published' || i.state === 'awaiting_verification',
-  errors: (i) => i.state === 'failed' || i.state === 'missing_from_source' || (i.state === 'draft' && i.issues.length > 0),
-  hold: (i) => i.state === 'postponed' || i.state === 'rejected',
-  existing: (i) => i.state === 'linked',
+  published: (i) => i.mode === 'owned' && (i.state === 'published' || i.state === 'awaiting_verification' || i.state === 'approved'),
+  missing: (i) => i.mode === 'owned' && !!i.projectId && i.missing.length > 0,
+  unpublished: (i) => i.state === 'draft',
+  errors: (i) => i.state === 'failed' || i.state === 'missing_from_source',
+  hold: (i) => i.state === 'postponed',
+  existing: (i) => i.mode === 'linked' && i.state !== 'postponed' && i.state !== 'missing_from_source',
 };
 
 const SUMMARY: [string, string][] = [
   ['scanned', 'Folders scanned'],
-  ['newDetected', 'New'],
-  ['pendingApproval', 'Awaiting approval'],
+  ['newDetected', 'New found'],
   ['published', 'Published'],
   ['updated', 'Updated'],
-  ['failed', 'Errors'],
   ['awaitingVerification', 'Awaiting live check'],
-  ['linked', 'Existing'],
+  ['linked', 'Existing linked'],
+  ['notPublished', 'Not publishable'],
+  ['failed', 'Errors'],
 ];
 
 /**
- * Drive → website project sync: overview, the queues a reviewer works from,
- * and run history. Each project opens in the review page (project-sync-item).
+ * Drive → website project sync: overview, what was published and what it
+ * lacks, and run history. The folder is the owner's approval, so nothing waits
+ * here for a decision; each project opens in its page (project-sync-item)
+ * for corrections, hold and undo.
  */
 @Component({
   selector: 'app-admin-project-sync',
@@ -62,7 +64,7 @@ const SUMMARY: [string, string][] = [
         <p class="font-mono text-xs uppercase tracking-[0.18em] text-accent">Automation</p>
         <h1 class="mt-3 font-display text-3xl font-medium tracking-[-0.02em] text-ink">Project sync</h1>
         <p class="mt-2 max-w-xl text-sm text-muted">
-          New folders in Google Drive arrive here as ready-made drafts. Nothing reaches the website until you approve it.
+          Every project folder in Google Drive is published to the website automatically. Correct details here when the folder name does not say enough.
         </p>
       </div>
       <div class="flex flex-wrap gap-3">
@@ -148,9 +150,7 @@ const SUMMARY: [string, string][] = [
           <ul class="mt-4 divide-y divide-hairline border-y border-hairline" data-test="items">
             @for (i of visible(); track i.id) {
               <li>
-                <a [routerLink]="i.mode === 'linked' ? null : ['/admin/project-sync', i.id]"
-                  class="flex items-center gap-4 py-4 transition-colors hover:bg-surface/60"
-                  [class.pointer-events-none]="i.mode === 'linked'">
+                <a [routerLink]="['/admin/project-sync', i.id]" class="flex items-center gap-4 py-4 transition-colors hover:bg-surface/60">
                   @if (i.cover) {
                     <app-sync-image [itemId]="i.id" [md5]="i.cover" [alt]="i.title" class="h-16 w-24 shrink-0" />
                   } @else {
@@ -163,15 +163,9 @@ const SUMMARY: [string, string][] = [
                   </span>
                   <span class="hidden shrink-0 flex-col items-end gap-1 text-end sm:flex">
                     <span class="font-mono text-xs uppercase tracking-[0.1em]" [class]="stateTone(i.state)">{{ stateLabel(i) }}</span>
-                    @if (i.state === 'pending_review') {
-                      @if (i.blocking.length) {
-                        <span class="text-xs text-red-600">{{ i.blocking.length }} to complete</span>
-                      } @else {
-                        <span class="text-xs text-accent">Ready to approve</span>
-                      }
-                    }
+                    @if (i.mode === 'owned' && i.projectId && i.missing.length) { <span class="text-xs text-muted">{{ i.missing.length }} detail(s) missing</span> }
                     @if (i.issues.length && i.state !== 'linked') { <span class="max-w-xs truncate text-xs text-muted">{{ i.issues[0] }}</span> }
-                    @if (i.aiText && i.state === 'pending_review') { <span class="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">AI-written text</span> }
+                    @if (i.aiText) { <span class="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">AI-written text</span> }
                   </span>
                   @if (i.mode !== 'linked') { <span class="font-mono text-xs text-muted">→</span> }
                 </a>
@@ -265,7 +259,7 @@ export class AdminProjectSync implements OnInit, OnDestroy {
   protected readonly items = signal<SyncItem[]>([]);
   protected readonly runs = signal<SyncRun[]>([]);
   protected readonly selected = signal<SyncRunDetail | null>(null);
-  protected readonly tab = signal<Tab>('pending');
+  protected readonly tab = signal<Tab>('published');
   protected readonly notice = signal('');
 
   protected readonly busy = computed(() => !!this.status()?.running || this.runs().some((r) => r.status === 'running'));
@@ -277,12 +271,11 @@ export class AdminProjectSync implements OnInit, OnDestroy {
   protected readonly tiles = computed(() => {
     const list = this.items();
     const n = (t: Exclude<Tab, 'history'>) => list.filter(IN_TAB[t]).length;
-    const ready = list.filter((i) => i.state === 'pending_review' && !i.blocking.length).length;
     return [
-      { label: 'New projects detected', count: n('new'), tab: 'new' as Tab, tone: 'text-ink' },
-      { label: 'Pending approval', count: n('pending'), tab: 'pending' as Tab, tone: 'text-ink' },
-      { label: 'Ready to approve', count: ready, tab: 'pending' as Tab, tone: ready ? 'text-accent' : 'text-ink' },
-      { label: 'Published by the sync', count: n('published'), tab: 'published' as Tab, tone: 'text-ink' },
+      { label: 'Published by the sync', count: n('published'), tab: 'published' as Tab, tone: 'text-accent' },
+      { label: 'With missing details', count: n('missing'), tab: 'missing' as Tab, tone: 'text-ink' },
+      { label: 'Not publishable yet', count: n('unpublished'), tab: 'unpublished' as Tab, tone: n('unpublished') ? 'text-red-600' : 'text-ink' },
+      { label: 'Existing projects in step', count: n('existing'), tab: 'existing' as Tab, tone: 'text-ink' },
       { label: 'Errors', count: n('errors'), tab: 'errors' as Tab, tone: n('errors') ? 'text-red-600' : 'text-ink' },
     ];
   });
@@ -330,7 +323,7 @@ export class AdminProjectSync implements OnInit, OnDestroy {
   }
 
   protected start(dryRun: boolean): void {
-    if (!dryRun && !confirm('Run the sync now? New folders are drafted and approved projects are published.')) return;
+    if (!dryRun && !confirm('Run the sync now? New and changed folders are published to the website.')) return;
     this.admin.create('project-sync/run', { dryRun }).subscribe(() => {
       this.notice.set(dryRun ? 'Rehearsal started — nothing will be written.' : 'Sync started.');
       this.status.update((s) => (s ? { ...s, running: true } : s));
@@ -360,7 +353,6 @@ export class AdminProjectSync implements OnInit, OnDestroy {
   }
 
   protected stateLabel(i: SyncItem): string {
-    if (i.state === 'pending_review' && i.projectId) return 'Update pending approval';
     return STATE_LABEL[i.state as ItemState] ?? i.state;
   }
 
@@ -374,11 +366,11 @@ export class AdminProjectSync implements OnInit, OnDestroy {
 
   protected emptyText(): string {
     return {
-      new: 'No new projects. New folders in Drive appear here after the next run.',
-      pending: 'Nothing waiting for approval.',
-      published: 'The sync has not published any project yet.',
+      published: 'The sync has not published any project yet. New folders in Drive are published at the next run.',
+      missing: 'Every published project has its location, sector, Arabic title and description.',
+      unpublished: 'Every folder could be published.',
       errors: 'No errors.',
-      hold: 'Nothing postponed or rejected.',
+      hold: 'Nothing on hold.',
       existing: 'No folders matched projects already on the site.',
       history: '',
     }[this.tab()];

@@ -27,8 +27,8 @@ export const item = (over: Partial<SyncItem> = {}): SyncItem => ({
   folderName: '16_rihana-plaza-commercial-building',
   slug: 'rihana-plaza-commercial-building',
   mode: 'owned',
-  state: 'pending_review',
-  projectId: null,
+  state: 'published',
+  projectId: 'p16',
   issues: [],
   attempts: 0,
   lastPublishedAt: null,
@@ -42,7 +42,7 @@ export const item = (over: Partial<SyncItem> = {}): SyncItem => ({
   cover: 'a'.repeat(32),
   imageCount: 3,
   blocking: [],
-  unconfirmed: ['Title (English)'],
+  missing: ['written description (only a one-line factual summary is published)'],
   aiText: true,
   canUndo: false,
   urlEn: '',
@@ -87,7 +87,7 @@ export function draft(): ProjectDraft {
 export const detail = (over: Partial<SyncItemDetail> = {}): SyncItemDetail => ({
   ...item(),
   draft: draft(),
-  readiness: { blocking: [], unconfirmed: ['Title (English)', 'Title (Arabic)', 'Sectors', 'Design categories'], warnings: [] },
+  readiness: { blocking: [], missing: ['written description (only a one-line factual summary is published)'], warnings: [] },
   minImages: 3,
   ...over,
 });
