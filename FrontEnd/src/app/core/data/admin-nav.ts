@@ -25,6 +25,11 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     roles: [Role.SuperAdmin, Role.ContentManager],
   },
   {
+    path: '/admin/project-sync',
+    label: 'Project sync',
+    roles: [Role.SuperAdmin, Role.ContentManager],
+  },
+  {
     path: '/admin/settings',
     label: 'Settings',
     roles: [Role.SuperAdmin, Role.ContentManager],

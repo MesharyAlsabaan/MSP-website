@@ -17,6 +17,11 @@ export const dataSourceOptions: DataSourceOptions = {
   database: cfg.database.name,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  // Pending migrations run at startup, each in its own transaction, BEFORE
+  // synchronize — so tables owned by a migration are created by it and never
+  // by DB_SYNCHRONIZE. Existing tables are left as they are.
+  migrationsRun: true,
+  migrationsTransactionMode: 'each',
   synchronize: cfg.database.synchronize,
   logging: cfg.env === 'development' ? ['error', 'warn'] : ['error'],
 };

@@ -135,6 +135,18 @@ export const routes: Routes = [
           import('./pages/admin/messages/messages').then((m) => m.AdminMessages),
       },
       {
+        path: 'project-sync',
+        canActivate: [roleGuard(Role.SuperAdmin, Role.ContentManager)],
+        loadComponent: () =>
+          import('./pages/admin/project-sync/project-sync-admin').then((m) => m.AdminProjectSync),
+      },
+      {
+        path: 'project-sync/:id',
+        canActivate: [roleGuard(Role.SuperAdmin, Role.ContentManager)],
+        loadComponent: () =>
+          import('./pages/admin/project-sync/project-sync-item').then((m) => m.AdminProjectSyncItem),
+      },
+      {
         path: 'settings',
         canActivate: [roleGuard(Role.SuperAdmin, Role.ContentManager)],
         loadComponent: () =>

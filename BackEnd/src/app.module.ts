@@ -11,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { PartnersModule } from './modules/partners/partners.module';
+import { ProjectSyncModule } from './modules/project-sync/project-sync.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ServicesModule } from './modules/services/services.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -30,6 +31,7 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
     UsersModule,
     ProjectsModule,
+    ProjectSyncModule,
     ServicesModule,
     TeamModule,
     TestimonialsModule,

@@ -12,11 +12,19 @@
     "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.ts",
     "classify:projects": "ts-node -r tsconfig-paths/register src/database/seeds/classify-projects.ts",
     "test": "jest",
+    "test:integration": "jest -c test/integration/jest.config.js --runInBand",
     "lint": "eslint \"src/**/*.ts\"",
     "images:variants": "ts-node -r tsconfig-paths/register src/scripts/image-variants.ts",
-    "images:variants:prod": "node dist/scripts/image-variants.js"
+    "images:variants:prod": "node dist/scripts/image-variants.js",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
+    "migration:run:prod": "typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert:prod": "typeorm migration:revert -d dist/database/data-source.js",
+    "project-sync:dry-run": "ts-node -r tsconfig-paths/register src/scripts/project-sync-dry-run.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "@nestjs/common": "^10.4.15",
     "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.4.15",
