@@ -239,8 +239,35 @@ body::before {
   animation: marquee-scroll 38s linear infinite;
 }
 
+.marquee-track--reverse {
+  animation-direction: reverse;
+}
+
 .marquee:hover .marquee-track {
   animation-play-state: paused;
+}
+
+// Client logos: grayscale on paper at rest, own colour on hover. Multiply
+// lets white-backed logo files sit on the tile without a visible box.
+.client-tile img {
+  mix-blend-mode: multiply;
+  filter: grayscale(1);
+  opacity: 0.8;
+  transition:
+    filter 0.4s ease,
+    opacity 0.4s ease;
+}
+
+.client-tile:hover img {
+  filter: none;
+  opacity: 1;
+}
+
+// Phones: the same balanced sizes, a touch smaller for the narrower tiles.
+@media (max-width: 639px) {
+  .client-tile img {
+    scale: 0.85;
+  }
 }
 
 // Respect reduced-motion preferences.

@@ -261,7 +261,6 @@ export class ContactPage {
     const mobile = c.whatsapp || '+966570327777';
     const hours = c.workingHours ?? { en: 'Sun–Thu · 9:00–17:00', ar: 'الأحد – الخميس · من 9:00 إلى 17:00' };
     const result: ContactDetail[] = [
-      { label: { en: 'Established', ar: 'سنة التأسيس' }, value: lv('2010'), ltr: true },
       { label: { en: 'Email', ar: 'البريد الإلكتروني' }, value: lv(c.email || 'info@msp.sa'), ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
       { label: { en: 'Riyadh office telephone', ar: 'هاتف مكتب الرياض' }, value: lv(c.phone || '+966112000087'), ltr: true, href: `tel:${c.phone || '+966112000087'}` },
       {

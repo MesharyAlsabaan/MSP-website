@@ -215,7 +215,6 @@ export class Contact {
     const mapUrl = c.mapUrl || 'https://www.google.com/maps?cid=14819986877967963984';
     return {
       en: [
-        { label: 'Established', value: '2010', ltr: true },
         { label: 'Email', value: c.email || 'info@msp.sa', ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
         { label: 'Riyadh office telephone', value: c.phone || '+966112000087', ltr: true, href: `tel:${c.phone || '+966112000087'}` },
         { label: 'Mobile / WhatsApp', value: c.whatsapp || '+966570327777', ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
@@ -224,7 +223,6 @@ export class Contact {
         { label: 'Cairo branch', value: c.cairoAddressEn || 'Rayhana Plaza, Zahraa El Maadi, Cairo, Egypt', href: cairoMapUrl },
       ],
       ar: [
-        { label: 'سنة التأسيس', value: '2010', ltr: true },
         { label: 'البريد الإلكتروني', value: c.email || 'info@msp.sa', ltr: true, href: `mailto:${c.email || 'info@msp.sa'}` },
         { label: 'هاتف مكتب الرياض', value: c.phone || '+966112000087', ltr: true, href: `tel:${c.phone || '+966112000087'}` },
         { label: 'الجوال / واتساب', value: c.whatsapp || '+966570327777', ltr: true, href: `https://wa.me/${(c.whatsapp || '+966570327777').replace(/\D/g, '')}` },
